@@ -177,14 +177,21 @@ si aggiungono primo in classifica, miglior attacco e miglior difesa.
 In `frontend/.env`: `VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1` (in produzione l'indirizzo pubblico
 del backend). CORS è già aperto in sviluppo.
 
+## Metterlo online
+
+Il sito sta su Vercel (cartella `frontend`), il backend su un server con un disco che non si cancella (`backend/Dockerfile`).
+Passo passo, variabili da inserire e come portare i dati già inseriti con il backup (Impostazioni, Dati e backup):
+[docs/DEPLOY.md](docs/DEPLOY.md).
+
 ## Sicurezza e privacy
 
 - Il sito pubblico mostra solo nomi, ruoli, numeri e foto della rosa. Date di nascita, telefono, email,
   certificati medici e pagamenti sono solo dietro login (o nel link personale del singolo giocatore).
 - Dei certificati medici si salva **solo la scadenza**, mai il documento.
 - Nessun codice fiscale viene salvato. I pagamenti sono un **registro**: l'app non incassa denaro.
-- Prima della messa online: `APP_ENV=production`, `APP_DEBUG=false`, HTTPS, e restringere CORS al dominio
-  del frontend (`php artisan config:publish cors`).
+- Online: con il `Dockerfile` sono già impostati `APP_ENV=production` e `APP_DEBUG=false`, e il server si fida del proxy
+  HTTPS della piattaforma. Per far chiamare l'API solo dal sito, `CORS_ALLOWED_ORIGINS` (vedi `backend/config/cors.php`).
+- Il backup del database contiene anche dati personali e gli utenti: va conservato con cura.
 
 ## Limiti noti e prossimi passi
 

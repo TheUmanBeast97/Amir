@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BackupController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\EventController;
@@ -92,5 +93,9 @@ Route::prefix('v1')->group(function () {
 
         Route::post('/sync/xfive', [SyncController::class, 'run']);
         Route::get('/sync/runs', [SyncController::class, 'runs']);
+
+        // Copia di sicurezza di tutti i dati (file SQLite) e ripristino da un file
+        Route::get('/backup', [BackupController::class, 'download'])->middleware('throttle:10,1');
+        Route::post('/backup/restore', [BackupController::class, 'restore'])->middleware('throttle:5,1');
     });
 });

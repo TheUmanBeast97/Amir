@@ -72,6 +72,40 @@ class AdminLoginTest extends TestCase
         $this->postJson('/api/v1/auth/login', ['email' => 'capo@example.com', 'password' => 'vecchia-password-1'])->assertStatus(422);
     }
 
+    public function test_a_server_can_start_with_a_ready_made_hash_and_never_overwrites_an_existing_admin(): void
+    {
+        $hash = Hash::make('password-di-prova-1');
+
+        $this->artisan('amir:admin', ['email' => 'Capo@Example.com', '--hash' => $hash, '--if-missing' => true])->assertSuccessful();
+
+        $this->postJson('/api/v1/auth/login', ['email' => 'capo@example.com', 'password' => 'password-di-prova-1'])->assertOk();
+        $this->assertSame(1, User::count());
+
+        // un secondo avvio con un'altra impronta non cambia la password di chi c'è già
+        $this->artisan('amir:admin', ['email' => 'capo@example.com', '--hash' => Hash::make('altra-password-22'), '--if-missing' => true])->assertSuccessful();
+
+        $this->postJson('/api/v1/auth/login', ['email' => 'capo@example.com', 'password' => 'password-di-prova-1'])->assertOk();
+        $this->postJson('/api/v1/auth/login', ['email' => 'capo@example.com', 'password' => 'altra-password-22'])->assertStatus(422);
+    }
+
+    public function test_something_that_is_not_a_hash_is_refused(): void
+    {
+        $this->artisan('amir:admin', ['email' => 'capo@example.com', '--hash' => 'password-in-chiaro-1'])->assertFailed();
+
+        $this->assertSame(0, User::count());
+    }
+
+    public function test_the_hash_command_prints_something_that_works_as_a_password(): void
+    {
+        $this->artisan('amir:hash')
+            ->expectsQuestion('Password (almeno 10 caratteri)', 'password-di-prova-1')
+            ->expectsQuestion('Ripeti la password', 'password-di-prova-1')
+            ->expectsOutputToContain('$2y$')
+            ->assertSuccessful();
+
+        $this->artisan('amir:hash')->expectsQuestion('Password (almeno 10 caratteri)', 'corta')->assertFailed();
+    }
+
     public function test_the_seeder_no_longer_creates_an_admin_from_the_environment(): void
     {
         // anche se in .env restasse una vecchia ADMIN_PASSWORD, il seeder non la usa

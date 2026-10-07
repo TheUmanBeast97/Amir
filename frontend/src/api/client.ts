@@ -157,6 +157,10 @@ export interface ApiClient {
   askDocuments(question: string): Promise<DocAnswer>;
   /** Il file originale di un documento (serve il login, quindi si scarica e si apre da qui). */
   getDocumentFile(slug: string): Promise<Blob>;
+  /** Tutti i dati dell'app in un solo file (database SQLite): serve il login. */
+  downloadBackup(): Promise<Blob>;
+  /** Sostituisce tutti i dati con quelli di un backup; `confirm` deve essere "RIPRISTINA". */
+  restoreBackup(file: File, confirm: string): Promise<{ restored: boolean }>;
   syncXfive(scope: "current" | "history"): Promise<SyncRun>;
   getSyncRuns(): Promise<SyncRun[]>;
   // player link
@@ -287,6 +291,42 @@ export const api: ApiClient = {
         res.status === 404 ? "File non trovato." : "Errore del server.",
       );
     return res.blob();
+  },
+  downloadBackup: async () => {
+    const token = getToken();
+    let res: Response;
+    try {
+      res = await fetch(`${BASE}/backup`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    } catch {
+      throw new ApiError(0, "Impossibile contattare il server. Controlla la connessione.");
+    }
+    if (res.status === 401) throw new ApiError(401, "Sessione scaduta. Accedi di nuovo.");
+    if (!res.ok) throw new ApiError(res.status, "Non riesco a preparare il backup.");
+    return res.blob();
+  },
+  restoreBackup: async (file, confirm) => {
+    const token = getToken();
+    const body = new FormData();
+    body.append("file", file);
+    body.append("confirm", confirm);
+    let res: Response;
+    try {
+      // niente Content-Type: lo mette il browser, con il confine del modulo
+      res = await fetch(`${BASE}/backup/restore`, {
+        method: "POST",
+        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body,
+      });
+    } catch {
+      throw new ApiError(0, "Impossibile contattare il server. Controlla la connessione.");
+    }
+    if (res.status === 401) throw new ApiError(401, "Sessione scaduta. Accedi di nuovo.");
+    if (res.status === 422) {
+      const b = (await res.json()) as { message: string; errors?: Record<string, string[]> };
+      throw new ApiError(422, b.message, b.errors ?? {});
+    }
+    if (!res.ok) throw new ApiError(res.status, "Ripristino non riuscito.");
+    return ((await res.json()) as { data: { restored: boolean } }).data;
   },
   syncXfive: (scope) => request("/sync/xfive", post({ scope })),
   getSyncRuns: () => request("/sync/runs"),

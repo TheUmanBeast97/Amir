@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -17,7 +18,9 @@ class AmirAdmin extends Command
 
     protected $signature = 'amir:admin
         {email : l\'email, che è anche il nome utente per accedere}
-        {--name= : nome mostrato nell\'area staff (solo alla creazione)}';
+        {--name= : nome mostrato nell\'area staff (solo alla creazione)}
+        {--hash= : impronta della password già calcolata (vedi amir:hash), per il primo avvio su un server senza terminale}
+        {--if-missing : non fa nulla se questo utente esiste già}';
 
     protected $description = 'Crea un amministratore o ne cambia la password (la password si digita qui, mai in .env)';
 
@@ -29,6 +32,16 @@ class AmirAdmin extends Command
             $this->error('Email non valida.');
 
             return self::FAILURE;
+        }
+
+        if ($this->option('if-missing') && User::where('email', $email)->exists()) {
+            $this->info("{$email} esiste già: non cambio nulla.");
+
+            return self::SUCCESS;
+        }
+
+        if ($this->option('hash')) {
+            return $this->fromHash($email, (string) $this->option('hash'));
         }
 
         $password = (string) $this->secret('Password (almeno '.self::MIN_PASSWORD.' caratteri)');
@@ -62,6 +75,26 @@ class AmirAdmin extends Command
             'password' => $password,
         ]);
         $this->info("Amministratore {$email} creato.");
+
+        return self::SUCCESS;
+    }
+
+    /** Crea (o aggiorna) l'utente con un'impronta di password già pronta: la password vera non passa di qui. */
+    private function fromHash(string $email, string $hash): int
+    {
+        if (! preg_match('/^\$2y\$\d{2}\$[.\/A-Za-z0-9]{53}$/', $hash)) {
+            $this->error('L\'impronta non è valida: va generata con `php artisan amir:hash` (inizia con $2y$).');
+
+            return self::FAILURE;
+        }
+
+        // si scrive direttamente in tabella: l'impronta è già pronta, e il modello rifiuterebbe una calcolata con un costo diverso da quello del server
+        DB::table('users')->updateOrInsert(
+            ['email' => $email],
+            ['name' => (string) ($this->option('name') ?: 'Amministratore'), 'password' => $hash, 'created_at' => now(), 'updated_at' => now()],
+        );
+        User::where('email', $email)->first()?->tokens()->delete();
+        $this->info("Amministratore {$email} pronto.");
 
         return self::SUCCESS;
     }

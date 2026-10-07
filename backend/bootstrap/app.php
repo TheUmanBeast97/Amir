@@ -12,6 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Sul server l'app sta dietro il proxy HTTPS della piattaforma: senza questo gli indirizzi di foto e stemmi
+        // uscirebbero con http:// e il browser li bloccherebbe nel sito https.
+        $middleware->trustProxies(at: '*');
+
         // Nessuna pagina di login da raggiungere: senza token si risponde 401 (JSON), mai un redirect
         $middleware->redirectGuestsTo(fn () => null);
     })

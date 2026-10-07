@@ -1,0 +1,19 @@
+# Cose che non devono mai finire dentro l'immagine: segreti, dati personali, roba che si rigenera
+.env
+.env.*
+!.env.example
+.git
+vendor
+node_modules
+tests
+.phpunit.cache
+database/*.sqlite*
+storage/app/private/*
+!storage/app/private/.gitignore
+storage/logs/*
+!storage/logs/.gitignore
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*
+!bootstrap/cache/.gitignore

@@ -1,0 +1,4 @@
+# Gli script e il Dockerfile girano su Linux: le righe devono finire con LF anche se il file nasce su Windows
+*.sh text eol=lf
+Dockerfile text eol=lf
+backend/docker/* text eol=lf
