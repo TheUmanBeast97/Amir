@@ -188,7 +188,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   try {
     res = await fetch(`${BASE}${path}`, { ...init, headers });
   } catch {
-    throw new ApiError(0, "Impossibile contattare il server. Controlla la connessione.");
+    // per chi gestisce il sito: l'indirizzo che il sito sta provando è scritto nella console del browser
+    console.error(`Il sito non raggiunge il server dei dati (${BASE}). Controlla VITE_API_BASE_URL e che il backend sia online.`);
+    throw new ApiError(0, "Il server dei dati non risponde. Riprova tra poco.");
   }
   if (res.status === 401) {
     localStorage.removeItem(TOKEN_KEY);
