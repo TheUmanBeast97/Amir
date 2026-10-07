@@ -79,7 +79,7 @@ export function StreaksPanel({ streaks }: { streaks: HistoryInsights["streaks"] 
           const run = streaks[s.id];
           return (
             <Reveal key={s.id} i={idx} scale={0.94} className="rounded-xl bg-background/50 p-3">
-              <div className={cn("font-display text-4xl leading-none num", run.length ? s.tone : "text-muted-foreground")}>{run.length ? <CountUp value={run.length} /> : "—"}</div>
+              <div className={cn("font-display text-4xl leading-none num", run.length ? s.tone : "text-muted-foreground")}>{run.length ? <CountUp value={run.length} /> : "-"}</div>
               <div className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{s.label}</div>
               {run.length > 1 && run.from && run.to && <div className="mt-1 text-[11px] text-muted-foreground num">{fmtShortDate(run.from)} → {fmtShortDate(run.to)}</div>}
             </Reveal>
@@ -342,7 +342,7 @@ export function CompetitionCard({ c, i = 0 }: { c: HistoryCompetition; i?: numbe
         viewport={{ once: true }}
         transition={{ ...spring.pop, delay: 0.1 + stagger(i, 0.05) }}
       >
-        {medal(c.final_position) ?? (c.final_position ? <span className="font-display text-xl num">{c.final_position}°</span> : <span className="text-xs text-muted-foreground">—</span>)}
+        {medal(c.final_position) ?? (c.final_position ? <span className="font-display text-xl num">{c.final_position}°</span> : <span className="text-xs text-muted-foreground">-</span>)}
       </motion.div>
       <div className="min-w-0 flex-1">
         <div className="truncate font-semibold">{c.name}</div>

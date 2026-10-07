@@ -11,12 +11,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/admin/classifiche")({
   head: () => ({
     meta: [
-      { title: "Classifiche squadra — AMIR COSTRUZIONI" },
+      { title: "Classifiche squadra - AMIR COSTRUZIONI" },
       {
         name: "description",
         content: "Presenze, allenamenti, marcatori, assist, voti medi e cartellini dei giocatori.",
       },
-      { property: "og:title", content: "Classifiche squadra — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Classifiche squadra - AMIR COSTRUZIONI" },
       { property: "og:description", content: "Le classifiche interne della squadra." },
     ],
   }),

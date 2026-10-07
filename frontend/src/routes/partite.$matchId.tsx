@@ -15,12 +15,12 @@ import { spring } from "@/lib/motion";
 export const Route = createFileRoute("/partite/$matchId")({
   head: () => ({
     meta: [
-      { title: "Partita — AMIR COSTRUZIONI" },
+      { title: "Partita - AMIR COSTRUZIONI" },
       {
         name: "description",
         content: "Convocati, formazione, referto e precedenti della partita di AMIR COSTRUZIONI.",
       },
-      { property: "og:title", content: "Partita — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Partita - AMIR COSTRUZIONI" },
       { property: "og:description", content: "Convocati, formazione e referto." },
     ],
   }),

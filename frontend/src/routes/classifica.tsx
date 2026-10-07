@@ -7,12 +7,12 @@ import { Reveal } from "@/components/motion";
 export const Route = createFileRoute("/classifica")({
   head: () => ({
     meta: [
-      { title: "Classifica — AMIR COSTRUZIONI" },
+      { title: "Classifica - AMIR COSTRUZIONI" },
       {
         name: "description",
         content: "Classifica completa del girone CITTADELLA XFive Alessandria.",
       },
-      { property: "og:title", content: "Classifica — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Classifica - AMIR COSTRUZIONI" },
       { property: "og:description", content: "Classifica completa del girone." },
     ],
   }),

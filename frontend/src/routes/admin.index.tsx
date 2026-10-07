@@ -29,13 +29,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
-      { title: "Dashboard staff — AMIR COSTRUZIONI" },
+      { title: "Dashboard staff - AMIR COSTRUZIONI" },
       {
         name: "description",
         content:
           "Panoramica per lo staff: prossima partita, stagione, Squad List, tesseramenti, certificati, quote e scadenze XFive.",
       },
-      { property: "og:title", content: "Dashboard staff — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Dashboard staff - AMIR COSTRUZIONI" },
       { property: "og:description", content: "Panoramica dello staff AMIR COSTRUZIONI." },
     ],
   }),
@@ -371,7 +371,7 @@ function DashboardPage() {
         <Kpi
           i={0}
           label={`Stagione ${o.season}`}
-          value={r.played ? `${r.won}-${r.drawn}-${r.lost}` : "—"}
+          value={r.played ? `${r.won}-${r.drawn}-${r.lost}` : "-"}
           sub={
             r.played
               ? `${r.points} punti · ${r.goals_for}-${r.goals_against} reti`
@@ -393,7 +393,7 @@ function DashboardPage() {
               {o.form.length ? (
                 o.form.map((f, i) => <ResultDot key={i} r={f} i={i} className="h-8 w-8 text-sm" />)
               ) : (
-                <span className="font-display text-4xl">—</span>
+                <span className="font-display text-4xl">-</span>
               )}
             </div>
             <div className="mt-2 text-xs text-muted-foreground">

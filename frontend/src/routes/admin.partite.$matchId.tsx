@@ -14,12 +14,12 @@ import { PublishBar } from "@/components/admin/match/PublishBar";
 export const Route = createFileRoute("/admin/partite/$matchId")({
   head: () => ({
     meta: [
-      { title: "Gestione partita — AMIR COSTRUZIONI" },
+      { title: "Gestione partita - AMIR COSTRUZIONI" },
       {
         name: "description",
         content: "Presenze, convocati, formazione, statistiche e precedenti della partita.",
       },
-      { property: "og:title", content: "Gestione partita — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Gestione partita - AMIR COSTRUZIONI" },
       { property: "og:description", content: "Presenze, convocati, formazione e statistiche." },
     ],
   }),

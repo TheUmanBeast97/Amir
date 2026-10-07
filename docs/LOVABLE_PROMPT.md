@@ -1,11 +1,11 @@
-# PROMPT PER LOVABLE — AMIR Team Manager
+# PROMPT PER LOVABLE - AMIR Team Manager
 
 > Come usarlo: incolla la PARTE 1, aspetta che Lovable finisca, poi incolla la PARTE 2.
 > Se vuoi andare più cauto, dividi la PARTE 2 in due messaggi (prima "Area admin", poi "Grafiche e statistiche").
 
 ---
 
-## PARTE 1 — Fondamenta, API layer e area pubblica
+## PARTE 1 - Fondamenta, API layer e area pubblica
 
 Costruisci "AMIR Team Manager": una web app mobile-first (installabile come PWA) per gestire una squadra di calcio amatoriale, **AMIR COSTRUZIONI**, che gioca nei campionati XFive di Alessandria (calcio a 8 e a 7). Tutta l'interfaccia è **in italiano**. Il backend esiste già (API REST Laravel) ma non è ancora collegabile: tu costruisci solo il frontend, contro un **contratto API fisso** e dati **mock**.
 
@@ -27,7 +27,7 @@ Costruisci "AMIR Team Manager": una web app mobile-first (installabile come PWA)
 - Colori maglia: la nostra squadra ha maglia 1 rossa `#D61F26`, maglia 2 bianca `#FFFFFF`. Mostra sempre lo stemma (`badge_url`) con un placeholder elegante se manca.
 
 ### Stato reale dei dati (importante per l'UX)
-La stagione corrente è **2026/2027**. Il girone **CITTADELLA [Alessandria]** (calcio a 8, 10 squadre, 18 giornate) ha **un solo turno ufficiale**: la 1ª giornata, *AMIR COSTRUZIONI – VALONS, giovedì 15/10/2026 ore 20:00, 100GRIGIO - CAMPO 4*. Le altre giornate sono abbinamenti **provvisori senza data né ora** (`status: "to_schedule"`, `is_provisional: true`). Quindi:
+La stagione corrente è **2026/2027**. Il girone **CITTADELLA [Alessandria]** (calcio a 8, 10 squadre, 18 giornate) ha **un solo turno ufficiale**: la 1ª giornata, *AMIR COSTRUZIONI - VALONS, giovedì 15/10/2026 ore 20:00, 100GRIGIO - CAMPO 4*. Le altre giornate sono abbinamenti **provvisori senza data né ora** (`status: "to_schedule"`, `is_provisional: true`). Quindi:
 - Una partita provvisoria mostra "Data da definire", ha stile attenuato e un chip **PROVVISORIA**; non ha countdown e non entra nel calendario telefonico.
 - Se `calendar_info.is_complete` è `false`, mostra in alto un banner informativo: "Calendario ufficiale in aggiornamento: XFive ha pubblicato {scheduled_rounds} giornate su {total_rounds}".
 - Non trattare mai una partita provvisoria come "prossima partita" ufficiale se esiste una partita con data.
@@ -35,9 +35,9 @@ La stagione corrente è **2026/2027**. Il girone **CITTADELLA [Alessandria]** (c
 ### Area pubblica (senza login, condivisibile via WhatsApp)
 1. `/` **Home**: hero con la prossima partita (stemmi, avversario, data/ora, campo, countdown; se non c'è data → "Data da definire"), ultima partita giocata con esito (V/N/P colorato), mini-classifica con la nostra riga evidenziata, prossime 5 partite, banner calendario incompleto. Pulsante "Aggiungi il calendario al telefono" (link `webcal://` / download di `/public/calendar.ics`).
 2. `/calendario`: tutte le partite della squadra raggruppate per giornata, filtro per competizione, chip stato (Programmata / Provvisoria / Giocata / Rinviata), switch "tutte le partite del girone".
-3. `/classifica`: tabella completa (P, V, N, Pe, GF, GS, DR, Pt), nostra riga evidenziata, selettore competizione. Le posizioni possono essere **a pari merito** (stesso numero ripetuto): mostrale così. Finché una squadra ha `played === 0` e nessuno ha giocato, al posto del numero mostra "—" e una nota "La stagione non è ancora iniziata". Se `PublicHome.standing` è `null`, nascondi la card "la tua posizione".
+3. `/classifica`: tabella completa (P, V, N, Pe, GF, GS, DR, Pt), nostra riga evidenziata, selettore competizione. Le posizioni possono essere **a pari merito** (stesso numero ripetuto): mostrale così. Finché una squadra ha `played === 0` e nessuno ha giocato, al posto del numero mostra "-" e una nota "La stagione non è ancora iniziata". Se `PublicHome.standing` è `null`, nascondi la card "la tua posizione".
 4. `/rosa`: griglia di card con foto, numero maglia (per lo staff "A"/"D"), ruolo, soprannome. Usa solo i campi di `PublicPlayer`.
-5. `/storico` — **sezione Storico** (dati delle stagioni passate, in sola lettura):
+5. `/storico` - **sezione Storico** (dati delle stagioni passate, in sola lettura):
    - In alto "Il nostro curriculum": record di sempre (partite, V-N-P, gol fatti/subiti, punti, differenza reti, % vittorie), numero stagioni, **miglior vittoria**, **peggior sconfitta**, **avversario più incontrato** (da `HistorySummary`).
    - Poi una sezione per **stagione** (più recente per prima, ad esempio 2025/2026 → 2022/2023) con il riepilogo della stagione e l'elenco delle competizioni giocate (campionato, coppe, tornei) con badge di **posizione finale** (🥇🥈🥉 per i primi tre; la posizione esiste solo per i campionati: se `final_position` è `null`, nessun badge), formato 7/8, record (V-N-P, GF-GS).
    - `/storico/:competitionId`: dettaglio torneo con classifica finale (nostra riga evidenziata) e tutte le nostre partite con risultato (V/N/P colorato).
@@ -50,7 +50,7 @@ Rendi il mock fedele alla realtà: squadra AMIR COSTRUZIONI (formato 8), competi
 
 ---
 
-## PARTE 2 — Area admin, formazioni, pagamenti, statistiche e grafiche
+## PARTE 2 - Area admin, formazioni, pagamenti, statistiche e grafiche
 
 Aggiungi l'area riservata sotto `/admin` (login email+password su `/admin/login`, token Bearer, route protette). Su mobile bottom-nav con le voci principali; su desktop sidebar.
 
@@ -77,7 +77,7 @@ Accessibilità (contrasti, focus, label), nessuno scroll orizzontale a 375px, sk
 
 ```ts
 // =====================================================================
-// AMIR Team Manager — API contract v1 (JSON, snake_case)
+// AMIR Team Manager - API contract v1 (JSON, snake_case)
 // Base URL: VITE_API_BASE_URL  (e.g. http://127.0.0.1:8000/api/v1)
 // Every response has the shape { data: ... }. Dates are ISO 8601 with an
 // offset (Europe/Rome). Money is always in cents (*_cents).

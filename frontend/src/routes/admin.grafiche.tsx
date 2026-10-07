@@ -30,13 +30,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/admin/grafiche")({
   head: () => ({
     meta: [
-      { title: "Studio grafiche — AMIR COSTRUZIONI" },
+      { title: "Studio grafiche - AMIR COSTRUZIONI" },
       {
         name: "description",
         content:
           "Crea immagini da condividere: match day, risultati, formazione, classifica e altro, con didascalie scritte dall'IA.",
       },
-      { property: "og:title", content: "Studio grafiche — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Studio grafiche - AMIR COSTRUZIONI" },
       { property: "og:description", content: "Immagini social con i dati veri della squadra." },
     ],
   }),
@@ -402,7 +402,7 @@ function LineupBoard({
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {p ? shortName(p) : "—"}
+                  {p ? shortName(p) : "-"}
                 </div>
               </div>
             );
@@ -442,7 +442,7 @@ function Studio() {
   const byId = (id: number | null) => all.find((x) => x.id === id);
   const name = (id: number | null) => {
     const p = byId(id);
-    return p ? (p.nickname ?? p.full_name) : "—";
+    return p ? (p.nickname ?? p.full_name) : "-";
   };
   const useNext = tpl === "matchday" || tpl === "precedenti" || tpl === "formazione";
   const captionMatch = (useNext ? next : last) ?? next ?? last;

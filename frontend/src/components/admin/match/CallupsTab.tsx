@@ -158,7 +158,7 @@ export function CallupsTab({ detail }: { detail: MatchDetail }) {
                     <span className="block truncate text-sm font-semibold">{p.full_name}</span>
                     <span className="flex flex-wrap items-center gap-1 text-[11px]">
                       <span className="text-muted-foreground">
-                        {p.role ? roleLabel[p.role] : "—"}
+                        {p.role ? roleLabel[p.role] : "-"}
                       </span>
                       {r ? (
                         <span

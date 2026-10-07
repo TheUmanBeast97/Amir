@@ -14,13 +14,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/calendario")({
   head: () => ({
     meta: [
-      { title: "Calendario — AMIR COSTRUZIONI" },
+      { title: "Calendario - AMIR COSTRUZIONI" },
       {
         name: "description",
         content:
           "Tutte le partite di AMIR COSTRUZIONI giornata per giornata, in lista o su calendario, con stato e orari.",
       },
-      { property: "og:title", content: "Calendario — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Calendario - AMIR COSTRUZIONI" },
       { property: "og:description", content: "Tutte le partite giornata per giornata." },
     ],
   }),

@@ -177,7 +177,7 @@ export function LineupTab({ detail }: { detail: MatchDetail }) {
               <span className="truncate">{shortName(p)}</span>
             </span>
             <span className="block truncate text-[10px] text-muted-foreground">
-              {p.role ? roleLabel[p.role] : "—"}
+              {p.role ? roleLabel[p.role] : "-"}
             </span>
           </span>
           <span

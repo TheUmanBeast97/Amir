@@ -22,13 +22,13 @@ import { MatchRow, StandingsTable } from "@/components/match";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "AMIR COSTRUZIONI — Prossima partita e classifica" },
+      { title: "AMIR COSTRUZIONI - Prossima partita e classifica" },
       {
         name: "description",
         content:
           "Prossima partita, risultati e classifica di AMIR COSTRUZIONI nel campionato XFive CITTADELLA di Alessandria.",
       },
-      { property: "og:title", content: "AMIR COSTRUZIONI — Match day" },
+      { property: "og:title", content: "AMIR COSTRUZIONI - Match day" },
       {
         property: "og:description",
         content: "Prossima partita, risultati e classifica della squadra.",

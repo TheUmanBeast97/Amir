@@ -38,13 +38,13 @@ import { dur, ease, spring } from "@/lib/motion";
 export const Route = createFileRoute("/rosa/$playerId")({
   head: () => ({
     meta: [
-      { title: "Scheda giocatore — AMIR COSTRUZIONI" },
+      { title: "Scheda giocatore - AMIR COSTRUZIONI" },
       {
         name: "description",
         content:
           "Statistiche, grafici di rendimento, record e carriera di un giocatore di AMIR COSTRUZIONI.",
       },
-      { property: "og:title", content: "Scheda giocatore — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Scheda giocatore - AMIR COSTRUZIONI" },
       { property: "og:description", content: "Statistiche e rendimento." },
     ],
   }),
@@ -670,7 +670,7 @@ function RecordsPanel({ page }: { page: PlayerPage }) {
   const line = (m: PlayerMatchRow | null) =>
     m
       ? `${m.date ? fmtShortDate(m.date) : m.season} · ${m.home_away === "H" ? "" : "@ "}${m.opponent.short_name} ${m.score_for}–${m.score_against}`
-      : "—";
+      : "-";
   const items: [string, string][] = [
     ["Esordio", line(r.debut)],
     ["Primo gol", line(r.first_goal)],
@@ -678,7 +678,7 @@ function RecordsPanel({ page }: { page: PlayerPage }) {
       "Partita da record",
       r.most_goals_in_match
         ? `${r.most_goals_in_match.goals} gol · ${line(r.most_goals_in_match)}`
-        : "—",
+        : "-",
     ],
     ["Triplette (o più)", String(r.hat_tricks)],
     ["Partite di fila a segno", String(r.scoring_streak)],

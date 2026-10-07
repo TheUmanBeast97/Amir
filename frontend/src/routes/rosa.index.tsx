@@ -11,13 +11,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/rosa/")({
   head: () => ({
     meta: [
-      { title: "Rosa — AMIR COSTRUZIONI" },
+      { title: "Rosa - AMIR COSTRUZIONI" },
       {
         name: "description",
         content:
           "Giocatori e staff di AMIR COSTRUZIONI per la stagione 2026/2027: scheda personale, statistiche e rendimento.",
       },
-      { property: "og:title", content: "Rosa — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Rosa - AMIR COSTRUZIONI" },
       { property: "og:description", content: "Giocatori e staff della squadra." },
     ],
   }),
@@ -104,7 +104,7 @@ function RosterPage() {
                       staff ? "bg-warning/20 text-warning" : "bg-secondary",
                     )}
                   >
-                    {p.role ? roleLabel[p.role] : "—"}
+                    {p.role ? roleLabel[p.role] : "-"}
                   </div>
                 </div>
               </Link>

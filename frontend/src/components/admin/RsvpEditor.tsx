@@ -10,7 +10,7 @@ const opts: { v: Rsvp | null; label: string; on: string }[] = [
   { v: "yes", label: "Sì", on: "bg-success text-success-foreground" },
   { v: "maybe", label: "Forse", on: "bg-warning text-warning-foreground" },
   { v: "no", label: "No", on: "bg-primary text-primary-foreground" },
-  { v: null, label: "—", on: "bg-muted text-foreground" },
+  { v: null, label: "-", on: "bg-muted text-foreground" },
 ];
 
 /** Counters + editable RSVP list + reminder. Optional "attended" column for past events. */

@@ -6,7 +6,7 @@ classifiche interne e grafiche per i social.
 
 ```
 gestionale/
-├── backend/   API REST (Laravel 12 + SQLite) — già funzionante e testata
+├── backend/   API REST (Laravel 12 + SQLite) - già funzionante e testata
 ├── docs/
 │   └── api-types.ts        contratto dell'API (tipi TypeScript, snake_case): è lo stesso del frontend
 ├── frontend/  sito pubblico + area staff (TanStack Start + React): gira in locale con bun
@@ -29,7 +29,10 @@ cd frontend && bun run dev
 
 - `localhost:8000` è **solo l'API** (risponde in JSON): il sito è `localhost:8080`.
 - Il frontend legge `frontend/.env` (`VITE_API_BASE_URL`): serve il backend acceso, non esiste più la modalità demo.
-- Login area staff (`/admin/login`): `admin@amir.local` e la password in `backend/.env` (`ADMIN_PASSWORD`).
+- Login area staff: tasto **Accedi** nel menu del sito (o direttamente `/admin/login`), con nome utente (l'email) e password.
+  Gli utenti stanno nel database; la password non è mai in `.env` né nel codice (nel database c'è solo l'hash).
+  Per creare un amministratore o cambiare una password: `cd backend && php artisan amir:admin tua@email.it`
+  (la password la digiti lì, almeno 10 caratteri; rilanciarlo su un'email esistente cambia la password e chiude le sessioni aperte).
 - Prima volta: `cd frontend && bun install --frozen-lockfile` (rispetta il lockfile e la guida di sicurezza
   che blocca pacchetti pubblicati da meno di 24 ore).
 
@@ -48,9 +51,10 @@ php artisan test                 # 100 test
 
 Opzionale, per provare l'app con **dati inventati** (non reali): `php artisan db:seed --class=DemoSeeder`.
 
-Variabili in `backend/.env`: `ADMIN_EMAIL`, `ADMIN_PASSWORD` (obbligatoria per creare l'admin),
-`FRONTEND_URL` (serve a costruire i link personali dei giocatori), `XFIVE_THROTTLE_MS` (pausa fra
-le richieste a XFive, default 1200).
+Variabili in `backend/.env`: `FRONTEND_URL` (serve a costruire i link personali dei giocatori),
+`XFIVE_THROTTLE_MS` (pausa fra le richieste a XFive, default 1200), `XFIVE_USER_AGENT` (come ci si presenta a XFive,
+con un contatto). Nessuna password: l'amministratore si crea con `php artisan amir:admin`. Il database è SQLite
+(`backend/database/database.sqlite`) e contiene tutto, utenti compresi.
 
 ## Come arrivano i dati da XFive
 

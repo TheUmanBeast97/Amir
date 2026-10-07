@@ -1,0 +1,85 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\User;
+use Database\Seeders\DatabaseSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
+
+/** L'amministratore si crea da terminale con `amir:admin`: la password non sta mai in .env né nel codice. */
+class AdminLoginTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private const ASK = 'Password (almeno 10 caratteri)';
+
+    private const AGAIN = 'Ripeti la password';
+
+    public function test_the_command_creates_an_admin_who_can_log_in_even_with_capital_letters(): void
+    {
+        $this->artisan('amir:admin', ['email' => 'Capo@Example.com', '--name' => 'Il Capo'])
+            ->expectsQuestion(self::ASK, 'password-di-prova-1')
+            ->expectsQuestion(self::AGAIN, 'password-di-prova-1')
+            ->assertSuccessful();
+
+        $user = User::where('email', 'capo@example.com')->firstOrFail();
+        $this->assertSame('Il Capo', $user->name);
+        // in database c'è solo l'hash, mai la password
+        $this->assertNotSame('password-di-prova-1', $user->password);
+        $this->assertTrue(Hash::check('password-di-prova-1', $user->password));
+
+        $this->postJson('/api/v1/auth/login', ['email' => 'CAPO@example.com', 'password' => 'password-di-prova-1'])
+            ->assertOk()
+            ->assertJsonPath('data.user.email', 'capo@example.com')
+            ->assertJsonStructure(['data' => ['token']]);
+
+        $this->postJson('/api/v1/auth/login', ['email' => 'capo@example.com', 'password' => 'sbagliata-di-sicuro'])
+            ->assertStatus(422);
+    }
+
+    public function test_a_short_or_unconfirmed_password_is_refused_and_nobody_is_created(): void
+    {
+        $this->artisan('amir:admin', ['email' => 'capo@example.com'])
+            ->expectsQuestion(self::ASK, 'corta')
+            ->assertFailed();
+
+        $this->artisan('amir:admin', ['email' => 'capo@example.com'])
+            ->expectsQuestion(self::ASK, 'password-di-prova-1')
+            ->expectsQuestion(self::AGAIN, 'password-DIVERSA-2')
+            ->assertFailed();
+
+        $this->artisan('amir:admin', ['email' => 'non-una-email'])->assertFailed();
+
+        $this->assertSame(0, User::count());
+    }
+
+    public function test_running_it_again_changes_the_password_and_logs_out_old_sessions(): void
+    {
+        $user = User::factory()->create(['email' => 'capo@example.com', 'password' => 'vecchia-password-1']);
+        $user->createToken('web');
+
+        $this->artisan('amir:admin', ['email' => 'capo@example.com'])
+            ->expectsQuestion(self::ASK, 'nuova-password-22')
+            ->expectsQuestion(self::AGAIN, 'nuova-password-22')
+            ->assertSuccessful();
+
+        $this->assertSame(1, User::count());
+        $this->assertTrue(Hash::check('nuova-password-22', $user->fresh()->password));
+        $this->assertSame(0, $user->tokens()->count());
+
+        $this->postJson('/api/v1/auth/login', ['email' => 'capo@example.com', 'password' => 'vecchia-password-1'])->assertStatus(422);
+    }
+
+    public function test_the_seeder_no_longer_creates_an_admin_from_the_environment(): void
+    {
+        // anche se in .env restasse una vecchia ADMIN_PASSWORD, il seeder non la usa
+        putenv('ADMIN_PASSWORD=non-deve-servire-1');
+        $_ENV['ADMIN_PASSWORD'] = 'non-deve-servire-1';
+
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertSame(0, User::count());
+    }
+}

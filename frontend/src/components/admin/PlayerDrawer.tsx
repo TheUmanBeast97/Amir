@@ -297,7 +297,7 @@ export function PlayerDrawer({
             )}
             <Field label="Ruolo">
               <NativeSelect value={f.role} onChange={(e) => set("role", e.target.value)}>
-                <option value="">—</option>
+                <option value="">-</option>
                 {(Object.keys(roleLabel) as PlayerRole[]).map((k) => (
                   <option key={k} value={k}>
                     {roleLabel[k]}

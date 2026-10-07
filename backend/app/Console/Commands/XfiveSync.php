@@ -24,7 +24,7 @@ class XfiveSync extends Command
         $this->info("Sincronizzazione XFive ({$scope})…");
         $run = $sync->run($scope);
 
-        $this->line('Esito: '.$run->status.' — '.json_encode($run->stats));
+        $this->line('Esito: '.$run->status.' - '.json_encode($run->stats));
         if ($run->error) {
             $this->warn($run->error);
         }

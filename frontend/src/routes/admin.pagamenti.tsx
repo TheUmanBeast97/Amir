@@ -38,12 +38,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/admin/pagamenti")({
   head: () => ({
     meta: [
-      { title: "Pagamenti — Area staff AMIR COSTRUZIONI" },
+      { title: "Pagamenti - Area staff AMIR COSTRUZIONI" },
       {
         name: "description",
         content: "Quote, multe e pagamenti dei giocatori: quanto dovuto e quanto versato.",
       },
-      { property: "og:title", content: "Pagamenti — Area staff AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Pagamenti - Area staff AMIR COSTRUZIONI" },
       { property: "og:description", content: "Registro quote e pagamenti." },
     ],
   }),

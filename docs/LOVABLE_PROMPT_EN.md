@@ -1,4 +1,4 @@
-# LOVABLE PROMPT — AMIR Team Manager (English)
+# LOVABLE PROMPT - AMIR Team Manager (English)
 
 > How to use: paste PART 1, wait until Lovable finishes, then paste PART 2.
 > For more control, split PART 2 in two messages (first "Admin area", then "Graphics studio and stats").
@@ -6,7 +6,7 @@
 
 ---
 
-## PART 1 — Foundations, API layer and public area
+## PART 1 - Foundations, API layer and public area
 
 Build **"AMIR Team Manager"**: a mobile-first web app (installable as a PWA) to run an amateur football (soccer) team, **AMIR COSTRUZIONI**, which plays in the XFive leagues of Alessandria, Italy (8-a-side and 7-a-side). The team's users are Italian, so **every piece of user-facing text must be in Italian** (labels, buttons, empty states, errors, dates). Code, identifiers and comments stay in English.
 
@@ -31,10 +31,10 @@ A REST backend (Laravel) already exists but is not reachable from here. You buil
 - Kit colours: our home kit is red `#D61F26`, away kit white `#FFFFFF`. Always show the crest (`badge_url`) with an elegant placeholder when it is missing.
 
 ### Real-world state of the data (important for the UX)
-The current season is **2026/2027**. The league **CITTADELLA [Alessandria]** (8-a-side, 10 teams, 18 rounds) has **only one official round published so far**: round 1, *AMIR COSTRUZIONI – VALONS, Thursday 15/10/2026 at 20:00, 100GRIGIO - CAMPO 4*. All the other rounds are **provisional pairings with no date or time** (`status: "to_schedule"`, `is_provisional: true`). Therefore:
+The current season is **2026/2027**. The league **CITTADELLA [Alessandria]** (8-a-side, 10 teams, 18 rounds) has **only one official round published so far**: round 1, *AMIR COSTRUZIONI - VALONS, Thursday 15/10/2026 at 20:00, 100GRIGIO - CAMPO 4*. All the other rounds are **provisional pairings with no date or time** (`status: "to_schedule"`, `is_provisional: true`). Therefore:
 - A provisional match shows "Data da definire", is visually muted, carries a **PROVVISORIA** chip, has no countdown and never appears as "next match" while an official dated match exists.
 - If `calendar_info.is_complete` is `false`, show a top info banner using `calendar_info.note` (Italian text provided by the API, e.g. "Calendario ufficiale ancora in aggiornamento: XFive ha pubblicato 1 giornate su 18.").
-- Standings: positions can be **tied** (the same number repeated). Show them as given. While nobody has played yet (`played === 0` for every row) show "—" instead of the position and a note "La stagione non è ancora iniziata". If `PublicHome.standing` is `null`, hide the "your position" card.
+- Standings: positions can be **tied** (the same number repeated). Show them as given. While nobody has played yet (`played === 0` for every row) show "-" instead of the position and a note "La stagione non è ancora iniziata". If `PublicHome.standing` is `null`, hide the "your position" card.
 - `HistoryCompetition.final_position` exists **only for leagues**; when it is `null` show no rank badge.
 
 ### Public area (no login, shareable on WhatsApp)
@@ -42,7 +42,7 @@ The current season is **2026/2027**. The league **CITTADELLA [Alessandria]** (8-
 2. `/calendario`: all our matches grouped by round, a competition filter, status chips (Programmata / Provvisoria / Giocata / Rinviata), and a switch "tutte le partite del girone".
 3. `/classifica`: full table (P, V, N, Pe, GF, GS, DR, Pt) with our row highlighted and a competition selector; follow the tie rules above.
 4. `/rosa`: card grid with photo, shirt number (staff use "A"/"D"), role, nickname. Use only the `PublicPlayer` fields.
-5. `/storico` — **History section** (past seasons, read-only):
+5. `/storico` - **History section** (past seasons, read-only):
    - At the top "Il nostro curriculum": all-time record (played, W-D-L, goals for/against, points, goal difference, win %), number of seasons, **best win**, **worst defeat**, **most frequent opponent** (from `HistorySummary`).
    - Then one block per **season** (newest first, e.g. 2025/2026 → 2022/2023) with the season summary and the list of competitions played (league, cups, tournaments), each with a final-position badge (🥇🥈🥉 for the top three, leagues only), format 7/8 and record (W-D-L, GF-GA).
    - `/storico/:competitionId`: competition detail with the final table (our row highlighted) and all our matches with result (W/D/L colour-coded).
@@ -55,7 +55,7 @@ Make the mock faithful to reality: team AMIR COSTRUZIONI (format 8), competition
 
 ---
 
-## PART 2 — Admin area, lineups, payments, stats and graphics
+## PART 2 - Admin area, lineups, payments, stats and graphics
 
 Add the private area under `/admin` (email + password login at `/admin/login`, Bearer token, protected routes). On mobile use a bottom navigation with the main entries; on desktop a sidebar.
 
@@ -82,7 +82,7 @@ Accessibility (contrast, focus, labels), no horizontal scroll at 375 px, loading
 
 ```ts
 // =====================================================================
-// AMIR Team Manager — API contract v1 (JSON, snake_case)
+// AMIR Team Manager - API contract v1 (JSON, snake_case)
 // Base URL: VITE_API_BASE_URL  (e.g. http://127.0.0.1:8000/api/v1)
 // Every response has the shape { data: ... }. Dates are ISO 8601 with an
 // offset (Europe/Rome). Money is always in cents (*_cents).

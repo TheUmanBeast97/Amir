@@ -8,12 +8,12 @@ import { Toggle } from "@/components/admin/kit";
 export const Route = createFileRoute("/admin/partite/")({
   head: () => ({
     meta: [
-      { title: "Partite — Area staff AMIR COSTRUZIONI" },
+      { title: "Partite - Area staff AMIR COSTRUZIONI" },
       {
         name: "description",
         content: "Elenco delle partite con presenze, formazione e statistiche.",
       },
-      { property: "og:title", content: "Partite — Area staff AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Partite - Area staff AMIR COSTRUZIONI" },
       { property: "og:description", content: "Gestione partite per lo staff." },
     ],
   }),

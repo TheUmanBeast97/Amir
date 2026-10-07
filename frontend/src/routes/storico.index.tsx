@@ -29,12 +29,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/storico/")({
   head: () => ({
     meta: [
-      { title: "Storico — AMIR COSTRUZIONI" },
+      { title: "Storico - AMIR COSTRUZIONI" },
       {
         name: "description",
         content: "Il curriculum di AMIR COSTRUZIONI: stagioni passate, competizioni e record.",
       },
-      { property: "og:title", content: "Storico — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Storico - AMIR COSTRUZIONI" },
       {
         property: "og:description",
         content: "Stagioni passate, competizioni e record della squadra.",
@@ -86,7 +86,7 @@ function Highlight({ title, m, i = 0 }: { title: string; m: HeadToHeadMatch | nu
             {opp} · {m.season}
           </div>
         ) : (
-          <div className="text-sm">—</div>
+          <div className="text-sm">-</div>
         )}
       </div>
       {m && (
@@ -459,7 +459,7 @@ function HistoryPage() {
                       <div className="truncate text-sm font-semibold">
                         {s.most_frequent_opponent
                           ? `${s.most_frequent_opponent.team.name} · ${s.most_frequent_opponent.played} volte`
-                          : "—"}
+                          : "-"}
                       </div>
                     </div>
                   </Reveal>

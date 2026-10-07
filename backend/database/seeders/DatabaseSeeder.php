@@ -9,8 +9,8 @@ use Illuminate\Database\Seeder;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Crea la nostra squadra e l'utente amministratore.
-     * Credenziali: ADMIN_EMAIL / ADMIN_PASSWORD in .env (la password non è nel codice).
+     * Crea la nostra squadra. L'amministratore NON si crea qui: `php artisan amir:admin <email>`
+     * chiede la password a terminale, così non sta mai né in .env né nel codice.
      */
     public function run(): void
     {
@@ -29,20 +29,10 @@ class DatabaseSeeder extends Seeder
             ],
         );
 
-        $email = (string) env('ADMIN_EMAIL', 'admin@amir.local');
-        $password = env('ADMIN_PASSWORD');
+        $this->command?->info('Squadra pronta.');
 
-        if ($password === null || $password === '') {
-            $this->command?->error('ADMIN_PASSWORD non impostata in .env: utente admin NON creato.');
-
-            return;
+        if (! User::query()->exists()) {
+            $this->command?->warn('Nessun amministratore: creane uno con `php artisan amir:admin tua@email.it` (la password si digita lì, non va in .env).');
         }
-
-        User::updateOrCreate(
-            ['email' => $email],
-            ['name' => 'Amministratore', 'password' => $password],
-        );
-
-        $this->command?->info("Squadra e utente admin pronti ({$email}).");
     }
 }

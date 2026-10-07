@@ -1,4 +1,4 @@
-# AMIR COSTRUZIONI — sito e area staff
+# AMIR COSTRUZIONI - sito e area staff
 
 Frontend di AMIR Team Manager: sito pubblico (prossima partita, calendario, classifica, rosa, storico)
 e area staff (`/admin`). Parla con l'API Laravel nella cartella `../backend`.
@@ -54,8 +54,8 @@ del sito; con font esterni cadrebbe sui caratteri di sistema.
 | Tipo | Voto |
 | --- | --- |
 | Bronzo | meno di 52 |
-| Argento | 52 – 63 |
-| Oro | 64 – 73 |
+| Argento | 52 - 63 |
+| Oro | 64 - 73 |
 | Fuoco (nera e rossa) | 74 o più |
 
 Il voto parte da 42 e sale con i gol a partita (corretti sul numero di partite, così 9 gol in 6 partite non valgono come 9 in

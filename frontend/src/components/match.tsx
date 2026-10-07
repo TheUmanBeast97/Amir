@@ -168,7 +168,7 @@ export function StandingsTable({
                       r.team.is_own && "border-l-4 border-primary",
                     )}
                   >
-                    {notStarted ? "—" : r.position}
+                    {notStarted ? "-" : r.position}
                   </td>
                   <td className="px-2 py-2.5">
                     <div className="flex items-center gap-2">

@@ -1,4 +1,4 @@
-# LOVABLE PROMPT — PART 3: real crests and photos, player pages, career stats
+# LOVABLE PROMPT - PART 3: real crests and photos, player pages, career stats
 
 > Paste this after PART 1 and PART 2. It only adds screens for data the backend now provides; it does not change anything that already works.
 

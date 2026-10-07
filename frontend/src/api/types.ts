@@ -1,5 +1,5 @@
 // =====================================================================
-// AMIR Team Manager — API contract v1 (JSON, snake_case)
+// AMIR Team Manager - API contract v1 (JSON, snake_case)
 // Base URL: VITE_API_BASE_URL  (e.g. http://127.0.0.1:8000/api/v1)
 // Every response has the shape { data: ... }. Dates are ISO 8601 with an
 // offset (Europe/Rome). Money is always in cents (*_cents).

@@ -36,12 +36,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/admin/amichevoli")({
   head: () => ({
     meta: [
-      { title: "Amichevoli — Area staff AMIR COSTRUZIONI" },
+      { title: "Amichevoli - Area staff AMIR COSTRUZIONI" },
       {
         name: "description",
         content: "Organizza le amichevoli: avversario, data, divisa, presenze e risultato.",
       },
-      { property: "og:title", content: "Amichevoli — Area staff AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Amichevoli - Area staff AMIR COSTRUZIONI" },
       { property: "og:description", content: "Gestione delle amichevoli." },
     ],
   }),

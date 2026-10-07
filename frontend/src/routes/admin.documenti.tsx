@@ -24,13 +24,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/admin/documenti")({
   head: () => ({
     meta: [
-      { title: "Documenti XFive — AMIR COSTRUZIONI" },
+      { title: "Documenti XFive - AMIR COSTRUZIONI" },
       {
         name: "description",
         content:
           "La modulistica XFive letta e riassunta: sanzioni, regole di gioco, checklist, costi e convenzioni.",
       },
-      { property: "og:title", content: "Documenti XFive — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Documenti XFive - AMIR COSTRUZIONI" },
       { property: "og:description", content: "La modulistica XFive riassunta per lo staff." },
     ],
   }),

@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| API v1 — contratto in docs/api-types.ts
+| API v1 - contratto in docs/api-types.ts
 |--------------------------------------------------------------------------
 */
 Route::prefix('v1')->group(function () {

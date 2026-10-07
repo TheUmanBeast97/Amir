@@ -92,7 +92,7 @@ export const kindLabel: Record<CompetitionKind, string> = {
   torneo: "Torneo",
   amichevole: "Amichevole",
 };
-/** "15 ott 2026" — per i registri partite. */
+/** "15 ott 2026": per i registri partite. */
 export const fmtShortDate = (iso: string) =>
   new Intl.DateTimeFormat("it-IT", {
     timeZone: "UTC",

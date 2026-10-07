@@ -1,7 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { CalendarDays, History, Home, Moon, Sun, Trophy, Users } from "lucide-react";
+import { CalendarDays, History, Home, LogIn, Moon, ShieldCheck, Sun, Trophy, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
+import { TOKEN_KEY } from "@/api/client";
 import { ActivePill, PageTransition } from "@/components/motion";
 import { dur, ease, spring } from "@/lib/motion";
 
@@ -45,6 +46,35 @@ function ThemeToggle() {
         </motion.span>
       </AnimatePresence>
     </button>
+  );
+}
+
+/** Chi ha già fatto l'accesso su questo browser? (si legge dopo il primo disegno: sul server non esiste localStorage) */
+function useStaffSession() {
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    const read = () => setSignedIn(!!localStorage.getItem(TOKEN_KEY));
+    read();
+    window.addEventListener("storage", read);
+    return () => window.removeEventListener("storage", read);
+  }, []);
+  return signedIn;
+}
+
+/** Il tasto per entrare nell'area staff; a chi è già dentro porta direttamente alla dashboard. */
+function StaffAccess({ compact = false }: { compact?: boolean }) {
+  const signedIn = useStaffSession();
+  const Icon = signedIn ? ShieldCheck : LogIn;
+  const label = signedIn ? "Area staff" : "Accedi";
+  return (
+    <Link
+      to={signedIn ? "/admin" : "/admin/login"}
+      aria-label={signedIn ? "Vai all'area staff" : "Accedi all'area staff"}
+      className={`press inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-primary/50 px-3 text-sm font-bold text-primary transition-colors hover:bg-primary/10 ${compact ? "" : "w-full"}`}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </Link>
   );
 }
 
@@ -95,15 +125,21 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="mt-auto flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">Stagione 2026/27</span>
-          <ThemeToggle />
+        <div className="mt-auto space-y-3">
+          <StaffAccess />
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Stagione 2026/27</span>
+            <ThemeToggle />
+          </div>
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex items-center justify-between border-b bg-background/85 px-4 py-2 backdrop-blur md:hidden">
           <Logo />
-          <ThemeToggle />
+          <div className="flex items-center gap-1">
+            <StaffAccess compact />
+            <ThemeToggle />
+          </div>
         </header>
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-28 pt-5 md:px-8 md:pb-12 md:pt-8">
           <PageTransition>{children}</PageTransition>

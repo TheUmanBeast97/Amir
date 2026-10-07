@@ -86,7 +86,7 @@ function PostMatchForm({ detail, initial }: { detail: MatchDetail; initial: Row[
         </Field>
         <Field label="Uomo partita">
           <NativeSelect value={motm} onChange={(e) => setMotm(e.target.value)}>
-            <option value="">—</option>
+            <option value="">-</option>
             {rows
               .filter((r) => r.played)
               .map((r) => (
@@ -146,7 +146,7 @@ function PostMatchForm({ detail, initial }: { detail: MatchDetail; initial: Row[
                       upd(r.player_id, { rating: e.target.value ? Number(e.target.value) : null })
                     }
                   >
-                    <option value="">—</option>
+                    <option value="">-</option>
                     {Array.from({ length: 19 }, (_, i) => 1 + i * 0.5).map((v) => (
                       <option key={v} value={v}>
                         {v}

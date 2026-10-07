@@ -23,13 +23,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/admin/giocatori")({
   head: () => ({
     meta: [
-      { title: "Giocatori — AMIR COSTRUZIONI" },
+      { title: "Giocatori - AMIR COSTRUZIONI" },
       {
         name: "description",
         content:
           "Gestione rosa: anagrafiche, tesseramenti, Squad List, certificati e link personali.",
       },
-      { property: "og:title", content: "Giocatori — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Giocatori - AMIR COSTRUZIONI" },
       { property: "og:description", content: "Gestione della rosa per lo staff." },
     ],
   }),
@@ -262,7 +262,7 @@ function PlayersPage() {
                         <div className="text-xs italic text-muted-foreground">“{p.nickname}”</div>
                       )}
                     </td>
-                    <td className="px-3 py-2">{p.role ? roleLabel[p.role] : "—"}</td>
+                    <td className="px-3 py-2">{p.role ? roleLabel[p.role] : "-"}</td>
                     <td className="px-3 py-2">
                       <span
                         className={cn(
@@ -273,7 +273,7 @@ function PlayersPage() {
                         {regLabel[p.registration_status]}
                       </span>
                     </td>
-                    <td className="px-3 py-2">{p.in_squad_list ? "Sì" : "—"}</td>
+                    <td className="px-3 py-2">{p.in_squad_list ? "Sì" : "-"}</td>
                     <td className="px-3 py-2 num">{certCell(p)}</td>
                     <td className="px-3 py-1">{actions(p)}</td>
                   </tr>

@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/admin/impostazioni")({
   head: () => ({
     meta: [
-      { title: "Impostazioni — AMIR COSTRUZIONI" },
+      { title: "Impostazioni - AMIR COSTRUZIONI" },
       { name: "description", content: "Sincronizzazioni XFive, importazione storico e uscita dall'area staff." },
-      { property: "og:title", content: "Impostazioni — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Impostazioni - AMIR COSTRUZIONI" },
       { property: "og:description", content: "Sincronizzazioni XFive e impostazioni dello staff." },
     ],
   }),

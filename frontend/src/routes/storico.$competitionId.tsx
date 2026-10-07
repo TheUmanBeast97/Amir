@@ -11,12 +11,12 @@ import { MatchRow, StandingsTable } from "@/components/match";
 export const Route = createFileRoute("/storico/$competitionId")({
   head: () => ({
     meta: [
-      { title: "Competizione passata — AMIR COSTRUZIONI" },
+      { title: "Competizione passata - AMIR COSTRUZIONI" },
       {
         name: "description",
         content: "Classifica finale e risultati di AMIR COSTRUZIONI in una competizione passata.",
       },
-      { property: "og:title", content: "Competizione passata — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Competizione passata - AMIR COSTRUZIONI" },
       { property: "og:description", content: "Classifica finale e risultati." },
     ],
   }),

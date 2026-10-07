@@ -9,12 +9,12 @@ import { Card, EmptyState, ErrorState, PageTitle, Skeleton } from "@/components/
 export const Route = createFileRoute("/storico/stagione/$season")({
   head: () => ({
     meta: [
-      { title: "Scheda stagione — AMIR COSTRUZIONI" },
+      { title: "Scheda stagione - AMIR COSTRUZIONI" },
       {
         name: "description",
         content: "Una stagione di AMIR COSTRUZIONI: rosa, record, serie, arbitri e campi.",
       },
-      { property: "og:title", content: "Scheda stagione — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "Scheda stagione - AMIR COSTRUZIONI" },
       { property: "og:description", content: "Rosa, record e curiosità di una stagione." },
     ],
   }),

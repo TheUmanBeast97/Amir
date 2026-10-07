@@ -11,9 +11,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/p/$token")({
   head: () => ({
     meta: [
-      { title: "La mia pagina — AMIR COSTRUZIONI" },
+      { title: "La mia pagina - AMIR COSTRUZIONI" },
       { name: "description", content: "Conferma la tua presenza e controlla le quote da versare." },
-      { property: "og:title", content: "La mia pagina — AMIR COSTRUZIONI" },
+      { property: "og:title", content: "La mia pagina - AMIR COSTRUZIONI" },
       { property: "og:description", content: "Conferma la presenza e controlla le quote." },
       { name: "robots", content: "noindex" },
     ],
