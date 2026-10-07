@@ -27,11 +27,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Accesso: i tentativi si contano per account oltre che per indirizzo IP. Il limite per account non si aggira cambiando
-        // IP, né falsificando l'intestazione X-Forwarded-For se il server fosse raggiungibile senza passare dal proxy.
-        RateLimiter::for('login', fn (Request $request) => [
-            Limit::perMinute(6)->by('login-account:'.Str::lower((string) $request->input('email'))),
-            Limit::perMinute(20)->by('login-ip:'.$request->ip()),
-        ]);
+        // Accesso: tre tetti al minuto. Dallo stesso indirizzo bastano pochi tentativi su un account. Chi cambia (o falsifica
+        // con X-Forwarded-For) l'indirizzo a ogni tentativo trova comunque un tetto per account, più alto: abbastanza basso
+        // da rendere inutile indovinare la password, abbastanza alto perché un estraneo non possa chiudere fuori il vero
+        // utente con pochi tentativi sbagliati.
+        // Copie di sicurezza: ognuna ha il suo contatore (con i limiti "throttle:5,1" tutte le rotte di un utente ne dividono uno solo).
+        RateLimiter::for('backup', fn (Request $request) => Limit::perMinute(10)->by('backup:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
+        RateLimiter::for('restore', fn (Request $request) => Limit::perMinute(5)->by('restore:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
+
+        RateLimiter::for('login', function (Request $request) {
+            $account = Str::lower((string) $request->input('email'));
+
+            return [
+                Limit::perMinute(6)->by('login-account-ip:'.$account.'|'.$request->ip()),
+                Limit::perMinute(30)->by('login-account:'.$account),
+                Limit::perMinute(20)->by('login-ip:'.$request->ip()),
+            ];
+        });
     }
 }

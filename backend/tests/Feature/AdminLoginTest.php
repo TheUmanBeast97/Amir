@@ -106,24 +106,42 @@ class AdminLoginTest extends TestCase
         $this->artisan('amir:hash')->expectsQuestion('Password (almeno 10 caratteri)', 'corta')->assertFailed();
     }
 
-    public function test_guessing_one_account_is_stopped_even_when_every_try_seems_to_come_from_a_different_address(): void
+    public function test_guessing_is_stopped_from_one_address_and_capped_per_account_even_with_faked_addresses(): void
     {
         User::factory()->create(['email' => 'capo@example.com', 'password' => 'password-di-prova-1']);
+        $try = fn (string $password, string $ip) => $this->withHeaders(['X-Forwarded-For' => $ip])
+            ->postJson('/api/v1/auth/login', ['email' => 'Capo@Example.com', 'password' => $password]);
 
-        // chi falsifica X-Forwarded-For cambia indirizzo a ogni tentativo: il limite per account lo ferma lo stesso
+        // dallo stesso indirizzo bastano pochi tentativi
         foreach (range(1, 6) as $i) {
-            $this->withHeaders(['X-Forwarded-For' => "203.0.113.{$i}"])
-                ->postJson('/api/v1/auth/login', ['email' => 'capo@example.com', 'password' => "sbagliata-{$i}-xx"])
-                ->assertStatus(422);
+            $try("sbagliata-{$i}-xx", '203.0.113.1')->assertStatus(422);
         }
+        $try('password-di-prova-1', '203.0.113.1')->assertStatus(429);
 
-        $this->withHeaders(['X-Forwarded-For' => '203.0.113.99'])
-            ->postJson('/api/v1/auth/login', ['email' => 'Capo@Example.com', 'password' => 'password-di-prova-1'])
-            ->assertStatus(429);
+        // chi cambia indirizzo a ogni tentativo ricomincia, ma c'è un tetto per account (30 al minuto in tutto)
+        foreach (range(1, 24) as $i) {
+            $try("sbagliata-{$i}-yy", '198.51.100.'.$i)->assertStatus(422);
+        }
+        $try('password-di-prova-1', '198.51.100.200')->assertStatus(429);
 
         // un altro account non ne risente
         User::factory()->create(['email' => 'altro@example.com', 'password' => 'password-di-prova-1']);
         $this->postJson('/api/v1/auth/login', ['email' => 'altro@example.com', 'password' => 'password-di-prova-1'])->assertOk();
+    }
+
+    public function test_one_wrong_try_from_a_stranger_does_not_lock_out_the_real_user(): void
+    {
+        User::factory()->create(['email' => 'capo@example.com', 'password' => 'password-di-prova-1']);
+
+        // alcuni tentativi sbagliati di un estraneo, da un altro indirizzo
+        foreach (range(1, 5) as $i) {
+            $this->withHeaders(['X-Forwarded-For' => '203.0.113.50'])
+                ->postJson('/api/v1/auth/login', ['email' => 'capo@example.com', 'password' => "sbagliata-{$i}-xx"])->assertStatus(422);
+        }
+
+        // la persona vera entra senza aspettare
+        $this->withHeaders(['X-Forwarded-For' => '192.0.2.10'])
+            ->postJson('/api/v1/auth/login', ['email' => 'capo@example.com', 'password' => 'password-di-prova-1'])->assertOk();
     }
 
     public function test_the_seeder_no_longer_creates_an_admin_from_the_environment(): void

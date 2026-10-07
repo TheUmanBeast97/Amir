@@ -95,7 +95,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/sync/runs', [SyncController::class, 'runs']);
 
         // Copia di sicurezza di tutti i dati (file SQLite) e ripristino da un file
-        Route::get('/backup', [BackupController::class, 'download'])->middleware('throttle:10,1');
-        Route::post('/backup/restore', [BackupController::class, 'restore'])->middleware('throttle:5,1');
+        Route::get('/backup', [BackupController::class, 'download'])->middleware('throttle:backup');
+        Route::post('/backup/restore', [BackupController::class, 'restore'])->middleware('throttle:restore');
     });
 });

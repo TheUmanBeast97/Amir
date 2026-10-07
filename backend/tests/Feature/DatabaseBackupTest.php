@@ -124,6 +124,33 @@ class DatabaseBackupTest extends TestCase
         $this->assertFileDoesNotExist($this->db.'.prima-del-ripristino');
     }
 
+    public function test_a_crafted_file_with_triggers_views_or_tables_we_do_not_know_is_refused(): void
+    {
+        $this->loginAsAdmin();
+        $this->player('Rossi');
+
+        $variants = [
+            'trigger' => "CREATE TRIGGER t AFTER INSERT ON players BEGIN UPDATE users SET name = 'x'; END",
+            'vista' => 'CREATE VIEW v AS SELECT 1',
+            'tabella in piu' => 'CREATE TABLE extra (id INTEGER)',
+            // SQLite non distingue le maiuscole: una "CACHE" al posto di "cache" non deve sfuggire alla pulizia
+            'cache con altre maiuscole' => 'DROP TABLE cache; CREATE TABLE CACHE ("key" TEXT PRIMARY KEY, value TEXT, expiration INTEGER)',
+        ];
+
+        foreach ($variants as $name => $sql) {
+            $copy = $this->downloadBackup();
+            (new PDO('sqlite:'.$copy))->exec($sql);
+
+            $this->post('/api/v1/backup/restore', [
+                'file' => UploadedFile::fake()->createWithContent('b.sqlite', (string) file_get_contents($copy)),
+                'confirm' => 'RIPRISTINA',
+            ], ['Accept' => 'application/json'])->assertStatus(422, "variante: {$name}");
+        }
+
+        $this->assertSame(['Rossi'], Player::pluck('last_name')->all(), 'il database in uso non è stato toccato');
+        $this->assertFileDoesNotExist($this->db.'.ripristino', 'nessuna copia a metà rimasta');
+    }
+
     public function test_a_backup_without_any_user_is_refused_so_nobody_is_locked_out(): void
     {
         $this->loginAsAdmin();

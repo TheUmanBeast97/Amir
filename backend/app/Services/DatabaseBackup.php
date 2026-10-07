@@ -22,9 +22,20 @@ class DatabaseBackup
      * per due motivi: un vecchio backup farebbe rivivere accessi già revocati, e cache e code contengono oggetti PHP
      * serializzati che l'app rilegge, quindi un file costruito ad arte non deve poterli portare dentro.
      */
-    private const RUNTIME_TABLES = [
-        'personal_access_tokens', 'sessions', 'password_reset_tokens', 'cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs',
-    ];
+    /** I nomi si leggono dalla configurazione: se qualcuno li cambia (es. DB_CACHE_TABLE) la pulizia segue. */
+    private function runtimeTables(): array
+    {
+        return array_values(array_unique(array_filter([
+            'personal_access_tokens',
+            config('session.table', 'sessions'),
+            config('auth.passwords.'.config('auth.defaults.passwords').'.table', 'password_reset_tokens'),
+            config('cache.stores.database.table', 'cache'),
+            config('cache.stores.database.lock_table', 'cache_locks'),
+            config('queue.connections.database.table', 'jobs'),
+            config('queue.batching.table', 'job_batches'),
+            config('queue.failed.table', 'failed_jobs'),
+        ], 'is_string')));
+    }
 
     /** Il file del database in uso. */
     public function path(): string
@@ -62,8 +73,6 @@ class DatabaseBackup
      */
     public function restore(string $uploaded): void
     {
-        $this->assertIsOurDatabase($uploaded);
-
         $db = $this->path();
         $stage = $db.'.ripristino';
 
@@ -71,8 +80,15 @@ class DatabaseBackup
             throw new RuntimeException('Non riesco a leggere il file caricato.');
         }
 
-        // prima di metterlo al posto del database in uso, si tolgono sessioni, token, cache e code che porta con sé
-        $this->clearRuntimeState($stage);
+        // si controlla e si ripulisce proprio la copia che diventerà il database, non il file caricato: nel mezzo non può cambiare
+        try {
+            $this->assertIsOurDatabase($stage);
+            $this->clearRuntimeState($stage);
+        } catch (\Throwable $e) {
+            @unlink($stage);
+
+            throw $e;
+        }
 
         DB::disconnect();
 
@@ -102,9 +118,22 @@ class DatabaseBackup
         $pdo = new PDO('sqlite:'.$file, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $existing = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'")->fetchAll(PDO::FETCH_COLUMN);
 
-        foreach (array_intersect(self::RUNTIME_TABLES, $existing) as $table) {
-            $pdo->exec('DELETE FROM "'.$table.'"');
+        // SQLite non distingue maiuscole e minuscole nei nomi: «CACHE» e «cache» sono la stessa tabella per l'app
+        $wanted = array_map('strtolower', $this->runtimeTables());
+
+        foreach ($existing as $table) {
+            if (in_array(strtolower((string) $table), $wanted, true)) {
+                $pdo->exec('DELETE FROM "'.str_replace('"', '""', (string) $table).'"');
+            }
         }
+    }
+
+    /** Nomi delle tabelle del file indicato (senza quelle interne di SQLite). */
+    private function tablesOf(PDO $pdo): array
+    {
+        $names = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'")->fetchAll(PDO::FETCH_COLUMN);
+
+        return array_values(array_filter($names, fn ($n) => ! str_starts_with((string) $n, 'sqlite_')));
     }
 
     private function assertIsOurDatabase(string $file): void
@@ -122,11 +151,24 @@ class DatabaseBackup
                 throw new InvalidArgumentException('Il file è danneggiato.');
             }
 
-            $tables = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'")->fetchAll(PDO::FETCH_COLUMN);
+            $tables = $this->tablesOf($pdo);
             $missing = array_diff(self::REQUIRED_TABLES, $tables);
 
             if ($missing !== []) {
                 throw new InvalidArgumentException('Non è un backup di AMIR Team Manager (mancano: '.implode(', ', $missing).').');
+            }
+
+            // un backup vero ha solo le tabelle di questa app: niente trigger, viste o tabelle che non conosciamo
+            // (un file costruito ad arte potrebbe nasconderci istruzioni che girano a ogni scrittura)
+            if ((int) $pdo->query("SELECT COUNT(*) FROM sqlite_master WHERE type IN ('trigger', 'view')")->fetchColumn() > 0) {
+                throw new InvalidArgumentException('Il file contiene trigger o viste: un backup di AMIR Team Manager non ne ha.');
+            }
+
+            $current = $this->tablesOf(DB::getPdo());
+            $unknown = array_diff($tables, $current);
+
+            if ($unknown !== []) {
+                throw new InvalidArgumentException('Il file contiene tabelle che questa versione non conosce ('.implode(', ', $unknown).'): viene da una versione più recente? Aggiorna prima il server.');
             }
 
             if ((int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn() === 0) {
