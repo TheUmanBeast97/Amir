@@ -1,0 +1,534 @@
+{
+  "updated_on": "2026-10-07",
+  "source": "XFive > Amministrazione > Squadre > Modulistica (manage_tournament.php?tmid=159&sk=team)",
+  "documents": [
+    {
+      "slug": "guida-gestione-portale-xfive",
+      "number": 1,
+      "title": "Guida gestione con portale XFive",
+      "category": "guida",
+      "kind": "guida",
+      "file": "01-guida-gestione-portale-xfive.pdf",
+      "mime": "application/pdf",
+      "source_url": "https://cdn.enjore.com/wl/xfivesport_it/doc/teams_doc/1-i71a6ls6h47FUVSPMv06558pedh2Ce.pdf",
+      "when": "Ogni volta che si inserisce o si tessera un giocatore, e prima di stampare la distinta.",
+      "purpose": "Spiega come il responsabile gestisce squadra, giocatori, tesseramenti e distinta dal portale XFive.",
+      "summary": "Ogni responsabile deve essere registrato sul sito. Dall'icona in alto a destra si entra in AMMINISTRAZIONE > Menu squadre: da lì si modificano i dati della squadra, la si iscrive a una competizione, si vede l'elenco delle competizioni (con il modulo d'iscrizione da generare) e i pagamenti fatti. Cliccando sul nome della squadra si vede la lista giocatori: si aggiungono i giocatori, si tesserano, si caricano le visite mediche e si stampano le distinte.",
+      "key_points": [
+        "Giocatore mai registrato: «Aggiungi giocatore». Giocatore già nel sistema: «Importa giocatore» scrivendo il nome.",
+        "La visita medica si inserisce e si carica dalla lista della squadra.",
+        "Dopo la richiesta di tesseramento il giocatore è in approvazione (arancione). Si clicca il pulsante di verifica e si aspetta che diventi verde: solo allora il tesseramento è valido per scendere in campo.",
+        "Solo i tesserati possono entrare nel recinto di gioco.",
+        "Distinta di gioco: nella sezione delle partite in programma si clicca il nome della squadra, si scelgono i giocatori e i numeri di maglia, si salva e si stampa.",
+        "Se un responsabile non vede un giocatore in distinta, il motivo è uno solo: non è ancora tesserato."
+      ],
+      "amounts": [],
+      "actions": [
+        "Per ogni nuovo giocatore: aggiungi o importa, carica la visita medica, richiedi il tesseramento e aspetta il verde.",
+        "Prima di ogni partita: prepara la distinta su XFive (qui in app puoi preparare convocati e formazione).",
+        "Se qualcuno manca in distinta, controlla prima di tutto che sia verde."
+      ],
+      "fill_in": false
+    },
+    {
+      "slug": "privacy-libertas",
+      "number": 2,
+      "title": "Privacy Libertas (informativa per l'affiliazione)",
+      "category": "privacy",
+      "kind": "informativa",
+      "file": "02-privacy-libertas.pdf",
+      "mime": "application/pdf",
+      "source_url": "https://cdn.enjore.com/wl/xfivesport_it/doc/teams_doc/1-M4Czsp08GHTRGOc052rad95F1fdLps.pdf",
+      "when": "All'iscrizione della squadra, insieme ai moduli di affiliazione a Libertas.",
+      "purpose": "Informativa GDPR del Centro Nazionale Sportivo Libertas APS sul trattamento dei dati del legale rappresentante dell'associazione al momento dell'affiliazione.",
+      "summary": "Il titolare del trattamento è il CNS Libertas APS (Roma). I dati del legale rappresentante servono per eseguire l'affiliazione e per gli obblighi di legge, statuto e regolamenti sportivi: il conferimento è obbligatorio, altrimenti non si può affiliare la squadra. I dati non vengono diffusi a soggetti indeterminati e possono essere trasferiti fuori dall'UE solo con le garanzie di legge.",
+      "key_points": [
+        "Va indicata l'associazione/società in alto e, in fondo, data, nominativo e firma del legale rappresentante.",
+        "Diritti dell'interessato (accesso, rettifica, cancellazione, portabilità, reclamo): si esercitano scrivendo a privacy@libertasnazionale.it, con risposta entro un mese (prorogabile se la richiesta è complessa).",
+        "I dati sono conservati solo per il tempo necessario agli scopi e agli obblighi di legge."
+      ],
+      "amounts": [],
+      "actions": [
+        "Compilare il nome dell'associazione e far firmare il legale rappresentante.",
+        "Consegnarlo con i moduli di affiliazione della squadra a Libertas."
+      ],
+      "fill_in": true
+    },
+    {
+      "slug": "privacy-coni",
+      "number": 3,
+      "title": "Privacy CONI (iscrizione al Registro delle società sportive)",
+      "category": "privacy",
+      "kind": "informativa",
+      "file": "03-privacy-coni.pdf",
+      "mime": "application/pdf",
+      "source_url": "https://cdn.enjore.com/wl/xfivesport_it/doc/teams_doc/1-t470oHsU186D9Hf3Ec2GAR7M5PoevT.pdf",
+      "when": "All'iscrizione della squadra, per l'iscrizione al Registro CONI delle associazioni sportive dilettantistiche.",
+      "purpose": "Informativa e consenso per i dati affidati a CONI Servizi S.p.A. tramite l'ente di affiliazione, per iscrivere la società al Registro Nazionale delle Associazioni e Società Sportive Dilettantistiche.",
+      "summary": "I dati sono trattati da CONI Servizi S.p.A. per i compiti istituzionali del CONI, per gli obblighi di legge, per eventi organizzati dal CONI e (punto facoltativo) per attività commerciali e di marketing. Il conferimento è obbligatorio per i punti 1.1, 1.2 e 1.3: senza, la società non viene iscritta al Registro. Il testo cita ancora il vecchio D.Lgs. 196/2003, ma serve solo come informativa.",
+      "key_points": [
+        "Ci sono due caselle di consenso: la prima (finalità 1.1-1.3) è necessaria per l'iscrizione al Registro, la seconda (1.4, marketing e pubblicità) è facoltativa.",
+        "Nel testo c'è uno spazio da completare con l'ente (fsn/dsa/eps): per noi è l'ente di promozione sportiva, cioè Libertas.",
+        "Si firma con data, a cura del legale rappresentante."
+      ],
+      "amounts": [],
+      "actions": [
+        "Spuntare «DO il consenso» per le finalità 1.1-1.3; la 1.4 (marketing) è a scelta.",
+        "Far firmare e datare il legale rappresentante."
+      ],
+      "fill_in": true
+    },
+    {
+      "slug": "domanda-tesseramento-privacy",
+      "number": 4,
+      "title": "Domanda di tesseramento giocatori con privacy (Mod. CNSL2)",
+      "category": "tesseramento",
+      "kind": "modulo",
+      "file": "04-domanda-tesseramento-giocatori-con-privacy.pdf",
+      "mime": "application/pdf",
+      "source_url": "https://cdn.enjore.com/wl/xfivesport_it/doc/teams_doc/1-5zIE8624vorZ3Szt9C02eNo9ThuFMN.pdf",
+      "when": "Per ogni giocatore e dirigente nuovo, prima di richiedere il tesseramento.",
+      "purpose": "Modulo individuale con cui ogni persona chiede di essere tesserata al CNS Libertas APS tramite la nostra associazione, con il consenso privacy.",
+      "summary": "Il giocatore (o il genitore/tutore se minorenne) inserisce i propri dati (nome, nascita, residenza, contatti, codice fiscale) e dichiara di conoscere statuto, regolamenti e polizza assicurativa Libertas. Si impegna a rispettare statuto, regolamenti, codice civile e CONI, a versare le quote di tesseramento e a esibire idonea certificazione medica. Il modulo contiene anche l'informativa privacy completa (11 punti) e tre consensi distinti.",
+      "key_points": [
+        "Consenso A (tesseramento e assicurazione): serve davvero, senza il tesseramento non può essere eseguito.",
+        "Consenso B (immagini e video sui social e sui portali Libertas): facoltativo. Prima di pubblicare foto di un giocatore dallo Studio grafiche conviene sapere se ha dato il consenso.",
+        "Consenso C (dati a terzi per scopi promozionali): facoltativo.",
+        "Per i minori firma chi esercita la potestà; dai 14 anni serve anche la firma del minore per assenso (D.Lgs. 36/2021, art. 16).",
+        "Con la firma si dichiara di conoscere il modello organizzativo dell'attività sportiva e la nomina del Safe Guarding Officer.",
+        "Il modulo va compilato con il nome dell'associazione e il suo codice di affiliazione a Libertas."
+      ],
+      "amounts": [],
+      "actions": [
+        "Far compilare e firmare il modulo a ogni giocatore e dirigente nuovo e archiviarlo.",
+        "Annotare chi ha negato il consenso B (immagini) per non usarne le foto sui social."
+      ],
+      "fill_in": true
+    },
+    {
+      "slug": "tabella-sanzioni",
+      "number": 5,
+      "title": "Tabella sanzioni economiche (c7/8)",
+      "category": "regolamento",
+      "kind": "regolamento",
+      "file": "05-tabella-sanzioni.pdf",
+      "mime": "application/pdf",
+      "source_url": "https://cdn.enjore.com/wl/xfivesport_it/doc/teams_doc/1-NhIuV0PDh2tDz0d6CAPsbN91Qp54mR.pdf",
+      "when": "Quando c'è un'espulsione, un ritardo, un'assenza o un dubbio su cosa costa un'irregolarità.",
+      "purpose": "Elenco delle multe e delle sanzioni sportive previste da XFive per il calcio a 7 e a 8.",
+      "summary": "Ammonizioni, anche per proteste, e squalifiche per somma di ammonizioni non costano nulla. Si paga per le espulsioni (5 € per fallo diretto, da 15 a 50 € per reazioni o insulti), per i ritardi e le irregolarità di distinta e, in modo molto più pesante, per partite non giocate o giocate con tesserati irregolari (fino a 150 € più sconfitta a tavolino 3-0).",
+      "key_points": [
+        "Ammonizioni, ammonizioni per proteste e squalifiche per somma di ammonizioni: nessuna sanzione economica.",
+        "Rinunciare a una partita costa 100 € se non si avvisa o si avvisa a meno di 48 ore, 30 € se si avvisa con tre o più giorni; in entrambi i casi 3-0 a tavolino e 1 punto di penalità.",
+        "Giocare con giocatori non tesserati costa 150 € più 3-0 a tavolino, e un altro 3-0 per ogni partita in cui quei giocatori hanno già giocato.",
+        "I danni agli impianti si pagano direttamente al centro sportivo.",
+        "Le sanzioni oltre un certo limite vengono richieste per integrare la cauzione; se non si versa possono essere raddoppiate."
+      ],
+      "amounts": [
+        { "label": "Espulsione diretta per fallo", "amount": "5 €", "cents": 500 },
+        { "label": "Espulsione per reazione o insulti ad avversari/arbitro", "amount": "da 15 a 50 €", "cents": 1500 },
+        { "label": "Partita non giocata, nessun avviso o meno di 48 ore", "amount": "100 € + 3-0 + 1 punto di penalità", "cents": 10000 },
+        { "label": "Persona non tesserata in panchina", "amount": "15 €", "cents": 1500 }
+      ],
+      "actions": [
+        "Se si deve rinunciare a una partita, avvisare XFive almeno tre giorni prima: costa 30 € invece di 100 €.",
+        "Controllare ogni partita che tutti, panchina compresa, siano tesserati (verdi) per evitare multe e il 3-0."
+      ],
+      "fill_in": false
+    },
+    {
+      "slug": "checklist-iscrizioni-partita",
+      "number": 6,
+      "title": "Checklist iscrizioni e partita",
+      "category": "guida",
+      "kind": "guida",
+      "file": "06-checklist-iscrizioni-e-partita.pdf",
+      "mime": "application/pdf",
+      "source_url": "https://cdn.enjore.com/wl/xfivesport_it/doc/teams_doc/1-DFBCadGPn3OTLTbiVf6FN3rd4LOz2d.pdf",
+      "when": "All'iscrizione a un torneo e prima di ogni partita.",
+      "purpose": "Due liste di controllo: i passaggi dell'iscrizione di una squadra e le linee guida per non prendere multe in partita.",
+      "summary": "La prima pagina elenca i nove passaggi dell'iscrizione (cauzione, pagamento, moduli XFive e Libertas, contratto e privacy per ogni tesserato, creazione squadra e giocatori sull'app, richiesta di tesseramento, foto ben visibili). La seconda elenca le undici verifiche da fare prima di ogni partita per non rischiare sanzioni. In fondo: 15 minuti prima della gara si contatta XFive se l'arbitro non c'è.",
+      "key_points": [
+        "Il ritardo massimo accettato è di 10 minuti (oltre, vedi tabella sanzioni).",
+        "Tutti, anche i dirigenti, devono avere la foto sull'app; i dirigenti non vanno inseriti con l'etichetta «Dirigente» ma con A o D nel campo del numero di maglia.",
+        "Servono la distinta con foto (PDF su carta o sul telefono) e le divise numerate, portiere o giocatore S.N. esclusi.",
+        "Se gli avversari sbagliano qualcosa nella distinta, lo si dice prima della partita, per sportività, e non con un ricorso a fine gara.",
+        "Si può dare la distinta in PDF agli avversari se la chiedono."
+      ],
+      "amounts": [],
+      "actions": [
+        "Usare la checklist partita qui in app prima di ogni gara.",
+        "Salvare il numero WhatsApp di XFive (338 643 0353) per l'arbitro mancante."
+      ],
+      "fill_in": false
+    },
+    {
+      "slug": "prestito-giocatori",
+      "number": 7,
+      "title": "Contratto di prestito giocatori",
+      "category": "contratti",
+      "kind": "modulo",
+      "file": "07-prestito-giocatori.pdf",
+      "mime": "application/pdf",
+      "source_url": "https://cdn.enjore.com/wl/xfivesport_it/doc/teams_doc/1-AU3NchB8HlhPZ9oLDElrDGS0rf8cMo.pdf",
+      "when": "Quando un giocatore va a giocare per un'altra squadra, o ne arriva uno in prestito da noi.",
+      "purpose": "Modulo con cui una squadra (A) presta un suo giocatore a un'altra (B) per un torneo specifico.",
+      "summary": "Si possono prestare solo giocatori con contratto di almeno 2 anni. Il contratto e la proprietà del giocatore restano alla squadra A. La squadra B che riceve il prestito paga 5 € alla squadra A, 5 € a XFive per il tesseramento e 5 € a XFive per l'iscrizione alla manifestazione. Firmano le due squadre e il giocatore.",
+      "key_points": [
+        "Solo con contratti di almeno 2 anni.",
+        "Va indicato il torneo specifico per cui vale il prestito.",
+        "Il contratto (documento 14) precisa che il prestito può riguardare una sola squadra a stagione (1/9 - 31/8).",
+        "Costo totale per chi riceve il giocatore: 15 € (5 € alla squadra di origine più 5 € di tesseramento e 5 € di iscrizione a XFive)."
+      ],
+      "amounts": [
+        { "label": "Dalla squadra B alla squadra A", "amount": "5 €", "cents": 500 },
+        { "label": "Tesseramento a XFive", "amount": "5 €", "cents": 500 },
+        { "label": "Iscrizione manifestazione a XFive", "amount": "5 €", "cents": 500 }
+      ],
+      "actions": [
+        "Se prestiamo o riceviamo un giocatore: compilare il modulo, controllare che il contratto sia di almeno 2 anni e versare le tre quote."
+      ],
+      "fill_in": true
+    },
+    {
+      "slug": "convenzione-fsport",
+      "number": 8,
+      "title": "Convenzione Fsport: modulo acquisto",
+      "category": "convenzioni",
+      "kind": "modulo",
+      "file": "08-convenzione-fsport.jpeg",
+      "mime": "image/jpeg",
+      "source_url": "https://cdn.enjore.com/wl/xfivesport_it/doc/teams_doc/1-8Ts5Lhs704ISbGLi9oVUp66Ehv1MNE.jpeg",
+      "when": "Ogni volta che la squadra compra qualcosa da Fsport.",
+      "purpose": "Modulo da compilare a ogni acquisto presso il partner Fsport (abbigliamento sportivo) e da inviare a XFive, per la classifica acquisti.",
+      "summary": "Si indicano squadra, responsabile, data, importo totale e tipo di prodotti. Ogni modulo rappresenta un singolo acquisto. La classifica conta gli acquisti di ogni squadra dal 1/9/2026 al 31/5/2027. Firmano il responsabile di squadra e Fsport.",
+      "key_points": [
+        "Ogni acquisto da Fsport va comunicato con un modulo, altrimenti non entra in classifica.",
+        "Periodo valido: dal 01/09/2026 al 31/05/2027.",
+        "Per vincere serve una spesa minima di 400 €."
+      ],
+      "amounts": [
+        { "label": "Spesa minima per vincere", "amount": "400 €", "cents": 40000 }
+      ],
+      "actions": [
+        "Se ordiniamo divise o materiale da Fsport: compilare un modulo per ogni acquisto e mandarlo a XFive."
+      ],
+      "fill_in": true
+    },
+    {
+      "slug": "note-tecniche-2026-27",
+      "number": 9,
+      "title": "Note tecniche sul regolamento + novità 2026/27",
+      "category": "regolamento",
+      "kind": "regolamento",
+      "file": "09-note-tecniche-2026-27.pdf",
+      "mime": "application/pdf",
+      "source_url": "https://cdn.enjore.com/wl/xfivesport_it/doc/teams_doc/1-TN4CDSAQ6UH83L71Ho9nUfAQEiiL0L.pdf",
+      "when": "Per capire una decisione dell'arbitro e per le regole di campo di ogni partita.",
+      "purpose": "Le regole di gioco di XFive per il calcio a 7 e a 8: 22 articoli più due novità della stagione 2026/27.",
+      "summary": "Niente fuorigioco, sostituzioni volanti illimitate a gioco fermo, minimo 5 giocatori in campo nel c7 e 6 nel c8. Il fallo da ultimo uomo è rosso solo se chi lo commette non poteva giocare il pallone, la bestemmia è sempre ammonizione, vietati piercing, orecchini e braccialetti metallici e scarpe a 6 tacchetti. Palloni solo n. 5. Novità 2026/27: 10 secondi per ripartire sui calci da fermo e palloni in segreteria.",
+      "key_points": [
+        "Calcio a 8: minimo 6 giocatori in campo, altrimenti l'arbitro non inizia o sospende la partita.",
+        "Il portiere non può prendere con le mani un passaggio volontario di un compagno fatto dal ginocchio in giù (punizione indiretta).",
+        "A fine gara capitano o dirigente possono chiedere all'arbitro marcatori e numero di reti: se non lo fanno, XFive non accetta contestazioni nei giorni dopo.",
+        "Il dirigente responsabile indicato in distinta risponde dei danni a cose e persone e del comportamento di tifosi e tesserati.",
+        "La squadra in casa (prima nominata) deve avere un gioco di maglie e uno di pettorine di colori diversi per i casi di divise uguali.",
+        "Novità 2026/27: palloni in segreteria (la squadra di casa ritira la sacca prima e la riconsegna dopo; i palloni mancanti si pagano metà a testa).",
+        "Novità 2026/27: 10 secondi per rimettere in gioco su tutti i calci da fermo; l'arbitro conta i primi 5 a mente e poi alza il braccio."
+      ],
+      "amounts": [],
+      "actions": [
+        "Quando giochiamo in casa: ritirare e riconsegnare la sacca dei palloni in segreteria e avere pettorine di un altro colore.",
+        "Far sapere alla squadra le regole che cambiano il gioco: 10 secondi sulle ripartenze, mano accidentale, nessun fuorigioco."
+      ],
+      "fill_in": false
+    },
+    {
+      "slug": "premi-convenzione-fsport",
+      "number": 10,
+      "title": "Premi convenzione Fsport: Acquista & Vinci",
+      "category": "convenzioni",
+      "kind": "promo",
+      "file": "10-premi-convenzione-fsport.jpeg",
+      "mime": "image/jpeg",
+      "source_url": "https://cdn.enjore.com/wl/xfivesport_it/doc/teams_doc/1-m9b1s7Nolhr5d9cRqE9LZvLB0f8Ap7.jpeg",
+      "when": "Quando si decide dove comprare divise e materiale.",
+      "purpose": "Locandina del concorso «Classifica acquisti Fsport».",
+      "summary": "La squadra che acquista di più presso il partner Fsport entro il 31/05/27, con spesa minima di 400 €, vince 10 borsoni calcio. La classifica è valida fino al 31/05/27. La grafica mostra un podio con tre posti, ma il premio indicato è solo quello del primo posto.",
+      "key_points": [
+        "Premio: 1° posto = 10 borsoni calcio.",
+        "Serve una spesa minima di 400 € e la classifica chiude il 31/05/27.",
+        "Per essere conteggiati bisogna inviare i moduli di acquisto (documento 8)."
+      ],
+      "amounts": [
+        { "label": "Spesa minima per il premio", "amount": "400 €", "cents": 40000 }
+      ],
+      "actions": [
+        "Se la squadra deve comprare divise o borsoni, farlo da Fsport e inviare i moduli: 10 borsoni per la squadra valgono molto più dei 400 €."
+      ],
+      "fill_in": false
+    },
+    {
+      "slug": "squad-list",
+      "number": 11,
+      "title": "Squad List 2026/27",
+      "category": "tesseramento",
+      "kind": "modulo",
+      "file": "11-squad-list.jpeg",
+      "mime": "image/jpeg",
+      "source_url": "https://cdn.enjore.com/wl/xfivesport_it/doc/teams_doc/1-d4hLpVS6Urb09Z8ErpD50gE6BRQu3o.jpeg",
+      "when": "A inizio stagione, entro la scadenza comunicata da XFive.",
+      "purpose": "Modulo con i 10 nominativi esclusivi della squadra per la stagione 2026/27.",
+      "summary": "Tabella da 1 a 10 con nome e cognome degli atleti, più i dati squadra (squadra, presidente o responsabile, telefono, mail). In fondo sono indicati il numero WhatsApp per info e supporto di XFive (338 643 0353) e i link all'app. Il modulo non riporta la scadenza: quella comunicata da XFive è il 5 ottobre 2026 (già presente fra le scadenze dell'app), dopo la quale XFive genera la lista d'ufficio con i primi 10 in ordine alfabetico non già presenti in altre squad list.",
+      "key_points": [
+        "I 10 nominativi sono esclusivi: non possono stare nella squad list di un'altra squadra.",
+        "Senza deposito, XFive la genera d'ufficio (primi 10 in ordine alfabetico non già in altre liste).",
+        "In app la Squad List si vede nella pagina Giocatori (colonna e filtro «Squad List») e nella dashboard."
+      ],
+      "amounts": [],
+      "actions": [
+        "Controllare su XFive che la nostra Squad List sia depositata e contenga i 10 giocatori scelti (la scadenza del 5/10 è già passata)."
+      ],
+      "fill_in": true
+    },
+    {
+      "slug": "convenzione-aurea",
+      "number": 12,
+      "title": "Convenzione Aurea Wellness",
+      "category": "convenzioni",
+      "kind": "promo",
+      "file": "12-convenzione-aurea.jpeg",
+      "mime": "image/jpeg",
+      "source_url": "https://cdn.enjore.com/wl/xfivesport_it/doc/teams_doc/1-v5DD3vfQ1Agva6NRts98Zn6Fv3O3lh.jpeg",
+      "when": "Per chi vuole allenarsi o rigenerarsi (palestra, wellness).",
+      "purpose": "Sconto del 20% sulle tariffe di Aurea Wellness per atleti, squadre e tesserati XFive.",
+      "summary": "Partnership XFive e Aurea Wellness: 20% di sconto sulle tariffe, riservato al mondo XFive. L'immagine non riporta le tariffe né come si ottiene lo sconto (a quanto pare va chiesto alla struttura dicendo che si è tesserati XFive).",
+      "key_points": [
+        "Indirizzo: via Girgenti 3, Alessandria. Telefono 0131 288135. Instagram @aurea.wellness.srl.",
+        "Valido per atleti, squadre e tesserati XFive."
+      ],
+      "amounts": [
+        { "label": "Sconto sulle tariffe", "amount": "20%", "cents": null }
+      ],
+      "actions": [
+        "Informare i giocatori che c'è la convenzione; per le modalità chiamare Aurea o chiedere a XFive."
+      ],
+      "fill_in": false
+    },
+    {
+      "slug": "convenzione-visite-mediche",
+      "number": 13,
+      "title": "Convenzione CDS: visite mediche sportive",
+      "category": "convenzioni",
+      "kind": "listino",
+      "file": "13-convenzione-visite-mediche.jpeg",
+      "mime": "image/jpeg",
+      "source_url": "https://cdn.enjore.com/wl/xfivesport_it/doc/teams_doc/1-13ve77SNIA2I71Ld4V1mS7FNsM1gU4.jpeg",
+      "when": "Quando un giocatore deve fare o rinnovare la visita medica.",
+      "purpose": "Tariffe riservate ai tesserati XFive e Libertas per le visite di idoneità sportiva con CDS.",
+      "summary": "Tre tariffe: visita non agonistica 40 €, agonistica under 40 50 €, agonistica over 40 80 €. L'immagine non indica sede e prenotazioni. Il modulo di tesseramento Libertas richiede un'idonea certificazione medica: l'app segnala già i certificati in scadenza.",
+      "key_points": [
+        "Idoneità sportiva, personale qualificato, percorso semplificato, tariffe riservate.",
+        "Il documento non dice quale tipo di visita pretenda XFive: chiedere se per il calcio a 8 basta la non agonistica."
+      ],
+      "amounts": [
+        { "label": "Non agonistica", "amount": "40 €", "cents": 4000 },
+        { "label": "Agonistica under 40", "amount": "50 €", "cents": 5000 },
+        { "label": "Agonistica over 40", "amount": "80 €", "cents": 8000 }
+      ],
+      "actions": [
+        "Passare la tariffa ai giocatori con il certificato in scadenza (vedi dashboard)."
+      ],
+      "fill_in": false
+    },
+    {
+      "slug": "contratto",
+      "number": 14,
+      "title": "Contratto XFive (base, contratti pluriennali, clausole)",
+      "category": "contratti",
+      "kind": "modulo",
+      "file": "14-contratto.jpeg",
+      "mime": "image/jpeg",
+      "source_url": "https://cdn.enjore.com/wl/xfivesport_it/doc/teams_doc/1-3I5dVSZSqrBfI6z40nq0nrUib1Po01.jpeg",
+      "when": "Quando si tessera un giocatore e si decide che tipo di contratto fargli firmare.",
+      "purpose": "Modulo a tre sezioni (A base, B tipologie, C clausole) che definisce il vincolo fra giocatore e società e i costi verso XFive.",
+      "summary": "A) Contratto base: nome, anno di nascita, ruolo (portiere, giocatore o dirigente); costa 5 € di tesseramento più 5 € di iscrizione per ogni competizione. Il giocatore non ha vincoli particolari, ma la società non ottiene tutele su cessioni. B) Contratti da 1, 2 o 3 anni (5, 15 o 30 €) per tenere il cartellino più stagioni, con possibilità di prestito dai 2 anni; periodo di prova di 1 partita (3 €) e diritti di prestazione (5 o 10 €) che fanno incassare 2 o 4 € per ogni futuro tesseramento in un'altra squadra. C) Clausola recessoria (3, 5, 25 o 50 €, o nessuna) e clausola di esclusione (20 € per squadra indicata).",
+      "key_points": [
+        "Il contratto va firmato con tutte e tre le persone presenti (giocatore, un presente, responsabile XFive), altrimenti decade.",
+        "Le clausole vanno pagate contestualmente alla firma, dove è previsto un costo.",
+        "Periodo di prova: una sola squadra per giocatore; finita la prova, se si vuole tenerlo, si fa il tesseramento intero a 5 €.",
+        "La squadra B che tessera un giocatore vincolato paga tesseramento, iscrizione e la quota alla squadra A.",
+        "Il prestito può riguardare una sola squadra a stagione (1/9 - 31/8) e si fa con contratto a parte, successivo.",
+        "Clausola recessoria: scegliendo «nessuna» la decisione resta al presidente senza benefici sulla cessione. Nota del modulo: «2 - 3 - 20 - 40 rimane alla società» (probabilmente le quote delle quattro clausole che restano alla società, il resto a XFive: da confermare); non vale per il periodo di prova e il giocatore può andare senza ok del presidente.",
+        "Clausola esclusione: il giocatore non può essere tesserato nelle 1 o 2 squadre indicate."
+      ],
+      "amounts": [
+        { "label": "Tesseramento", "amount": "5 €", "cents": 500 },
+        { "label": "Iscrizione per ogni competizione", "amount": "5 €", "cents": 500 },
+        { "label": "Contratto da 1 anno", "amount": "5 €", "cents": 500 },
+        { "label": "Contratto da 2 anni", "amount": "15 €", "cents": 1500 },
+        { "label": "Contratto da 3 anni", "amount": "30 €", "cents": 3000 },
+        { "label": "Periodo di prova (1 partita)", "amount": "3 €", "cents": 300 },
+        { "label": "Diritti di prestazione, opzione 1", "amount": "5 € (poi 2 € per ogni tesseramento altrove)", "cents": 500 },
+        { "label": "Diritti di prestazione, opzione 2", "amount": "10 € (poi 4 € per ogni tesseramento altrove)", "cents": 1000 },
+        { "label": "Clausola recessoria", "amount": "3, 5, 25 o 50 € (o nessuna)", "cents": 300 },
+        { "label": "Clausola esclusione, per squadra indicata", "amount": "20 €", "cents": 2000 }
+      ],
+      "actions": [
+        "Decidere con la squadra se serve il contratto base o uno pluriennale: le comunicazioni XFive dicono che i contratti ai giocatori sono facoltativi, la checklist di iscrizione li elenca per ogni tesserato (da chiarire).",
+        "Per i prestiti usare il documento 7."
+      ],
+      "fill_in": true
+    },
+    {
+      "slug": "amichevoli-convenzione",
+      "number": 15,
+      "title": "Amichevoli con XFive",
+      "category": "convenzioni",
+      "kind": "promo",
+      "file": "15-amichevoli-convenzione.jpeg",
+      "mime": "image/jpeg",
+      "source_url": "https://cdn.enjore.com/wl/xfivesport_it/doc/teams_doc/1-sGoHsDHPG8bq245A278N9PORN4LB5p.jpeg",
+      "when": "Quando si organizza un'amichevole.",
+      "purpose": "Locandina: chi organizza le amichevoli tramite XFive risparmia sui campi convenzionati.",
+      "summary": "Organizzando le amichevoli con XFive si ottengono sconto sui campi convenzionati, cashback sulla spesa e un ulteriore sconto per la squadra («più giochi, più risparmi»). La locandina non riporta percentuali né contatti: bisogna contattare XFive.",
+      "key_points": [
+        "Tre vantaggi: sconto sui campi convenzionati, cashback sulla spesa, ulteriore sconto per la squadra.",
+        "Importi e modalità non sono scritti: da chiedere a XFive (WhatsApp 338 643 0353)."
+      ],
+      "amounts": [],
+      "actions": [
+        "Prima di fissare un'amichevole, chiedere a XFive lo sconto sul campo (si gestiscono dalla pagina Amichevoli)."
+      ],
+      "fill_in": false
+    }
+  ],
+  "sanctions": [
+    { "code": "1", "area": "disciplina", "title": "Ammonizioni", "amount": "nessuna sanzione", "cents_min": 0, "cents_max": 0, "extra": "" },
+    { "code": "2", "area": "disciplina", "title": "Ammonizioni per proteste", "amount": "nessuna sanzione", "cents_min": 0, "cents_max": 0, "extra": "" },
+    { "code": "3", "area": "disciplina", "title": "Espulsioni per fallo di reazione o per insulti ad avversari o arbitro", "amount": "da 15 a 50 €", "cents_min": 1500, "cents_max": 5000, "extra": "" },
+    { "code": "3A", "area": "disciplina", "title": "Comportamento antisportivo verso avversari", "amount": "5 €", "cents_min": 500, "cents_max": 500, "extra": "" },
+    { "code": "4", "area": "disciplina", "title": "Squalifiche (espulsioni per somma di ammonizioni)", "amount": "nessuna sanzione", "cents_min": 0, "cents_max": 0, "extra": "" },
+    { "code": "5", "area": "disciplina", "title": "Espulsione diretta per fallo", "amount": "5 €", "cents_min": 500, "cents_max": 500, "extra": "" },
+    { "code": "6", "area": "rinuncia", "title": "Partita non disputata per assenza della squadra, senza preavviso o con preavviso inferiore a due giorni (meno di 48 ore)", "amount": "100 €", "cents_min": 10000, "cents_max": 10000, "extra": "+ sconfitta a tavolino 3-0 + 1 punto di penalità" },
+    { "code": "6A", "area": "rinuncia", "title": "Partita non disputata per assenza della squadra, con preavviso di tre o più giorni", "amount": "30 €", "cents_min": 3000, "cents_max": 3000, "extra": "+ sconfitta a tavolino 3-0 + 1 punto di penalità" },
+    { "code": "7", "area": "disciplina", "title": "Comportamento violento di giocatori o dirigenti durante o al termine della partita, segnalato nel referto", "amount": "da 30 a 150 € alla società + 10 € per ogni giocatore coinvolto", "cents_min": 3000, "cents_max": 15000, "extra": "+ squalifica disciplinare" },
+    { "code": "8", "area": "tesseramento", "title": "Partita disputata con giocatori non tesserati", "amount": "150 €", "cents_min": 15000, "cents_max": 15000, "extra": "+ sconfitta a tavolino 3-0 + squalifica disciplinare ai giocatori non in regola + 3-0 per ogni partita in cui hanno giocato" },
+    { "code": "8A", "area": "tesseramento", "title": "Partita disputata con giocatori fuori dai limiti di tesseramento previsti dal Regolamento", "amount": "150 €", "cents_min": 15000, "cents_max": 15000, "extra": "+ sconfitta a tavolino 3-0 + 3-0 per ogni partita in cui hanno giocato" },
+    { "code": "8B", "area": "tesseramento", "title": "Partita disputata con giocatori squalificati", "amount": "50 €", "cents_min": 5000, "cents_max": 5000, "extra": "+ sconfitta a tavolino 3-0" },
+    { "code": "9", "area": "organizzazione", "title": "Partita iniziata con ritardo di 10 minuti ma non oltre i 15", "amount": "15 €", "cents_min": 1500, "cents_max": 1500, "extra": "" },
+    { "code": "10", "area": "organizzazione", "title": "Mancato rispetto delle normative di base (pallone ufficiale, distinta mancante o non compilata correttamente, divise numerate o pettorine)", "amount": "5 €", "cents_min": 500, "cents_max": 500, "extra": "" },
+    { "code": "11", "area": "tesseramento", "title": "Persona non tesserata in panchina", "amount": "15 €", "cents_min": 1500, "cents_max": 1500, "extra": "" },
+    { "code": "12", "area": "rinuncia", "title": "Rinuncia alla partecipazione a play-off, coppe, spareggi di promozione o retrocessione", "amount": "50 € oltre al costo del campo (vedi art. 6)", "cents_min": 5000, "cents_max": 5000, "extra": "" },
+    { "code": "12A", "area": "rinuncia", "title": "Rinuncia alla fase provinciale o regionale (solo per le squadre che ne hanno ottenuto il diritto sul campo e hanno accettato la convocazione)", "amount": "100 € oltre agli altri eventuali costi anticipati", "cents_min": 10000, "cents_max": 10000, "extra": "" },
+    { "code": "13", "area": "cauzione", "title": "Le sanzioni oltre un certo limite saranno richieste dall'organizzazione per integrare la cauzione", "amount": "se non si versa possono essere raddoppiate", "cents_min": null, "cents_max": null, "extra": "" },
+    { "code": "14", "area": "danni", "title": "Danni causati agli impianti sportivi", "amount": "pagati su segnalazione direttamente al centro sportivo", "cents_min": null, "cents_max": null, "extra": "" }
+  ],
+  "technical_rules": [
+    { "n": "1", "topic": "Pallone in gioco", "text": "Il pallone è in gioco quando viene calciato e si muove in qualsiasi direzione. Si può segnare direttamente dal calcio d'inizio e dalla ripresa dopo una rete." },
+    { "n": "2", "topic": "Fuorigioco", "text": "Non è previsto il fuorigioco." },
+    { "n": "3", "topic": "Sostituzioni e numero di giocatori", "text": "Sostituzioni volanti illimitate, autorizzate dall'arbitro e solo a gioco fermo; chi entra può farlo solo dopo l'uscita del compagno e nel settore della propria squadra (salvo gravi infortuni). Si gioca in 7 (c7) e in 8 (c8); minimo 5 in campo per il c7 e 6 per il c8: sotto quel numero l'arbitro non inizia o sospende la partita. Il portiere può essere sostituito da un giocatore di movimento se manca il portiere di riserva, ma solo all'intervallo (salvo infortuni). Un giocatore di movimento infortunato può essere sostituito dal portiere di riserva se la squadra non ha altri cambi; altrimenti resta in inferiorità numerica." },
+    { "n": "4", "topic": "Espulsione", "text": "Chi viene espulso non può in nessun caso rientrare e sconta altre giornate di squalifica (art. 10)." },
+    { "n": "5", "topic": "Pallone fuori gioco", "text": "Il pallone non è in gioco quando ha oltrepassato interamente, a terra o in aria, una linea laterale o di porta, o quando l'arbitro ha interrotto il gioco." },
+    { "n": "6", "topic": "Vantaggio", "text": "Il vantaggio è a discrezione dell'arbitro, che può tornare sulla sua decisione se l'azione non si concretizza." },
+    { "n": "7", "topic": "Punizione diretta", "text": "Si assegna per: dare o tentare di dare un calcio, sgambetto, saltare o caricare un avversario (anche di spalla), colpire, spingere o trattenere, sputare, condotta antisportiva, violenta o imprudente, tocco volontario di mano. La barriera sta a 8 m; durante l'esecuzione il portiere non può essere ostacolato da vicino e nessun avversario può stare in area a meno di 2 m dal portiere." },
+    { "n": "8", "topic": "Punizione indiretta", "text": "Si assegna per: il portiere che tocca con le mani un retropassaggio di piede di un compagno (anche da rimessa laterale o calcio da fermo), gioco pericoloso, ostacolare il portiere durante il rinvio, ostacolare un avversario che si smarca anche senza palla, ogni altra infrazione. Non si segna direttamente: serve il tocco di un altro giocatore." },
+    { "n": "9", "topic": "Scivolata del portiere", "text": "Il portiere può scivolare nella propria area come nel calcio a 11." },
+    { "n": "10", "topic": "Fallo da ultimo uomo", "text": "È espulsione solo se c'è una chiara occasione da rete e il fallo è commesso da un giocatore senza alcuna possibilità di giocare il pallone; altrimenti è una semplice ammonizione. Se il vantaggio non si concretizza l'arbitro può tornare indietro e dare punizione o rigore e sanzionare il colpevole." },
+    { "n": "11", "topic": "Bestemmia", "text": "È sempre punita con l'ammonizione." },
+    { "n": "12", "topic": "Oggetti vietati", "text": "Vietati piercing facciali, orecchini e braccialetti metallici. Gli orecchini possono essere coperti con un cerotto sul lobo. Nessuna deroga." },
+    { "n": "13", "topic": "Danni e responsabilità", "text": "Eventuali danni a cose o persone sono a carico del dirigente responsabile indicato in distinta (ogni società è obbligata a presentarne uno). Le squadre rispondono del comportamento dei propri tifosi e tesserati. L'organizzazione può prendere decisioni e sanzioni per qualsiasi atto che danneggi cose, persone e campionato." },
+    { "n": "14", "topic": "Poteri dell'arbitro", "text": "L'arbitro può sanzionare i tesserati non solo durante ma anche prima e dopo la partita (anche negli spogliatoi), per esempio in caso di risse o insulti tra tesserati o verso di lui." },
+    { "n": "15", "topic": "Scarpe", "text": "È assolutamente vietato giocare con scarpe da calcio a 6 tacchetti." },
+    { "n": "16", "topic": "Referto e marcatori", "text": "A fine gara dirigente responsabile e/o capitano possono chiedere all'arbitro i nomi e il numero di reti dei propri marcatori per verificare il referto. Se non lo chiedono, XFive non accetta contestazioni nei giorni seguenti." },
+    { "n": "17", "topic": "Portiere fuori area", "text": "Il portiere che ferma la palla con le mani fuori area è ammonito se non è chiara occasione da gol; se commette fallo da ultimo uomo su chiara occasione, senza possibilità di giocare il pallone, è rosso diretto con espulsione." },
+    { "n": "18", "topic": "Passaggio al portiere", "text": "Il portiere non può prendere con le mani un passaggio volontario di un compagno effettuato dal ginocchio in giù: altrimenti punizione indiretta dal punto dell'infrazione." },
+    { "n": "19", "topic": "Rilancio del portiere", "text": "Il portiere può rilanciare con le mani anche nella metà campo avversaria, ma non può segnare così: la rete vale solo se il pallone è stato toccato da un compagno o da un avversario." },
+    { "n": "20", "topic": "Palloni", "text": "Per uniformità si usano solo palloni n. 5." },
+    { "n": "21", "topic": "Palloni, maglie e pettorine", "text": "Il centro sportivo e XFive non forniscono recupera-palloni (vedi la novità 2026/27 sui palloni). La squadra di casa deve avere un gioco di maglie e un gioco di pettorine di colori distinti da usare in caso di uguaglianza cromatica con la squadra ospite. In caso di inadempienze, in base al referto, scatta la multa da regolamento." },
+    { "n": "22", "topic": "Regole IFAB e novità XFive", "text": "XFive non applica le regole IFAB del calcio a 11 introdotte nel 2019/2020 e adotta queste: mano accidentale dell'attaccante punita solo se porta subito a una rete o a un'ovvia occasione (limite del braccio: parte inferiore dell'ascella); sul rinvio dal fondo è ammesso il passaggio in area al compagno; l'arbitro può ammonire con giallo o espellere i dirigenti con rosso (se il colpevole non è individuabile, il provvedimento va al primo allenatore presente nell'area tecnica); se il portiere commette infrazione su rigore e la palla non entra o colpisce palo o traversa, il rigore non si ribatte (salvo che l'infrazione abbia influenzato il tiratore); se il tiro si ripete il portiere è avvertito alla prima infrazione e ammonito alla successiva, se portiere e tiratore sbagliano insieme è penalizzato il tiratore; i gialli presi in partita (supplementari inclusi) non contano nella sequenza dei rigori, e due gialli allo stesso giocatore (uno in partita, uno ai rigori) risultano come due cartellini, non come espulsione." },
+    { "n": "2026/27 a", "topic": "10 secondi sui calci da fermo", "text": "Su tutti i calci da fermo il portiere o i giocatori hanno 10 secondi per rimettere il pallone in gioco. L'arbitro conta i primi 5 secondi a mente e poi, alzando il braccio, continua dal 5° al 10°." },
+    { "n": "2026/27 b", "topic": "Palloni in segreteria", "text": "I palloni sono a disposizione in segreteria: la squadra di casa (la prima nominata) ritira la sacca prima della gara e la riconsegna a fine partita. La segreteria segnala l'eventuale mancanza di palloni, che XFive ripristina: alle due squadre viene decurtata metà del costo del pallone a ciascuna." }
+  ],
+  "registration_checklist": [
+    "Versamento cauzione",
+    "Pagamento iscrizione",
+    "Compilazione modulo iscrizione XFive",
+    "Compilazione moduli affiliazione squadra a Libertas",
+    "Per ogni giocatore e dirigente: contratto + privacy Libertas",
+    "Richiedere la creazione della squadra sull'app",
+    "Inserimento dei dati dei giocatori sull'app",
+    "Invio della richiesta di tesseramento dall'app",
+    "Accertarsi che le foto dei tesserati siano ben visibili"
+  ],
+  "match_checklist": [
+    { "text": "Giocatori tutti tesserati sull'app (verdi)", "tip": "Chi non è verde non può stare in campo né in panchina: 15 € e, se gioca, 150 € più 3-0." },
+    { "text": "Tutti, anche i dirigenti, con la foto sull'app", "tip": "Senza foto non si entra nel recinto." },
+    { "text": "Dirigenti inseriti con A o D nel numero di maglia, non con l'etichetta «Dirigente»", "tip": "Altrimenti in distinta mancano le foto." },
+    { "text": "Arrivare in anticipo: ritardo massimo 10 minuti", "tip": "Fra 10 e 15 minuti di ritardo si paga 15 €." },
+    { "text": "Colore delle divise controllato, pettorine pronte", "tip": "La squadra di casa deve averne di colore diverso." },
+    { "text": "Distinta con foto pronta in PDF (carta o telefono)", "tip": "Distinta mancante o sbagliata: 5 €." },
+    { "text": "Palloni n. 5: sacca ritirata in segreteria se giochiamo in casa", "tip": "Novità 2026/27. La vecchia checklist chiede 3 palloni gonfi: nel dubbio, portarne uno." },
+    { "text": "Entrano in campo solo i tesserati, niente bambini", "tip": "Persona non tesserata in panchina: 15 €." },
+    { "text": "Divise numerate (portiere o giocatore S.N. esclusi)", "tip": "Divise non numerate: 5 €." },
+    { "text": "Distinta in PDF da dare agli avversari, se la chiedono", "tip": "" },
+    { "text": "Errori degli avversari segnalati prima della gara, non con un ricorso a fine partita", "tip": "Per sportività e a tutela delle altre squadre." }
+  ],
+  "match_checklist_footer": "15 minuti prima della gara, se l'arbitro non c'è, contatta XFive: WhatsApp 338 643 0353.",
+  "price_list": [
+    { "group": "Tesseramento e contratti", "label": "Tesseramento (contratto base)", "amount": "5 €", "cents": 500, "doc": "contratto" },
+    { "group": "Tesseramento e contratti", "label": "Iscrizione a ogni competizione", "amount": "5 €", "cents": 500, "doc": "contratto" },
+    { "group": "Tesseramento e contratti", "label": "Contratto da 1 anno", "amount": "5 €", "cents": 500, "doc": "contratto" },
+    { "group": "Tesseramento e contratti", "label": "Contratto da 2 anni", "amount": "15 €", "cents": 1500, "doc": "contratto" },
+    { "group": "Tesseramento e contratti", "label": "Contratto da 3 anni", "amount": "30 €", "cents": 3000, "doc": "contratto" },
+    { "group": "Tesseramento e contratti", "label": "Periodo di prova (1 partita)", "amount": "3 €", "cents": 300, "doc": "contratto" },
+    { "group": "Tesseramento e contratti", "label": "Diritti di prestazione (poi 2 € per ogni tesseramento altrove)", "amount": "5 €", "cents": 500, "doc": "contratto" },
+    { "group": "Tesseramento e contratti", "label": "Diritti di prestazione (poi 4 € per ogni tesseramento altrove)", "amount": "10 €", "cents": 1000, "doc": "contratto" },
+    { "group": "Tesseramento e contratti", "label": "Clausola recessoria", "amount": "3, 5, 25 o 50 €", "cents": 300, "doc": "contratto" },
+    { "group": "Tesseramento e contratti", "label": "Clausola esclusione, per squadra indicata", "amount": "20 €", "cents": 2000, "doc": "contratto" },
+    { "group": "Prestiti", "label": "Prestito: la squadra che riceve paga alla squadra di origine", "amount": "5 €", "cents": 500, "doc": "prestito-giocatori" },
+    { "group": "Prestiti", "label": "Prestito: tesseramento a XFive", "amount": "5 €", "cents": 500, "doc": "prestito-giocatori" },
+    { "group": "Prestiti", "label": "Prestito: iscrizione alla manifestazione", "amount": "5 €", "cents": 500, "doc": "prestito-giocatori" },
+    { "group": "Visite mediche CDS", "label": "Non agonistica", "amount": "40 €", "cents": 4000, "doc": "convenzione-visite-mediche" },
+    { "group": "Visite mediche CDS", "label": "Agonistica under 40", "amount": "50 €", "cents": 5000, "doc": "convenzione-visite-mediche" },
+    { "group": "Visite mediche CDS", "label": "Agonistica over 40", "amount": "80 €", "cents": 8000, "doc": "convenzione-visite-mediche" }
+  ],
+  "alerts": [
+    {
+      "level": "warning",
+      "title": "Squad List: la scadenza è passata",
+      "text": "Il modulo Squad List non riporta la scadenza, ma XFive ha comunicato il 5 ottobre 2026. Controlla su XFive che i nostri 10 esclusivi siano depositati: altrimenti li sceglie XFive (primi 10 in ordine alfabetico).",
+      "docs": ["squad-list"]
+    },
+    {
+      "level": "warning",
+      "title": "Palloni: due regole diverse nello stesso documento",
+      "text": "L'art. 21 dice che XFive non fornisce palloni e la checklist chiede 3 palloni gonfi; la novità 2026/27 dice che i palloni sono in segreteria e li ritira la squadra di casa. Vale l'ultima (2026/27): in casa, ritira e riconsegna la sacca. Nel dubbio portane uno tuo.",
+      "docs": ["note-tecniche-2026-27", "checklist-iscrizioni-partita"]
+    },
+    {
+      "level": "info",
+      "title": "Contratti: obbligatori o no?",
+      "text": "Le comunicazioni XFive di inizio stagione dicono che i contratti ai giocatori sono facoltativi, mentre la checklist di iscrizione chiede «contratto + privacy Libertas» per ogni giocatore e dirigente. Conviene chiedere a XFive cosa vale per noi.",
+      "docs": ["contratto", "checklist-iscrizioni-partita"]
+    },
+    {
+      "level": "info",
+      "title": "Foto e video sui social: serve il consenso B",
+      "text": "Nel modulo di tesseramento Libertas il consenso B (immagini e video) è facoltativo. Prima di pubblicare foto dei giocatori dallo Studio grafiche controlla che non l'abbiano negato.",
+      "docs": ["domanda-tesseramento-privacy"]
+    },
+    {
+      "level": "info",
+      "title": "Convenzioni senza istruzioni",
+      "text": "Aurea, CDS (visite) e Amichevoli non riportano come ottenere lo sconto né contatti di prenotazione: chiedi a XFive (WhatsApp 338 643 0353) prima di promettere qualcosa ai giocatori.",
+      "docs": ["convenzione-aurea", "convenzione-visite-mediche", "amichevoli-convenzione"]
+    },
+    {
+      "level": "info",
+      "title": "Clausola recessoria: nota da confermare",
+      "text": "Nel contratto c'è la nota «2 - 3 - 20 - 40 rimane alla società», in corrispondenza delle quattro clausole da 3, 5, 25 e 50 €. Sembra la quota che resta alla società, ma il modulo non lo spiega: chiedi conferma prima di proporla ai giocatori.",
+      "docs": ["contratto"]
+    }
+  ]
+}

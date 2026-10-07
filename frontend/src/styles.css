@@ -1,0 +1,265 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+@import "./fonts.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-display: "Barlow Condensed", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-highlight: var(--highlight);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* Dark is the default theme */
+:root {
+  --radius: 0.75rem;
+  --background: oklch(0.145 0.004 285);
+  --foreground: oklch(0.97 0 0);
+  --card: oklch(0.195 0.005 285);
+  --card-foreground: oklch(0.97 0 0);
+  --popover: oklch(0.195 0.005 285);
+  --popover-foreground: oklch(0.97 0 0);
+  --primary: oklch(0.575 0.215 27);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.25 0.006 285);
+  --secondary-foreground: oklch(0.97 0 0);
+  --muted: oklch(0.24 0.005 285);
+  --muted-foreground: oklch(0.68 0.01 285);
+  --accent: oklch(0.27 0.008 285);
+  --accent-foreground: oklch(0.97 0 0);
+  --destructive: oklch(0.575 0.215 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.86 0.14 82);
+  --warning-foreground: oklch(0.2 0.02 80);
+  --success: oklch(0.71 0.16 152);
+  --success-foreground: oklch(0.15 0.03 152);
+  --highlight: oklch(0.575 0.215 27 / 14%);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.575 0.215 27);
+  --chart-1: oklch(0.575 0.215 27);
+  --chart-2: oklch(0.71 0.16 152);
+  --chart-3: oklch(0.86 0.14 82);
+  --chart-4: oklch(0.97 0 0);
+  --chart-5: oklch(0.6 0.01 285);
+  --sidebar: oklch(0.17 0.005 285);
+  --sidebar-foreground: oklch(0.97 0 0);
+  --sidebar-primary: oklch(0.575 0.215 27);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.25 0.006 285);
+  --sidebar-accent-foreground: oklch(0.97 0 0);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.575 0.215 27);
+  --gradient-hero: radial-gradient(120% 90% at 100% 0%, oklch(0.575 0.215 27 / 45%), transparent 60%),
+    linear-gradient(160deg, oklch(0.22 0.01 285), oklch(0.15 0.004 285));
+}
+
+.light {
+  --background: oklch(0.975 0.002 285);
+  --foreground: oklch(0.17 0.005 285);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.17 0.005 285);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.17 0.005 285);
+  --secondary: oklch(0.94 0.004 285);
+  --secondary-foreground: oklch(0.17 0.005 285);
+  --muted: oklch(0.94 0.004 285);
+  --muted-foreground: oklch(0.48 0.01 285);
+  --accent: oklch(0.92 0.005 285);
+  --accent-foreground: oklch(0.17 0.005 285);
+  --warning: oklch(0.72 0.15 75);
+  --success: oklch(0.6 0.16 152);
+  --highlight: oklch(0.575 0.215 27 / 10%);
+  --border: oklch(0 0 0 / 10%);
+  --input: oklch(0 0 0 / 14%);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.17 0.005 285);
+  --sidebar-accent: oklch(0.94 0.004 285);
+  --sidebar-accent-foreground: oklch(0.17 0.005 285);
+  --sidebar-border: oklch(0 0 0 / 10%);
+  --gradient-hero: radial-gradient(120% 90% at 100% 0%, oklch(0.575 0.215 27 / 30%), transparent 60%),
+    linear-gradient(160deg, oklch(1 0 0), oklch(0.95 0.004 285));
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    line-height: 1;
+  }
+}
+
+@utility font-display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-weight: 800;
+}
+@utility num {
+  font-variant-numeric: tabular-nums;
+}
+@utility card-cut {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%);
+}
+@utility bg-hero {
+  background: var(--gradient-hero);
+}
+@utility stripe {
+  background-image: repeating-linear-gradient(135deg, var(--color-primary) 0 6px, transparent 6px 12px);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@utility animate-rise {
+  animation: rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* ---------- Movimento (le molle e i passaggi di pagina stanno in src/lib/motion.ts) ---------- */
+
+/* Scheletro di caricamento: una luce che scorre, al posto del lampeggio. */
+@keyframes shimmer {
+  to { transform: translateX(100%); }
+}
+@utility shimmer {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(100deg, transparent 15%, color-mix(in oklab, var(--foreground) 10%, transparent) 50%, transparent 85%);
+    animation: shimmer 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+}
+
+/* Schede cliccabili: si sollevano all'avvicinarsi del puntatore e si schiacciano al tocco. */
+@utility lift {
+  transition-property: transform, box-shadow, border-color, background-color;
+  transition-duration: 220ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 28px -16px rgb(0 0 0 / 0.55);
+  }
+  &:active {
+    transform: translateY(0) scale(0.985);
+    transition-duration: 90ms;
+  }
+}
+
+/* Pulsanti e controlli: risposta tattile breve. */
+@utility press {
+  transition-property: transform, background-color, border-color, color, opacity, box-shadow;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  &:active {
+    transform: scale(0.96);
+    transition-duration: 70ms;
+  }
+}
+
+/* Il fondo stadio dell'home respira lentamente; sopra, una luce di riflettore lo attraversa ogni tanto. */
+@keyframes kenburns {
+  from { transform: scale(1.03) translate3d(0, 0, 0); }
+  to { transform: scale(1.13) translate3d(-1.8%, -1.2%, 0); }
+}
+@utility animate-kenburns {
+  animation: kenburns 26s ease-in-out infinite alternate;
+}
+@keyframes floodlight {
+  0% { transform: translateX(-40%) skewX(-16deg); opacity: 0; }
+  12% { opacity: 1; }
+  45% { transform: translateX(380%) skewX(-16deg); opacity: 0; }
+  100% { transform: translateX(380%) skewX(-16deg); opacity: 0; }
+}
+@utility animate-floodlight {
+  animation: floodlight 9s cubic-bezier(0.4, 0, 0.2, 1) 1.2s infinite;
+}
+
+/* Le parti che disegna il browser portano i colori della squadra. */
+::selection {
+  background: color-mix(in oklab, var(--primary) 42%, transparent);
+  color: var(--foreground);
+}
+html {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--foreground) 24%, transparent) transparent;
+}
+input,
+textarea {
+  caret-color: var(--primary);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+/* Chi chiede meno movimento tiene stati e dissolvenze, ma niente scorrimenti continui. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-kenburns,
+  .animate-floodlight,
+  .animate-rise,
+  .shimmer::after {
+    animation: none;
+  }
+  .lift:hover,
+  .lift:active,
+  .press:active {
+    transform: none;
+  }
+}

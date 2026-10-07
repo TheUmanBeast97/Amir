@@ -1,0 +1,24 @@
+# Segreti e dati personali: non devono mai finire su GitHub
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# Generati o scaricabili
+node_modules/
+vendor/
+.output/
+.vercel/
+.nitro/
+.vinxi/
+.tanstack/
+dist/
+*.log
+
+# Materiale di lavoro locale (screenshot dell'area admin XFive, archivio Lovable, prove)
+screencapture-*.png
+*.zip
+.playwright-mcp/

@@ -1,0 +1,6 @@
+[install]
+saveTextLockfile = true
+# 24h supply-chain guard: skip package versions published less than a day ago.
+minimumReleaseAge = 86400
+# Per saltare la guida su un singolo pacchetto: minimumReleaseAgeExcludes = ["nome-pacchetto"]
+# (da fare solo dopo averne verificato l'origine).
