@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\SafeError;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -114,24 +115,31 @@ class DatabaseBackup
         $backup = $this->read($uploaded);
         $order = $this->checkAgainstSchema($backup);
 
+        $stage = 'avvio';
+
         try {
-            DB::transaction(function () use ($backup, $order) {
+            DB::transaction(function () use ($backup, $order, &$stage) {
                 // prima i figli, poi i padri: nessuna regola di collegamento viene violata
                 foreach (array_reverse($order) as $table) {
+                    $stage = "pulizia di {$table}";
                     DB::table($table)->delete();
                 }
                 foreach ($order as $table) {
                     if (isset($backup['tables'][$table])) {
+                        $stage = "scrittura di {$table}";
                         $this->insert($table, $backup['tables'][$table]);
                     }
                 }
+                $stage = 'pulizia dello stato di servizio';
                 foreach ($this->runtimeTablesPresent() as $table) {
                     DB::table($table)->delete();
                 }
+                $stage = 'riallineamento dei contatori';
                 $this->resyncSequences($order);
             });
         } catch (Throwable $e) {
-            Log::warning('Ripristino non riuscito: '.$e->getMessage());
+            // mai il messaggio intero: per un errore del database contiene l'SQL con i valori (email, impronte delle password)
+            Log::warning("Ripristino non riuscito ({$stage}): ".SafeError::describe($e));
 
             throw new InvalidArgumentException('Il backup non si può applicare: i dati non sono coerenti con questa versione. Non è stato cambiato nulla.');
         }

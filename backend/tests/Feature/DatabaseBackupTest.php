@@ -10,6 +10,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -172,9 +173,20 @@ class DatabaseBackupTest extends TestCase
         $second[array_search('id', $columns, true)] = 99;
         $backup['tables']['users']['rows'][] = $second;
 
+        Log::spy();
+
         $this->restore($backup)->assertStatus(422)->assertJsonValidationErrors('file');
 
         $this->assertEqualsCanonicalizing(['Rossi', 'Bianchi'], Player::pluck('last_name')->all());
+
+        // il log dice cosa è andato storto ma mai i valori: l'errore del database porta con sé l'SQL con email e impronte delle password
+        Log::shouldHaveReceived('warning')->withArgs(function (string $message) {
+            return str_contains($message, 'Ripristino non riuscito')
+                && str_contains($message, 'SQLSTATE')
+                && ! str_contains($message, 'capo@example.com')
+                && ! str_contains(strtolower($message), 'insert into')
+                && ! str_contains($message, 'password');
+        })->once();
     }
 
     public function test_a_backup_never_carries_sessions_tokens_cache_or_queued_jobs(): void

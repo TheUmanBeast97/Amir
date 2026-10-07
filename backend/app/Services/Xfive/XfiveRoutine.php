@@ -4,6 +4,7 @@ namespace App\Services\Xfive;
 
 use App\Models\SyncRun;
 use App\Models\Team;
+use App\Support\SafeError;
 use RuntimeException;
 use Throwable;
 
@@ -53,7 +54,7 @@ final class XfiveRoutine
             $status = 'ok';
         } catch (Throwable $e) {
             $status = 'error';
-            $error = $e->getMessage();
+            $error = SafeError::describe($e); // l'esito resta leggibile nell'area staff: niente SQL con i valori
         }
 
         $run->update(['status' => $status, 'finished_at' => now(), 'stats' => $stats, 'error' => $error]);

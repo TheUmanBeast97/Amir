@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Support\SafeError;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -43,7 +44,7 @@ final class DatabaseBootstrap
             return true;
         } catch (Throwable $e) {
             // se il database non risponde lo dirà la richiesta stessa: qui non si deve peggiorare le cose
-            Log::warning('Preparazione del database non riuscita: '.$e->getMessage());
+            Log::warning('Preparazione del database non riuscita: '.SafeError::describe($e));
 
             return false;
         }
