@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Route;
 */
 Route::prefix('v1')->group(function () {
 
-    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
     // ---- Pubblico: nessun login, solo dati che si possono mostrare a tutti ----
     Route::prefix('public')->group(function () {

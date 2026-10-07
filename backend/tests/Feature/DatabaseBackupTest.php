@@ -138,6 +138,46 @@ class DatabaseBackupTest extends TestCase
         $this->assertTrue(User::where('email', 'capo@example.com')->exists());
     }
 
+    public function test_a_backup_never_carries_sessions_tokens_cache_or_queued_jobs(): void
+    {
+        $this->loginAsAdmin();
+        User::first()->createToken('web');
+        DB::table('cache')->insert(['key' => 'k', 'value' => 'O:8:"stdClass":0:{}', 'expiration' => 9999999999]);
+        $this->assertSame(1, DB::table('personal_access_tokens')->count());
+
+        $pdo = new PDO('sqlite:'.$this->downloadBackup());
+
+        $this->assertSame(1, (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn(), 'i dati ci sono');
+        foreach (['personal_access_tokens', 'cache', 'sessions', 'jobs'] as $table) {
+            $this->assertSame(0, (int) $pdo->query("SELECT COUNT(*) FROM {$table}")->fetchColumn(), "{$table} non deve stare nel backup");
+        }
+        // e la copia in uso non ha perso nulla
+        $this->assertSame(1, DB::table('personal_access_tokens')->count());
+    }
+
+    public function test_restoring_wipes_tokens_and_serialized_leftovers_that_a_crafted_file_brings_in(): void
+    {
+        $this->loginAsAdmin();
+        $copy = $this->downloadBackup();
+
+        // un file costruito ad arte: un accesso "revocato" e un oggetto serializzato nella cache
+        $pdo = new PDO('sqlite:'.$copy);
+        $pdo->exec("INSERT INTO personal_access_tokens (tokenable_type, tokenable_id, name, token, created_at, updated_at) VALUES ('App\\Models\\User', 1, 'vecchio', 'abc', datetime('now'), datetime('now'))");
+        $pdo->exec("INSERT INTO cache (key, value, expiration) VALUES ('evil', 'O:8:\"stdClass\":0:{}', 9999999999)");
+        $pdo->exec("INSERT INTO jobs (queue, payload, attempts, available_at, created_at) VALUES ('default', 'O:8:\"stdClass\":0:{}', 0, 0, 0)");
+        unset($pdo);
+
+        $this->post('/api/v1/backup/restore', [
+            'file' => UploadedFile::fake()->createWithContent('b.sqlite', (string) file_get_contents($copy)),
+            'confirm' => 'RIPRISTINA',
+        ], ['Accept' => 'application/json'])->assertOk();
+
+        $this->assertSame(0, DB::table('personal_access_tokens')->count());
+        $this->assertSame(0, DB::table('cache')->count());
+        $this->assertSame(0, DB::table('jobs')->count());
+        $this->assertTrue(User::where('email', 'capo@example.com')->exists());
+    }
+
     public function test_only_logged_in_staff_can_download_or_restore(): void
     {
         $this->getJson('/api/v1/backup')->assertUnauthorized();

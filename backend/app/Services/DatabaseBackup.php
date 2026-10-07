@@ -17,6 +17,15 @@ class DatabaseBackup
     /** Senza queste tabelle un file non è il database di questa app. */
     private const REQUIRED_TABLES = ['migrations', 'users', 'players', 'matches', 'teams', 'competitions'];
 
+    /**
+     * Stato di servizio, non dati: sessioni e token di accesso, cache, code. Nei backup non c'entrano e non si ripristinano,
+     * per due motivi: un vecchio backup farebbe rivivere accessi già revocati, e cache e code contengono oggetti PHP
+     * serializzati che l'app rilegge, quindi un file costruito ad arte non deve poterli portare dentro.
+     */
+    private const RUNTIME_TABLES = [
+        'personal_access_tokens', 'sessions', 'password_reset_tokens', 'cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs',
+    ];
+
     /** Il file del database in uso. */
     public function path(): string
     {
@@ -40,6 +49,7 @@ class DatabaseBackup
 
         // VACUUM INTO scrive una copia compatta e consistente; il file di destinazione deve essere vuoto
         DB::statement('VACUUM INTO '.DB::getPdo()->quote($target));
+        $this->clearRuntimeState($target);
 
         return $target;
     }
@@ -61,6 +71,9 @@ class DatabaseBackup
             throw new RuntimeException('Non riesco a leggere il file caricato.');
         }
 
+        // prima di metterlo al posto del database in uso, si tolgono sessioni, token, cache e code che porta con sé
+        $this->clearRuntimeState($stage);
+
         DB::disconnect();
 
         if (is_file($db)) {
@@ -81,6 +94,17 @@ class DatabaseBackup
         DB::purge();
         // un backup fatto con una versione più vecchia dell'app si aggiorna da solo
         Artisan::call('migrate', ['--force' => true]);
+    }
+
+    /** Svuota le tabelle di servizio (vedi RUNTIME_TABLES) del file indicato, che non deve essere quello in uso. */
+    private function clearRuntimeState(string $file): void
+    {
+        $pdo = new PDO('sqlite:'.$file, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $existing = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'")->fetchAll(PDO::FETCH_COLUMN);
+
+        foreach (array_intersect(self::RUNTIME_TABLES, $existing) as $table) {
+            $pdo->exec('DELETE FROM "'.$table.'"');
+        }
     }
 
     private function assertIsOurDatabase(string $file): void

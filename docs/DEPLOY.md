@@ -33,6 +33,7 @@ stato provato su un Linux vero, ma non con un account Railway.
 | `CORS_ALLOWED_ORIGINS` | `https://amir-taupe.vercel.app` | facoltativa: solo il tuo sito può chiamare l'API |
 | `GEMINI_API_KEY` | la tua chiave Gemini | facoltativa: didascalie, scheda scout, domande sui documenti |
 | `XFIVE_USER_AGENT` | `AmirTeamManager/0.1 (gestionale squadra; contatto: la tua email)` | facoltativa: come ci si presenta a XFive |
+| `TRUSTED_PROXIES` | indirizzi del proxy separati da virgola | facoltativa: senza, ci si fida del proxy della piattaforma. I tentativi di accesso sono limitati comunque anche per account |
 
 Non servono `APP_KEY` (si crea da sola e resta nel volume), né `APP_ENV`, `DB_DATABASE` e simili: sono già nell'immagine.
 
@@ -65,6 +66,9 @@ e non si ricostruiscono da XFive. Si portano sul server con un backup:
 3. Ti chiede di accedere di nuovo: usa lo stesso nome utente e la stessa password di prima, perché il backup contiene anche gli utenti.
 
 La versione di prima del ripristino resta sul server come `database.sqlite.prima-del-ripristino`, accanto al database, per tornare indietro.
+
+Il backup contiene i dati e gli utenti, **non** le sessioni, i token di accesso e la cache: per questo dopo ogni ripristino tutti devono
+accedere di nuovo, e un vecchio backup non fa rivivere accessi già revocati.
 
 ## 4. Controlli finali
 

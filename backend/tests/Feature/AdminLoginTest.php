@@ -106,6 +106,26 @@ class AdminLoginTest extends TestCase
         $this->artisan('amir:hash')->expectsQuestion('Password (almeno 10 caratteri)', 'corta')->assertFailed();
     }
 
+    public function test_guessing_one_account_is_stopped_even_when_every_try_seems_to_come_from_a_different_address(): void
+    {
+        User::factory()->create(['email' => 'capo@example.com', 'password' => 'password-di-prova-1']);
+
+        // chi falsifica X-Forwarded-For cambia indirizzo a ogni tentativo: il limite per account lo ferma lo stesso
+        foreach (range(1, 6) as $i) {
+            $this->withHeaders(['X-Forwarded-For' => "203.0.113.{$i}"])
+                ->postJson('/api/v1/auth/login', ['email' => 'capo@example.com', 'password' => "sbagliata-{$i}-xx"])
+                ->assertStatus(422);
+        }
+
+        $this->withHeaders(['X-Forwarded-For' => '203.0.113.99'])
+            ->postJson('/api/v1/auth/login', ['email' => 'Capo@Example.com', 'password' => 'password-di-prova-1'])
+            ->assertStatus(429);
+
+        // un altro account non ne risente
+        User::factory()->create(['email' => 'altro@example.com', 'password' => 'password-di-prova-1']);
+        $this->postJson('/api/v1/auth/login', ['email' => 'altro@example.com', 'password' => 'password-di-prova-1'])->assertOk();
+    }
+
     public function test_the_seeder_no_longer_creates_an_admin_from_the_environment(): void
     {
         // anche se in .env restasse una vecchia ADMIN_PASSWORD, il seeder non la usa
