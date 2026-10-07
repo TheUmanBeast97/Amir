@@ -2,11 +2,11 @@
 
 namespace App\Services\Xfive;
 
-use Illuminate\Support\Facades\Storage;
+use App\Services\MediaStore;
 
 /**
- * Scarica stemmi e foto dal CDN delle immagini di XFive e li salva sul disco
- * locale: il frontend li legge dalla nostra API (stessa origine, con CORS),
+ * Scarica stemmi e foto dal CDN delle immagini di XFive e li salva nel nostro
+ * archivio (database): il frontend li legge dalla nostra API (con CORS),
  * così non dipende da XFive e le grafiche si possono esportare in PNG.
  */
 final class ImageDownloader
@@ -17,7 +17,7 @@ final class ImageDownloader
         'player' => ['s', 'q'],
     ];
 
-    public function __construct(private readonly XfiveClient $client) {}
+    public function __construct(private readonly XfiveClient $client, private readonly MediaStore $media) {}
 
     /**
      * Scarica l'immagine nella taglia migliore disponibile e la salva.
@@ -46,10 +46,10 @@ final class ImageDownloader
             // una sola copia per id: se l'estensione cambia si toglie la vecchia
             foreach (['png', 'jpg'] as $other) {
                 if ($other !== $ext) {
-                    Storage::disk('local')->delete("media/{$kind}s/{$id}.{$other}");
+                    $this->media->forget("media/{$kind}s/{$id}.{$other}");
                 }
             }
-            Storage::disk('local')->put($path, $image['body']);
+            $this->media->put($path, $image['body'], $ext === 'jpg' ? 'image/jpeg' : 'image/png');
 
             return $path;
         }

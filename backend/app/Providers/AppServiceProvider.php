@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\DatabaseBootstrap;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -44,5 +45,10 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(20)->by('login-ip:'.$request->ip()),
             ];
         });
+
+        // sul server il primo avvio può trovare il database ancora da preparare (tabelle, amministratore): se serve lo si prepara qui
+        if (config('amir.self_migrate') && ! $this->app->runningInConsole()) {
+            $this->app->make(DatabaseBootstrap::class)->ensureReady();
+        }
     }
 }

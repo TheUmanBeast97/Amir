@@ -6,6 +6,8 @@ use App\Models\Competition;
 use App\Models\Player;
 use App\Models\PlayerCompetitionStat;
 use App\Models\Team;
+use App\Services\MediaStore;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 /**
@@ -25,6 +27,7 @@ final class PlayerProfileSyncer
         private readonly PlayerInfoParser $info,
         private readonly StatsTableParser $tables,
         private readonly ImageDownloader $images,
+        private readonly MediaStore $media,
     ) {}
 
     /**
@@ -101,11 +104,13 @@ final class PlayerProfileSyncer
      * (dal suo profilo) ha una riga, anche a zero; i valori si riscrivono da zero
      * a ogni esecuzione, quindi si può rilanciare senza duplicati.
      *
-     * @return array{competitions:int, rows:int, unmatched_rows:int}
+     * @param  bool  $currentOnly  solo i tornei della stagione in corso (le vecchie stagioni non cambiano più)
+     * @param  float|null  $deadline  istante (microtime) oltre il quale non si inizia un altro torneo: il resto alla prossima volta
+     * @return array{competitions:int, rows:int, unmatched_rows:int, stopped:bool}
      */
-    public function syncStats(Team $own): array
+    public function syncStats(Team $own, bool $currentOnly = false, ?float $deadline = null): array
     {
-        $result = ['competitions' => 0, 'rows' => 0, 'unmatched_rows' => 0];
+        $result = ['competitions' => 0, 'rows' => 0, 'unmatched_rows' => 0, 'stopped' => false];
 
         $players = Player::where('team_id', $own->id)->whereNotNull('xfive_profile')->get();
         $byKey = [];
@@ -115,7 +120,18 @@ final class PlayerProfileSyncer
 
         $teamName = Str::lower($own->name);
 
-        foreach (Competition::where('has_own_team', true)->orderBy('season')->get() as $competition) {
+        $competitions = Competition::where('has_own_team', true)
+            ->when($currentOnly, fn ($q) => $q->where('is_current', true))
+            ->orderBy('season')
+            ->get();
+
+        foreach ($competitions as $competition) {
+            if ($deadline !== null && microtime(true) > $deadline) {
+                $result['stopped'] = true;
+
+                break;
+            }
+
             foreach ($players as $p) {
                 $played = collect($p->xfive_profile['tournaments'] ?? [])->pluck('id')->contains($competition->xfive_tournament_id);
                 if ($played) {
@@ -155,6 +171,64 @@ final class PlayerProfileSyncer
             }
 
             $result['competitions']++;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Riscarica le foto dei giocatori già abbinati a un profilo XFive ma senza foto salvata (ad esempio dopo un ripristino
+     * dei dati: le immagini non stanno nei backup). Una richiesta di ricerca e una di download per giocatore; chi su XFive
+     * non ha una foto vera non si riprova per una settimana.
+     *
+     * @param  float|null  $deadline  istante (microtime) oltre il quale ci si ferma: il resto alla prossima volta
+     * @return array{photos:int, remaining:int}
+     */
+    public function fillMissingPhotos(Team $own, ?float $deadline = null): array
+    {
+        $result = ['photos' => 0, 'remaining' => 0];
+
+        // chi ha un indirizzo della foto (gli ex giocatori) si scarica direttamente; gli altri si cercano per nome fra i profili.
+        // «Senza foto» vuol dire che l'immagine non c'è davvero, non solo che manca il percorso: dopo un ripristino i percorsi tornano, le immagini no.
+        $candidates = Player::where('team_id', $own->id)
+            ->where(fn ($q) => $q->whereNotNull('photo_url')->orWhere(fn ($x) => $x->where('is_active', true)->whereNotNull('xfive_person_id')))
+            ->orderByDesc('is_active')
+            ->orderBy('last_name')
+            ->orderBy('id')
+            ->get();
+        $stored = $this->media->existingPaths($candidates->pluck('photo_path')->filter()->all());
+
+        $players = $candidates
+            ->reject(fn (Player $p) => $p->photo_path && isset($stored[$p->photo_path]))
+            ->reject(fn (Player $p) => Cache::has("amir:photo-missing:{$p->id}"));
+
+        foreach ($players as $player) {
+            if ($deadline !== null && microtime(true) > $deadline) {
+                $result['remaining']++;
+
+                continue;
+            }
+
+            $avatar = $this->remoteImageUrl($player->photo_url);
+            if ($avatar === null && $player->is_active && $player->xfive_person_id) {
+                foreach ($this->client->finder(trim($player->first_name.' '.$player->last_name)) as $item) {
+                    if (preg_match('#/player-info/(\d+)/#', (string) ($item['url'] ?? ''), $m) && (int) $m[1] === (int) $player->xfive_person_id) {
+                        $avatar = $this->avatarUrl((string) ($item['avatar'] ?? ''));
+
+                        break;
+                    }
+                }
+            }
+
+            $path = $avatar ? $this->images->store($avatar, 'player', $player->id) : null;
+            if ($path === null) {
+                Cache::put("amir:photo-missing:{$player->id}", true, now()->addWeek());
+
+                continue;
+            }
+
+            $player->update(['photo_path' => $path]);
+            $result['photos']++;
         }
 
         return $result;
@@ -219,6 +293,12 @@ final class PlayerProfileSyncer
     private function avatarUrl(string $html): ?string
     {
         return preg_match('/src="([^"]+)"/', $html, $m) ? $m[1] : null;
+    }
+
+    /** L'indirizzo di una foto già nota, solo se è del CDN di XFive (le foto proprie dei giocatori non si scaricano da altrove). */
+    private function remoteImageUrl(?string $url): ?string
+    {
+        return $url !== null && in_array(parse_url($url, PHP_URL_HOST), ['cdn.enjore.com', 'www.xfivesport.it'], true) ? $url : null;
     }
 
     /** @return array<int,string> */

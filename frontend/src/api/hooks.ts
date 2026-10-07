@@ -11,7 +11,7 @@ import {
   type Scope,
   type StatsInput,
 } from "./client";
-import type { FriendlyInput, Id, Lineup, Rsvp } from "./types";
+import type { FriendlyInput, Id, Lineup, Rsvp, SyncScope } from "./types";
 
 // ---- public ----
 export const useHome = () => useQuery({ queryKey: ["home"], queryFn: () => api.getHome() });
@@ -271,7 +271,8 @@ export const useSyncRuns = (poll = false) =>
 export const useSync = () => {
   const inv = useInvalidate();
   return useMutation({
-    mutationFn: (scope: "current" | "history") => api.syncXfive(scope),
-    onSuccess: () => inv(["sync-runs"]),
+    mutationFn: (scope: SyncScope) => api.syncXfive(scope),
+    // un aggiornamento cambia partite, classifica, rosa e immagini: tutto si rilegge
+    onSuccess: () => inv(["sync-runs"], ["dashboard"], ["players"], ["roster"], ["matches"], ["admin-matches"], ["standings"], ["home"], ["history"], ["career"]),
   });
 };

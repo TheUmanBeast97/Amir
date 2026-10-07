@@ -114,6 +114,7 @@ final class HistoryInsights
             ->whereIn('match_id', $games->pluck('id'))
             ->whereHas('player', fn ($p) => $p->where('team_id', $ownId))
             ->with('player')
+            ->orderBy('id') // a pari merito vale l'ordine di inserimento, uguale su ogni database
             ->get();
     }
 

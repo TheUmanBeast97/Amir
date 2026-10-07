@@ -2,8 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Competition;
-use App\Models\Game;
 use App\Models\Team;
 use App\Services\Xfive\MatchDetailsSyncer;
 use Illuminate\Console\Command;
@@ -27,25 +25,7 @@ class XfiveMatches extends Command
             return self::FAILURE;
         }
 
-        $games = Game::with(['competition', 'home', 'away'])
-            ->involving($own->id)
-            ->where('status', Game::PLAYED)
-            ->whereNotNull('xfive_match_id')
-            ->whereHas('competition', function ($c) {
-                $c->where('kind', '!=', Competition::KIND_FRIENDLY);
-                if (! $this->option('include-excluded')) {
-                    $c->where('is_excluded', false);
-                }
-            })
-            ->when(! $this->option('all'), function ($q) {
-                $q->where(function ($w) {
-                    $w->whereNull('details_synced_at');
-                    if ($this->option('recent')) {
-                        $w->orWhere('kickoff_at', '>=', now()->subDays(10));
-                    }
-                });
-            })
-            ->orderBy('kickoff_at')
+        $games = $syncer->pendingGames($own, (bool) $this->option('all'), (bool) $this->option('recent'), (bool) $this->option('include-excluded'))
             ->when((int) $this->option('limit') > 0, fn ($q) => $q->limit((int) $this->option('limit')))
             ->get();
 

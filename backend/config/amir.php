@@ -101,6 +101,26 @@ return [
     // dove gira il frontend: serve a costruire i link personali dei giocatori (/p/{token})
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:8080'),
 
+    // Aggiornamenti da XFive lanciati dal sito o dalle esecuzioni pianificate
+    'sync' => [
+        // sul server (Vercel) dopo la risposta non si può più lavorare: l'aggiornamento si fa mentre la richiesta è aperta
+        'inline' => filter_var(env('AMIR_SYNC_INLINE', env('VERCEL') ? 'true' : 'false'), FILTER_VALIDATE_BOOLEAN),
+        // secondi a disposizione di un aggiornamento "a pezzi" (details, media, stats): una richiesta sul server dura poco
+        'budget' => (int) env('AMIR_SYNC_BUDGET', 40),
+    ],
+
+    // sul server, al primo avvio, prepara da solo il database se non lo è (vedi DatabaseBootstrap)
+    'self_migrate' => filter_var(env('AMIR_SELF_MIGRATE', env('VERCEL') ? 'true' : 'false'), FILTER_VALIDATE_BOOLEAN),
+
+    // primo amministratore sul server (vedi amir:deploy): l'email e l'IMPRONTA della password (php artisan amir:hash), mai la password
+    'admin' => [
+        'email' => env('AMIR_ADMIN_EMAIL'),
+        'hash' => env('AMIR_ADMIN_HASH'),
+    ],
+
+    // segreto delle esecuzioni pianificate (Vercel lo manda come «Authorization: Bearer ...»); vuoto = rotte disattivate
+    'cron_secret' => env('CRON_SECRET'),
+
     'squad_list_limit' => 10,
     'cert_warning_days' => 30,
 

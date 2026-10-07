@@ -1,0 +1,20 @@
+# Non serve al server (o non deve finirci)
+.env
+.env.*
+!.env.example
+tests
+docker
+Dockerfile
+.dockerignore
+phpunit.xml
+node_modules
+vendor
+package.json
+package-lock.json
+vite.config.js
+storage/logs
+storage/framework
+storage/app
+database/*.sqlite
+database/*.sqlite-*
+bootstrap/cache/*.php

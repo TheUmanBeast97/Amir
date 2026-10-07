@@ -10,6 +10,7 @@ use App\Models\Team;
 use App\Services\DashboardService;
 use App\Services\IcsBuilder;
 use App\Services\MatchReport;
+use App\Services\MediaStore;
 use App\Services\Stats\HistoryService;
 use App\Services\Stats\PlayerStatsService;
 use App\Services\Stats\StandingsCalculator;
@@ -17,8 +18,6 @@ use App\Support\Present;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /** Endpoint senza login: solo dati adatti a un sito pubblico. */
 class PublicController extends Controller
@@ -46,6 +45,7 @@ class PublicController extends Controller
             ->orderByRaw('kickoff_at IS NULL')
             ->orderBy('kickoff_at')
             ->orderBy('round')
+            ->orderBy('id')
             ->limit(5)
             ->get();
 
@@ -121,28 +121,35 @@ class PublicController extends Controller
         return $this->ok($history->headToHead($own, $team));
     }
 
-    /** Stemma salvato in locale: stessa origine dell'API (con CORS), utile per esportare le grafiche. */
-    public function badge(Team $team): BinaryFileResponse
+    /** Stemma salvato da noi: stessa origine dell'API (con CORS), utile per esportare le grafiche. */
+    public function badge(Request $request, Team $team, MediaStore $media): Response
     {
-        abort_unless($team->badge_path && Storage::disk('local')->exists($team->badge_path), 404);
+        abort_unless($team->badge_path, 404);
 
-        return $this->image($team->badge_path);
+        return $this->image($request, $media, $team->badge_path);
     }
 
-    public function photo(Player $player): BinaryFileResponse
+    public function photo(Request $request, Player $player, MediaStore $media): Response
     {
-        abort_unless($player->photo_path && Storage::disk('local')->exists($player->photo_path), 404);
+        abort_unless($player->photo_path, 404);
 
-        return $this->image($player->photo_path);
+        return $this->image($request, $media, $player->photo_path);
     }
 
-    /** Immagine salvata in locale, con tipo dichiarato dall'estensione e cache di un giorno. */
-    private function image(string $path): BinaryFileResponse
+    /** Immagine salvata da noi: cache di un giorno (anche sulla rete di Vercel) e risposta «non cambiata» se il browser ha già la stessa. */
+    private function image(Request $request, MediaStore $media, string $path): Response
     {
-        return response()->file(Storage::disk('local')->path($path), [
-            'Content-Type' => str_ends_with($path, '.jpg') ? 'image/jpeg' : 'image/png',
-            'Cache-Control' => 'public, max-age=86400',
+        $file = $media->get($path);
+        abort_if($file === null, 404);
+
+        $response = response($file['body'], 200, [
+            'Content-Type' => $file['mime'],
+            'Cache-Control' => 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
         ]);
+        $response->setEtag(md5($file['body']));
+        $response->isNotModified($request);
+
+        return $response;
     }
 
     /**

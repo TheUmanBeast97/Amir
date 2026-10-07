@@ -69,6 +69,7 @@ final class PlayerStatsService
         $totals = $this->allTotals($own);
 
         return Player::where('team_id', $own->id)
+            ->orderBy('id')
             ->get()
             ->filter(fn (Player $p) => isset($totals[$p->id]))
             ->map(function (Player $p) use ($totals) {
@@ -102,6 +103,7 @@ final class PlayerStatsService
                 ->where('status', Game::PLAYED)
                 ->whereHas('competition', fn ($c) => $c->counted()))
             ->with(['game.competition', 'game.home', 'game.away'])
+            ->orderBy('id')
             ->get()
             ->sortBy(fn (MatchPlayerStat $s) => ($s->game->kickoff_at?->timestamp ?? 0).sprintf('%08d', $s->match_id))
             ->values()
@@ -218,6 +220,7 @@ final class PlayerStatsService
                 ->where('status', Game::PLAYED)
                 ->whereHas('competition', fn ($c) => $c->counted()))
             ->with('game.competition:id,season')
+            ->orderBy('id')
             ->get()
             ->groupBy('player_id');
 
@@ -416,6 +419,7 @@ final class PlayerStatsService
             ->where('player_id', '!=', $player->id)
             ->where('played', true)
             ->with('player')
+            ->orderBy('id')
             ->get()
             ->groupBy('player_id')
             ->map(function (Collection $shared) use ($result) {

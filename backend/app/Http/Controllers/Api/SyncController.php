@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\SyncRun;
-use App\Services\Xfive\XfiveSyncService;
+use App\Services\Xfive\XfiveRoutine;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -12,17 +12,22 @@ use Illuminate\Validation\Rule;
 class SyncController extends Controller
 {
     /**
-     * Avvia l'aggiornamento da XFive dopo aver risposto (può richiedere
-     * qualche decina di secondi): la risposta contiene la corsa "running",
-     * lo stato si legge poi da GET /sync/runs.
+     * Avvia un aggiornamento da XFive (scope: vedi XfiveRoutine).
+     *
+     * In locale parte dopo la risposta (può richiedere qualche decina di secondi): la risposta contiene la corsa
+     * "running", lo stato si legge poi da GET /sync/runs. Sul server (Vercel) dopo la risposta non si può più lavorare,
+     * quindi l'aggiornamento si fa subito, entro un tempo massimo, e la risposta contiene già l'esito (con "remaining" nelle
+     * statistiche se c'è ancora da fare).
      */
-    public function run(Request $request): JsonResponse
+    public function run(Request $request, XfiveRoutine $routine): JsonResponse
     {
-        $data = $request->validate(['scope' => ['required', Rule::in(['current', 'history'])]]);
+        $data = $request->validate(['scope' => ['required', Rule::in(XfiveRoutine::SCOPES)]]);
+        $inline = (bool) config('amir.sync.inline');
 
+        // una corsa rimasta "in corso" perché la richiesta è stata interrotta non deve bloccare per sempre
         $already = SyncRun::where('scope', $data['scope'])
             ->where('status', 'running')
-            ->where('started_at', '>=', now()->subMinutes(15))
+            ->where('started_at', '>=', now()->subMinutes($inline ? 2 : 15))
             ->first();
 
         if ($already) {
@@ -36,9 +41,16 @@ class SyncController extends Controller
             'stats' => [],
         ]);
 
-        dispatch(function () use ($run, $data) {
+        if ($inline) {
             set_time_limit(0);
-            app(XfiveSyncService::class)->run($data['scope'], $run);
+            $routine->run($data['scope'], $run, (float) config('amir.sync.budget'));
+
+            return $this->ok($this->present($run->refresh()));
+        }
+
+        dispatch(function () use ($run, $data, $routine) {
+            set_time_limit(0);
+            $routine->run($data['scope'], $run, (float) config('amir.sync.budget'));
         })->afterResponse();
 
         return $this->ok($this->present($run), 202);

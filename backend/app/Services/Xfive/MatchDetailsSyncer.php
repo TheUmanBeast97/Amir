@@ -2,11 +2,13 @@
 
 namespace App\Services\Xfive;
 
+use App\Models\Competition;
 use App\Models\Game;
 use App\Models\MatchPlayerStat;
 use App\Models\Player;
 use App\Models\Team;
 use App\Support\PersonName;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -38,6 +40,36 @@ final class MatchDetailsSyncer
         private readonly MatchPageParser $parser,
         private readonly ImageDownloader $images,
     ) {}
+
+    /**
+     * Le nostre partite giocate di cui leggere il referto (comando xfive:matches e aggiornamento dal sito).
+     *
+     * @param  bool  $all  anche quelle di cui abbiamo già i dettagli
+     * @param  bool  $recent  solo senza dettagli o giocate negli ultimi 10 giorni (aggiornamento automatico)
+     * @param  bool  $includeExcluded  anche i tornei esclusi dalle statistiche
+     */
+    public function pendingGames(Team $own, bool $all = false, bool $recent = false, bool $includeExcluded = false): Builder
+    {
+        return Game::with(['competition', 'home', 'away'])
+            ->involving($own->id)
+            ->where('status', Game::PLAYED)
+            ->whereNotNull('xfive_match_id')
+            ->whereHas('competition', function ($c) use ($includeExcluded) {
+                $c->where('kind', '!=', Competition::KIND_FRIENDLY);
+                if (! $includeExcluded) {
+                    $c->where('is_excluded', false);
+                }
+            })
+            ->when(! $all, function ($q) use ($recent) {
+                $q->where(function ($w) use ($recent) {
+                    $w->whereNull('details_synced_at');
+                    if ($recent) {
+                        $w->orWhere('kickoff_at', '>=', now()->subDays(10));
+                    }
+                });
+            })
+            ->orderBy('kickoff_at');
+    }
 
     /**
      * @return array{status:string, stats:int, created:int, mismatch:bool}

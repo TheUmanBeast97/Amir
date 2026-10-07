@@ -38,7 +38,7 @@ class MatchController extends Controller
             $query->involving($own->id);
         }
 
-        $games = $query->orderBy('round')->orderByRaw('kickoff_at IS NULL')->orderBy('kickoff_at')->get();
+        $games = $query->orderBy('round')->orderByRaw('kickoff_at IS NULL')->orderBy('kickoff_at')->orderBy('id')->get();
 
         return $this->ok($games->map(fn (Game $g) => Present::match($g, $own->id))->values()->all());
     }

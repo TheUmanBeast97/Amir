@@ -46,15 +46,16 @@ php artisan xfive:sync current   # stagione in corso
 php artisan xfive:sync history   # stagioni passate (circa 1 minuto)
 php artisan serve                # http://127.0.0.1:8000/api/v1
 php artisan xfive:matches        # referti: presenze, marcatori, arbitro (circa 3 minuti)
-php artisan test                 # 100 test
+php artisan test                 # tutti i test (SQLite)
 ```
 
 Opzionale, per provare l'app con **dati inventati** (non reali): `php artisan db:seed --class=DemoSeeder`.
 
 Variabili in `backend/.env`: `FRONTEND_URL` (serve a costruire i link personali dei giocatori),
 `XFIVE_THROTTLE_MS` (pausa fra le richieste a XFive, default 1200), `XFIVE_USER_AGENT` (come ci si presenta a XFive,
-con un contatto). Nessuna password: l'amministratore si crea con `php artisan amir:admin`. Il database è SQLite
-(`backend/database/database.sqlite`) e contiene tutto, utenti compresi.
+con un contatto). Nessuna password: l'amministratore si crea con `php artisan amir:admin`. In locale il database è SQLite
+(`backend/database/database.sqlite`) e contiene tutto, utenti compresi; online (Vercel) è Postgres: lo stesso codice gira su
+entrambi, e i test si possono lanciare anche su Postgres (`DB_CONNECTION=pgsql DB_HOST=... php artisan test`).
 
 ## Come arrivano i dati da XFive
 
@@ -179,9 +180,9 @@ del backend). CORS è già aperto in sviluppo.
 
 ## Metterlo online
 
-Il sito sta su Vercel (cartella `frontend`), il backend su un server con un disco che non si cancella (`backend/Dockerfile`).
+Tutto su Vercel: il sito (cartella `frontend`) e il backend (cartella `backend`, funzione PHP con database Postgres).
 Passo passo, variabili da inserire e come portare i dati già inseriti con il backup (Impostazioni, Dati e backup):
-[docs/DEPLOY.md](docs/DEPLOY.md).
+[docs/DEPLOY.md](docs/DEPLOY.md). Il `backend/Dockerfile` resta come alternativa per un server con disco.
 
 ## Sicurezza e privacy
 
@@ -189,7 +190,7 @@ Passo passo, variabili da inserire e come portare i dati già inseriti con il ba
   certificati medici e pagamenti sono solo dietro login (o nel link personale del singolo giocatore).
 - Dei certificati medici si salva **solo la scadenza**, mai il documento.
 - Nessun codice fiscale viene salvato. I pagamenti sono un **registro**: l'app non incassa denaro.
-- Online: con il `Dockerfile` sono già impostati `APP_ENV=production` e `APP_DEBUG=false`, e il server si fida del proxy
+- Online: `APP_ENV=production` e `APP_DEBUG=false` sono già impostati (in `backend/api/index.php` e nel `Dockerfile`), e il server si fida del proxy
   HTTPS della piattaforma. Per far chiamare l'API solo dal sito, `CORS_ALLOWED_ORIGINS` (vedi `backend/config/cors.php`).
 - Il backup del database contiene anche dati personali e gli utenti: va conservato con cura.
 

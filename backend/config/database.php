@@ -17,7 +17,8 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    // in locale SQLite (un file), sul server Vercel Postgres (il disco di Vercel non resta: i dati stanno nel database online)
+    'default' => env('DB_CONNECTION', env('VERCEL') ? 'pgsql' : 'sqlite'),
 
     /*
     |--------------------------------------------------------------------------
@@ -87,7 +88,9 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DB_URL'),
+            // l'indirizzo lo dà l'integrazione Postgres di Vercel (Neon): si preferisce quello diretto, non quello del "pooler",
+            // perché con i pooler che riutilizzano le connessioni le richieste preparate possono confondersi
+            'url' => env('DB_URL') ?: env('DATABASE_URL_UNPOOLED') ?: env('POSTGRES_URL_NON_POOLING') ?: env('DATABASE_URL') ?: env('POSTGRES_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),

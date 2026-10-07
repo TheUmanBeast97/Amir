@@ -118,6 +118,7 @@ final class HistoryService
             ->whereHas('player', fn ($p) => $p->where('team_id', $own->id))
             ->whereHas('game', fn ($g) => $g->where('status', Game::PLAYED)->whereHas('competition', fn ($c) => $c->counted()))
             ->with(['player', 'game.competition:id,season'])
+            ->orderBy('id')
             ->get();
 
         return $rows
@@ -140,6 +141,7 @@ final class HistoryService
             ->orderByRaw('kickoff_at IS NULL')
             ->orderBy('kickoff_at')
             ->orderBy('round')
+            ->orderBy('id')
             ->get();
 
         $rows = $this->standings->forCompetition($competition);
@@ -195,6 +197,7 @@ final class HistoryService
                 ->orWhere(fn ($x) => $x->where('home_team_id', $opponent->id)->where('away_team_id', $own->id)))
             ->orderByRaw('kickoff_at IS NULL')
             ->orderByDesc('kickoff_at')
+            ->orderBy('id')
             ->get();
 
         $record = $this->record($games, $own->id);

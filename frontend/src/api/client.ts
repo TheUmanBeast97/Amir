@@ -38,6 +38,7 @@ import type {
   ScoutResult,
   StandingRow,
   SyncRun,
+  SyncScope,
   TeamEvent,
   User,
 } from "./types";
@@ -161,7 +162,7 @@ export interface ApiClient {
   downloadBackup(): Promise<Blob>;
   /** Sostituisce tutti i dati con quelli di un backup; `confirm` deve essere "RIPRISTINA". */
   restoreBackup(file: File, confirm: string): Promise<{ restored: boolean }>;
-  syncXfive(scope: "current" | "history"): Promise<SyncRun>;
+  syncXfive(scope: SyncScope): Promise<SyncRun>;
   getSyncRuns(): Promise<SyncRun[]>;
   // player link
   getMe(token: string): Promise<MeResponse>;

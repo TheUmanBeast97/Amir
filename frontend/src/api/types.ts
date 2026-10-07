@@ -661,9 +661,11 @@ export interface MeResponse {
   upcoming_events: TeamEvent[]; // each with my_rsvp
   balance: PlayerBalance;
 }
+/** current = calendario e risultati, history = storico, details = referti delle partite, media = stemmi e foto, stats = statistiche dei giocatori */
+export type SyncScope = "current" | "history" | "details" | "media" | "stats";
 export interface SyncRun {
   id: Id;
-  scope: "current" | "history";
+  scope: SyncScope;
   status: "running" | "ok" | "error";
   started_at: ISODateTime;
   finished_at: ISODateTime | null;
@@ -826,7 +828,7 @@ export interface ImportResult {
 //  GET  /documents                                         -> Modulistica  (i 15 documenti XFive analizzati, sanzioni, regole, checklist, costi)
 //  GET  /documents/{slug}/file                             -> il PDF o l'immagine originale (serve il Bearer: si scarica come blob)
 //  POST /documents/ask {question}                          -> DocAnswer
-//  POST /sync/xfive {scope:"current"|"history"}            -> SyncRun (HTTP 202, poll GET /sync/runs)
+//  POST /sync/xfive {scope: SyncScope}                     -> SyncRun (in locale HTTP 202 e poi GET /sync/runs; sul server HTTP 200 con l'esito, stats.remaining > 0 = c'è ancora da fare, si richiama)
 //  GET  /sync/runs                                         -> SyncRun[]
 // PLAYER (personal link, no login)
 //  GET  /me/{token}                                        -> MeResponse

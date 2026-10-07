@@ -162,8 +162,10 @@ class XfiveProfilesTest extends TestCase
         $path = app(ImageDownloader::class)->store('https://cdn.enjore.com/wl/x/img/team/badge/s/159abc.png', 'badge', 7);
 
         $this->assertSame('media/badges/7.png', $path);
-        Storage::disk('local')->assertExists($path);
-        $this->assertGreaterThan(900, Storage::disk('local')->size($path));
+        $stored = app(\App\Services\MediaStore::class)->get($path);
+        $this->assertNotNull($stored, 'salvata nel database');
+        $this->assertSame('image/png', $stored['mime']);
+        $this->assertGreaterThan(900, strlen($stored['body']));
     }
 
     public function test_the_badge_falls_back_to_the_small_size(): void
@@ -192,12 +194,16 @@ class XfiveProfilesTest extends TestCase
 
     public function test_the_badge_is_served_by_our_api_and_the_team_json_points_to_it(): void
     {
-        Storage::disk('local')->put('media/badges/'.$this->own->id.'.png', $this->png());
+        app(\App\Services\MediaStore::class)->put('media/badges/'.$this->own->id.'.png', $this->png(), 'image/png');
         $this->own->update(['badge_path' => 'media/badges/'.$this->own->id.'.png', 'badge_url' => 'https://cdn.enjore.com/old.png']);
 
         $response = $this->get("/api/v1/public/badges/{$this->own->id}")->assertOk();
         $this->assertSame('image/png', $response->headers->get('Content-Type'));
         $this->assertStringContainsString('max-age', $response->headers->get('Cache-Control'));
+        $this->assertNotNull($response->headers->get('ETag'));
+
+        // il browser che ha già l'immagine riceve «non cambiata»
+        $this->get("/api/v1/public/badges/{$this->own->id}", ['If-None-Match' => $response->headers->get('ETag')])->assertStatus(304);
 
         $this->assertStringEndsWith("/api/v1/public/badges/{$this->own->id}", \App\Support\Present::team($this->own->refresh())['badge_url']);
 
@@ -410,7 +416,7 @@ class XfiveProfilesTest extends TestCase
         $p = $this->player(extra: ['photo_url' => 'https://example.com/remote.png']);
         $this->assertSame('https://example.com/remote.png', \App\Support\Present::publicPlayer($p)['photo_url']);
 
-        Storage::disk('local')->put("media/players/{$p->id}.png", $this->png());
+        app(\App\Services\MediaStore::class)->put("media/players/{$p->id}.png", $this->png(), 'image/png');
         $p->update(['photo_path' => "media/players/{$p->id}.png"]);
 
         $this->get("/api/v1/public/players/{$p->id}/photo")->assertOk()->assertHeader('Content-Type', 'image/png');
@@ -419,5 +425,21 @@ class XfiveProfilesTest extends TestCase
         // gli ex giocatori mantengono la foto: compaiono nello storico
         $p->update(['is_active' => false]);
         $this->get("/api/v1/public/players/{$p->id}/photo")->assertOk();
+    }
+
+    public function test_images_saved_on_disk_by_older_versions_are_still_served_and_can_be_moved_into_the_database(): void
+    {
+        Storage::disk('local')->put("media/players/9.jpg", $this->png());
+        $p = $this->player();
+        $p->update(['photo_path' => 'media/players/9.jpg']);
+
+        $this->get("/api/v1/public/players/{$p->id}/photo")->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+        $this->assertSame(0, \Illuminate\Support\Facades\DB::table('media_files')->count());
+
+        $this->artisan('amir:media-import')->expectsOutputToContain('1')->assertSuccessful();
+
+        $this->assertSame(1, \Illuminate\Support\Facades\DB::table('media_files')->count());
+        Storage::disk('local')->delete('media/players/9.jpg');
+        $this->get("/api/v1/public/players/{$p->id}/photo")->assertOk()->assertHeader('Content-Type', 'image/jpeg');
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BackupController;
+use App\Http\Controllers\Api\CronController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\EventController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Api\PlayerController;
 use App\Http\Controllers\Api\PublicController;
 use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\SyncController;
+use App\Services\Xfive\XfiveRoutine;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,6 +42,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/stats/career', [PublicController::class, 'careerStats']);
         Route::get('/matches/{game}', [PublicController::class, 'match']);
     });
+
+    // ---- Aggiornamenti automatici da XFive: li chiama la pianificazione di Vercel (serve CRON_SECRET) ----
+    Route::get('/cron/{scope}', [CronController::class, 'run'])
+        ->whereIn('scope', XfiveRoutine::SCOPES)
+        ->middleware('throttle:30,1');
 
     // ---- Giocatore: link personale, nessuna password ----
     Route::prefix('me/{token}')->middleware('throttle:60,1')->group(function () {
