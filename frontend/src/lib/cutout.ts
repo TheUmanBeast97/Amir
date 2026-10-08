@@ -39,6 +39,7 @@ export async function makeCutout(
   try {
     cut = await removeBackground(source, {
       model: "isnet_fp16",
+      proxyToWorker: true, // il calcolo gira in un thread a parte: la pagina resta reattiva
       output: { format: "image/png", quality: 1 },
       progress: (key) => {
         if (key.startsWith("compute")) onProgress("ritaglio");

@@ -797,6 +797,43 @@ function useCardScale() {
   return scale;
 }
 
+/** Mentre la prima volta si ritaglia la foto: una carta vuota che pulsa, con il passo in corso. La vera figurina arriva dopo. */
+function CreatingCard({ step, scale }: { step: CutoutProgress; scale: number }) {
+  const reduce = useReducedMotion();
+  return (
+    <div className="relative mx-auto" style={{ width: W * scale, height: H * scale }} role="status" aria-live="polite">
+      <motion.div
+        className="absolute inset-0 overflow-hidden"
+        style={{ clipPath: shape(46 * scale), background: "linear-gradient(150deg,#2a2a31,#121216)" }}
+        animate={reduce ? {} : { scale: [1, 1.015, 1] }}
+        transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+      >
+        {!reduce && (
+          <motion.div
+            aria-hidden
+            className="absolute inset-y-0 w-1/3"
+            style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent)" }}
+            animate={{ x: ["-120%", "420%"] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
+          />
+        )}
+        <div className="absolute inset-0 grid place-items-center p-6 text-center">
+          <div>
+            <motion.div
+              className="mx-auto mb-4 h-14 w-14 rounded-full border-4 border-primary border-t-transparent"
+              animate={reduce ? {} : { rotate: 360 }}
+              transition={{ duration: 1.1, repeat: Infinity, ease: "linear" }}
+            />
+            <div className="font-display text-3xl uppercase text-white">Sto creando la figurina</div>
+            <div className="mt-2 text-sm text-white/70">{step}…</div>
+            <div className="mt-3 text-xs text-white/50">Solo la prima volta: ritaglio la foto senza sfondo e la salvo per tutti.</div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 /** Il pannello «i»: come è venuto fuori il voto, voce per voce, con i pesi del ruolo. */
 function RatingExplainer({ page, rating }: { page: PlayerPage; rating: CardRating }) {
   const e = explain(page.card);
@@ -981,20 +1018,19 @@ export function PlayerCardButton({ page }: { page: PlayerPage }) {
           </DialogContent>
         </Dialog>
         <div className="py-4">
-          <HoloCard
-            page={page}
-            rating={rating}
-            scale={scale}
-            faceRef={node}
-            onFlipped={() => setReady(true)}
-            cutout={cutout}
-          />
+          {cutting ? (
+            <CreatingCard step={cutting} scale={scale} />
+          ) : (
+            <HoloCard
+              page={page}
+              rating={rating}
+              scale={scale}
+              faceRef={node}
+              onFlipped={() => setReady(true)}
+              cutout={cutout}
+            />
+          )}
         </div>
-        {cutting && (
-          <p className="text-center text-xs text-muted-foreground" role="status">
-            Preparo la sagoma senza sfondo: {cutting}… (solo la prima volta, poi resta salvata)
-          </p>
-        )}
         <div className="flex flex-wrap justify-center gap-2">
           <Btn onClick={download} disabled={busy || !ready}>
             <Download className="h-4 w-4" /> Scarica PNG
