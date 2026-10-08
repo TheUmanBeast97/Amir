@@ -21,6 +21,12 @@ class AmirDeploy extends Command
             if (env('VERCEL_ENV') === 'production') {
                 $this->error('Manca il database: nel progetto Vercel apri Storage, crea un database Postgres (Neon) e collegalo al progetto, poi pubblica di nuovo.');
 
+                // solo i NOMI delle variabili, mai i valori: serve a capire se il collegamento c'è ma ha un nome diverso o non arriva al build
+                $names = $this->visibleDatabaseVariables();
+                $this->line($names === []
+                    ? 'Il build non vede nessuna variabile del database (DATABASE_URL, POSTGRES_URL, PG...). Controlla in Settings, Environment Variables che siano attive per Production.'
+                    : 'Variabili del database che il build vede: '.implode(', ', $names).'. Nessuna è un indirizzo di connessione riconosciuto (DATABASE_URL, POSTGRES_URL, anche con un prefisso).');
+
                 return self::FAILURE;
             }
 
@@ -47,6 +53,20 @@ class AmirDeploy extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * I nomi (mai i valori) delle variabili d'ambiente che sembrano del database.
+     *
+     * @return array<int, string>
+     */
+    private function visibleDatabaseVariables(): array
+    {
+        $keys = array_unique([...array_keys(getenv()), ...array_keys($_ENV), ...array_keys($_SERVER)]);
+        $found = array_values(array_filter($keys, fn ($key) => is_string($key) && preg_match('/DATABASE|POSTGRES|NEON|(^|_)PG|(^|_)DB_/i', $key) === 1));
+        sort($found);
+
+        return $found;
     }
 
     private function databaseIsConfigured(): bool
