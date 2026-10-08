@@ -133,6 +133,15 @@ class PageParsersTest extends TestCase
         $this->assertSame([['url' => 'https://cdn.enjore.com/wl/xfivesport_it/doc/tournament_doc/187-QbTp99bQ01-norme-tecniche.pdf', 'title' => 'Norme tecniche']], $docs);
     }
 
+    public function test_image_paths_stay_inside_the_images_folder(): void
+    {
+        $this->assertSame('team/badge/q/159P0F4VqfzqtoIt0V.png', \App\Services\Xfive\Archive\XfiveArchiver::imagePath('https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/q/159P0F4VqfzqtoIt0V.png'));
+        $this->assertSame('player/q/x.png', \App\Services\Xfive\Archive\XfiveArchiver::imagePath('https://cdn.enjore.com/wl/xfivesport_it/img/../../img/player/q/../../..//q/x.png'));
+        $this->assertSame('a_b.png', \App\Services\Xfive\Archive\XfiveArchiver::imagePath('https://cdn.enjore.com/img/a%20b.png'));
+        $this->assertNull(\App\Services\Xfive\Archive\XfiveArchiver::imagePath('https://cdn.enjore.com/wl/x/doc/file.pdf'));
+        $this->assertNull(\App\Services\Xfive\Archive\XfiveArchiver::imagePath('https://cdn.enjore.com/img/../..'));
+    }
+
     public function test_latin1_pages_are_repaired(): void
     {
         $broken = mb_convert_encoding('<div class="tournament-title">CAFFÈ KM0</div>', 'Windows-1252', 'UTF-8');

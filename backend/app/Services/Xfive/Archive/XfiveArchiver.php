@@ -417,11 +417,20 @@ final class XfiveArchiver
     public static function imagePath(string $url): ?string
     {
         $p = (string) parse_url($url, PHP_URL_PATH);
-        if (preg_match('~/img/(.+)$~', $p, $m)) {
-            return preg_replace('~[^A-Za-z0-9/._-]~', '_', $m[1]);
+        if (! preg_match('~/img/(.+)$~', $p, $m)) {
+            return null;
+        }
+        // un segmento alla volta, senza «..» né segmenti vuoti: il file resta dentro img/ qualunque cosa dica l'indirizzo
+        $segments = [];
+        foreach (explode('/', $m[1]) as $segment) {
+            $clean = preg_replace('~[^A-Za-z0-9._-]~', '_', $segment) ?? '';
+            if ($clean === '' || $clean === '.' || $clean === '..') {
+                continue;
+            }
+            $segments[] = $clean;
         }
 
-        return null;
+        return $segments === [] ? null : implode('/', $segments);
     }
 
     // ------------------------------------------------------------------ pagine leggibili
