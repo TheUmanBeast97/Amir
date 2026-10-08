@@ -184,6 +184,11 @@ Tutto su Vercel: il sito (cartella `frontend`) e il backend (cartella `backend`,
 Passo passo, variabili da inserire e come portare i dati già inseriti con il backup (Impostazioni, Dati e backup):
 [docs/DEPLOY.md](docs/DEPLOY.md). Il `backend/Dockerfile` resta come alternativa per un server con disco.
 
+## Archivio di XFive
+
+Com'è fatto il sito di XFive (indirizzi, chiamate interne, lettori) e come si scarica tutto in locale con
+`php artisan xfive:archive`, a tappe e per sezione: [docs/XFIVE_SITE.md](docs/XFIVE_SITE.md).
+
 ## Sicurezza e privacy
 
 - Il sito pubblico mostra solo nomi, ruoli, numeri e foto della rosa. Date di nascita, telefono, email,
