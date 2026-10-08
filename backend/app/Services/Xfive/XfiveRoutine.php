@@ -4,6 +4,8 @@ namespace App\Services\Xfive;
 
 use App\Models\SyncRun;
 use App\Models\Team;
+use App\Services\Xfive\Admin\AdminRosterSyncer;
+use App\Services\Xfive\Admin\XfiveAdminClient;
 use App\Support\SafeError;
 use RuntimeException;
 use Throwable;
@@ -16,19 +18,22 @@ use Throwable;
  *   details  referti delle partite giocate (arbitro, distinta, marcatori, cartellini)
  *   media    stemmi e foto mancanti
  *   stats    statistiche per torneo dei nostri giocatori (stagione in corso)
+ *   admin    rosa, tesseramenti, certificati e Squad List dall'area amministrazione (serve l'accesso con il tuo account, spento di serie)
  *
  * Sul server (Vercel) una richiesta può durare poco: gli ultimi tre lavorano entro un tempo massimo e, se c'è
  * ancora da fare, lo dicono in "remaining": basta lanciarli di nuovo.
  */
 final class XfiveRoutine
 {
-    public const SCOPES = ['current', 'history', 'details', 'media', 'stats'];
+    public const SCOPES = ['current', 'history', 'details', 'media', 'stats', 'admin'];
 
     public function __construct(
         private readonly XfiveSyncService $calendar,
         private readonly MatchDetailsSyncer $details,
         private readonly PlayerProfileSyncer $players,
         private readonly BadgeSyncer $badges,
+        private readonly AdminRosterSyncer $admin,
+        private readonly XfiveAdminClient $adminClient,
     ) {}
 
     /** $existing: una corsa già creata (es. dalla richiesta HTTP) da portare a termine. */
@@ -49,6 +54,7 @@ final class XfiveRoutine
                 'details' => $this->details($own, $deadline),
                 'media' => $this->media($own, $deadline),
                 'stats' => $this->stats($own, $deadline),
+                'admin' => $this->admin($own),
                 default => throw new RuntimeException("Aggiornamento sconosciuto: {$scope}."),
             };
             $status = 'ok';
@@ -98,6 +104,21 @@ final class XfiveRoutine
             'photos' => $photos['photos'],
             'remaining' => $badges['remaining'] + $photos['remaining'],
         ];
+    }
+
+    /**
+     * Rosa, tesseramenti, certificati e Squad List dall'area amministrazione di XFive. Solo se qualcuno l'ha accesa
+     * (XFIVE_ADMIN_ENABLED e le credenziali): altrimenti non fa nulla, senza contattare XFive.
+     *
+     * @return array<string, int>
+     */
+    private function admin(Team $own): array
+    {
+        if (! $this->adminClient->enabled()) {
+            return ['disabled' => 1];
+        }
+
+        return $this->admin->sync($own);
     }
 
     /** @return array<string, int> */

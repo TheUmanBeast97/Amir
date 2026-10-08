@@ -40,6 +40,8 @@ import type {
   SyncRun,
   SyncScope,
   TeamEvent,
+  XfiveAdminCheck,
+  XfiveAdminStatus,
   User,
 } from "./types";
 
@@ -164,6 +166,8 @@ export interface ApiClient {
   restoreBackup(file: File, confirm: string): Promise<{ restored: boolean }>;
   syncXfive(scope: SyncScope): Promise<SyncRun>;
   getSyncRuns(): Promise<SyncRun[]>;
+  getXfiveAdminStatus(): Promise<XfiveAdminStatus>;
+  checkXfiveAdmin(): Promise<XfiveAdminCheck>;
   // player link
   getMe(token: string): Promise<MeResponse>;
   setMyRsvp(
@@ -333,6 +337,8 @@ export const api: ApiClient = {
   },
   syncXfive: (scope) => request("/sync/xfive", post({ scope })),
   getSyncRuns: () => request("/sync/runs"),
+  getXfiveAdminStatus: () => request("/xfive-admin"),
+  checkXfiveAdmin: () => request("/xfive-admin/check", post({})),
   getMe: (token) => request(`/me/${token}`),
   setMyRsvp: (token, eid, v) => request(`/me/${token}/events/${eid}/rsvp`, post(v)),
 };

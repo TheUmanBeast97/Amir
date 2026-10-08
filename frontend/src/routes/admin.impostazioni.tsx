@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChartColumn, ClipboardList, Download, History, Images, LogOut, RefreshCw, Upload } from "lucide-react";
+import { ChartColumn, ClipboardList, Download, History, Images, KeyRound, LogOut, RefreshCw, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api, TOKEN_KEY } from "@/api/client";
+import { useCheckXfiveAdmin, useXfiveAdminStatus } from "@/api/hooks";
+import type { SyncScope } from "@/api/types";
 import { Card, EmptyState, ErrorState, PageTitle, Skeleton } from "@/components/ui-kit";
 import { Btn, TextInput, toastError } from "@/components/admin/kit";
 import { useLogout } from "@/components/admin/AdminShell";
@@ -103,6 +105,106 @@ function BackupCard() {
   );
 }
 
+/** L'accesso all'area amministrazione di XFive con l'account dello staff: rosa, Squad List, certificati e tesseramenti. */
+function XfiveAdminCard({ start, busy, working }: { start: (scope: SyncScope) => void; busy: boolean; working: SyncScope | null }) {
+  const status = useXfiveAdminStatus();
+  const check = useCheckXfiveAdmin();
+  const s = status.data;
+  const last = s?.last_run;
+
+  const tryLogin = () =>
+    check.mutate(undefined, {
+      onSuccess: (r) => (r.ok ? toast.success(r.message) : toast.error(r.message)),
+      onError: toastError,
+    });
+
+  const badge = !s
+    ? null
+    : !s.configured
+      ? { text: "Non configurato", cls: "bg-muted text-muted-foreground" }
+      : !s.enabled
+        ? { text: "Spento", cls: "bg-warning/15 text-warning" }
+        : { text: "Acceso", cls: "bg-success/15 text-success" };
+
+  return (
+    <Card>
+      <div className="mb-1 flex flex-wrap items-center gap-3">
+        <h2 className="text-2xl">Area amministrazione XFive</h2>
+        {badge && <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold uppercase", badge.cls)}>{badge.text}</span>}
+      </div>
+      <p className="mb-3 text-sm text-muted-foreground">
+        Legge dal tuo account amministratore su XFive la rosa: Squad List, scadenze dei certificati e stato dei tesseramenti. Solo lettura.
+        Email e password stanno solo nelle variabili protette del server: qui non si digitano e non si salvano.
+      </p>
+
+      {status.isPending ? (
+        <Skeleton className="h-16" />
+      ) : status.isError ? (
+        <ErrorState error={status.error} onRetry={() => status.refetch()} />
+      ) : (
+        <>
+          {!s?.configured && (
+            <p className="mb-3 rounded-lg border bg-secondary/40 p-3 text-sm">
+              Nel progetto del backend su Vercel imposta <code>XFIVE_ADMIN_EMAIL</code> e <code>XFIVE_ADMIN_PASSWORD</code> (come variabile
+              sensibile), poi <code>XFIVE_ADMIN_ENABLED=1</code> per accenderlo, e premi Redeploy.
+            </p>
+          )}
+          {s?.configured && !s.enabled && (
+            <p className="mb-3 rounded-lg border bg-secondary/40 p-3 text-sm">
+              Le credenziali ci sono ma è spento: puoi provare l'accesso, ma la lettura della rosa resta ferma. Per accenderlo imposta{" "}
+              <code>XFIVE_ADMIN_ENABLED=1</code> nel backend e premi Redeploy.
+            </p>
+          )}
+          {s?.blocked_until && (
+            <p className="mb-3 rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">
+              XFive ha rifiutato l'accesso: nuovi tentativi sospesi fino alle {fmtDateTime(s.blocked_until)}, per non rischiare il blocco dell'account.
+              Controlla email e password nel backend.
+            </p>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            <Btn variant="outline" onClick={tryLogin} disabled={!s?.configured || check.isPending || busy}>
+              <KeyRound className="h-4 w-4" /> {check.isPending ? "Provo l'accesso…" : "Prova accesso"}
+            </Btn>
+            <Btn onClick={() => start("admin")} disabled={!s?.enabled || busy || check.isPending}>
+              <RefreshCw className={cn("h-4 w-4", working === "admin" && "animate-spin")} /> Leggi rosa da XFive
+            </Btn>
+          </div>
+
+          {check.data && (
+            <p className={cn("mt-3 text-sm", check.data.ok ? "text-success" : "text-primary")} role="status">
+              {check.data.message}
+            </p>
+          )}
+
+          {last && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Ultima lettura: <span className="capitalize">{fmtDateTime(last.started_at)}</span> ·{" "}
+              {last.status === "error" ? (last.error ?? "errore") : last.stats["disabled"] ? "spento" : summary(last.stats)}
+              {s && s.players_synced > 0 ? ` · ${s.players_synced} giocatori collegati a XFive` : ""}
+            </p>
+          )}
+        </>
+      )}
+    </Card>
+  );
+}
+
+/** I numeri che contano di una lettura, in italiano e senza gli zeri. */
+function summary(stats: Record<string, number>) {
+  const parts: [string, string][] = [
+    ["matched", "abbinati"],
+    ["squad_list_changes", "cambi di Squad List"],
+    ["certificate_changes", "certificati aggiornati"],
+    ["unmatched", "non abbinati su XFive"],
+    ["ambiguous", "dubbi sul nome"],
+    ["birth_mismatch", "date di nascita diverse"],
+    ["missing_on_xfive", "nostri giocatori assenti su XFive"],
+  ];
+  const text = parts.filter(([k]) => (stats[k] ?? 0) > 0).map(([k, label]) => `${stats[k]} ${label}`);
+  return text.length ? text.join(", ") : "nessuna differenza";
+}
+
 function SettingsPage() {
   const { start, busy, working, left, runs } = useSyncFlow();
   const logout = useLogout();
@@ -144,6 +246,7 @@ function SettingsPage() {
           </ul>
         )}
       </Card>
+      <XfiveAdminCard start={start} busy={busy} working={working} />
       <BackupCard />
       <Card>
         <h2 className="mb-3 text-2xl">Account</h2>

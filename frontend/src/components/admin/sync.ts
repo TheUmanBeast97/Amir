@@ -10,6 +10,7 @@ export const syncLabel: Record<SyncScope, string> = {
   details: "Partite giocate",
   media: "Stemmi e foto",
   stats: "Statistiche",
+  admin: "Rosa da XFive",
 };
 
 /** Quante volte al massimo si richiama un aggiornamento che dichiara di avere ancora da fare. */

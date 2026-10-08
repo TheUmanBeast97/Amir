@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Services\Xfive\Admin\XfiveAdminException;
 use Illuminate\Database\QueryException;
 use PDOException;
 use Throwable;
@@ -14,6 +15,11 @@ final class SafeError
 {
     public static function describe(Throwable $e): string
     {
+        // i messaggi dell'accesso a XFive sono scritti per essere mostrati: mai credenziali né pezzi di pagina
+        if ($e instanceof XfiveAdminException) {
+            return $e->getMessage();
+        }
+
         if ($e instanceof QueryException || $e instanceof PDOException) {
             return class_basename($e).' (SQLSTATE '.($e->getCode() ?: 'sconosciuto').')';
         }

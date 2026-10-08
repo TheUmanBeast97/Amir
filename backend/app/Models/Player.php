@@ -23,6 +23,8 @@ class Player extends Model
             'birth_date' => 'date',
             'xfive_profile' => 'array',
             'xfive_synced_at' => 'datetime',
+            'xfive_membership' => 'array',
+            'xfive_admin_synced_at' => 'datetime',
             'scout_generated_at' => 'datetime',
         ];
     }

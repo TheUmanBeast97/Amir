@@ -262,6 +262,15 @@ export const useDocuments = () =>
   useQuery({ queryKey: ["documents"], queryFn: () => api.getDocuments(), staleTime: 10 * 60_000 });
 export const useAskDocuments = () =>
   useMutation({ mutationFn: (question: string) => api.askDocuments(question) });
+export const useXfiveAdminStatus = () =>
+  useQuery({ queryKey: ["xfive-admin"], queryFn: () => api.getXfiveAdminStatus() });
+export const useCheckXfiveAdmin = () => {
+  const inv = useInvalidate();
+  return useMutation({
+    mutationFn: () => api.checkXfiveAdmin(),
+    onSuccess: () => inv(["xfive-admin"]),
+  });
+};
 export const useSyncRuns = (poll = false) =>
   useQuery({
     queryKey: ["sync-runs"],
@@ -273,6 +282,6 @@ export const useSync = () => {
   return useMutation({
     mutationFn: (scope: SyncScope) => api.syncXfive(scope),
     // un aggiornamento cambia partite, classifica, rosa e immagini: tutto si rilegge
-    onSuccess: () => inv(["sync-runs"], ["dashboard"], ["players"], ["roster"], ["matches"], ["admin-matches"], ["standings"], ["home"], ["history"], ["career"]),
+    onSuccess: () => inv(["sync-runs"], ["xfive-admin"], ["dashboard"], ["players"], ["roster"], ["matches"], ["admin-matches"], ["standings"], ["home"], ["history"], ["career"]),
   });
 };

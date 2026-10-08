@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\PlayerController;
 use App\Http\Controllers\Api\PublicController;
 use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\SyncController;
+use App\Http\Controllers\Api\XfiveAdminController;
 use App\Services\Xfive\XfiveRoutine;
 use Illuminate\Support\Facades\Route;
 
@@ -97,6 +98,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/documents', [DocumentController::class, 'index']);
         Route::get('/documents/{slug}/file', [DocumentController::class, 'file'])->where('slug', '[a-z0-9-]+');
         Route::post('/documents/ask', [DocumentController::class, 'ask'])->middleware('throttle:20,1');
+
+        // Accesso all'area amministrazione di XFive con il tuo account (spento finché non lo accendi): stato e prova di accesso
+        Route::get('/xfive-admin', [XfiveAdminController::class, 'status']);
+        Route::post('/xfive-admin/check', [XfiveAdminController::class, 'check'])->middleware('throttle:5,1');
 
         Route::post('/sync/xfive', [SyncController::class, 'run']);
         Route::get('/sync/runs', [SyncController::class, 'runs']);

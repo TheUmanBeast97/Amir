@@ -661,8 +661,8 @@ export interface MeResponse {
   upcoming_events: TeamEvent[]; // each with my_rsvp
   balance: PlayerBalance;
 }
-/** current = calendario e risultati, history = storico, details = referti delle partite, media = stemmi e foto, stats = statistiche dei giocatori */
-export type SyncScope = "current" | "history" | "details" | "media" | "stats";
+/** current = calendario e risultati, history = storico, details = referti delle partite, media = stemmi e foto, stats = statistiche dei giocatori, admin = rosa e tesseramenti dall'area amministrazione di XFive */
+export type SyncScope = "current" | "history" | "details" | "media" | "stats" | "admin";
 export interface SyncRun {
   id: Id;
   scope: SyncScope;
@@ -671,6 +671,25 @@ export interface SyncRun {
   finished_at: ISODateTime | null;
   stats: Record<string, number>;
   error: string | null;
+}
+/** L'accesso all'area amministrazione di XFive con l'account dello staff (spento finché non lo si accende sul server). */
+export interface XfiveAdminStatus {
+  configured: boolean;
+  enabled: boolean;
+  blocked_until: ISODateTime | null;
+  players_synced: number;
+  last_run: {
+    status: "running" | "ok" | "error";
+    started_at: ISODateTime;
+    finished_at: ISODateTime | null;
+    stats: Record<string, number>;
+    error: string | null;
+  } | null;
+}
+export interface XfiveAdminCheck {
+  ok: boolean;
+  state: "ok" | "not_configured" | "disabled" | "blocked" | "login_failed" | "unreachable" | "unexpected_page";
+  message: string;
 }
 export interface ReminderMessage {
   text: string; // WhatsApp-ready text to paste
@@ -830,6 +849,8 @@ export interface ImportResult {
 //  POST /documents/ask {question}                          -> DocAnswer
 //  POST /sync/xfive {scope: SyncScope}                     -> SyncRun (in locale HTTP 202 e poi GET /sync/runs; sul server HTTP 200 con l'esito, stats.remaining > 0 = c'è ancora da fare, si richiama)
 //  GET  /sync/runs                                         -> SyncRun[]
+//  GET  /xfive-admin                                       -> XfiveAdminStatus (nessuna richiesta a XFive)
+//  POST /xfive-admin/check                                 -> XfiveAdminCheck (fa un accesso vero a XFive)
 // PLAYER (personal link, no login)
 //  GET  /me/{token}                                        -> MeResponse
 //  POST /me/{token}/events/{eventId}/rsvp {rsvp,note?}     -> TeamEvent

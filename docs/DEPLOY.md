@@ -110,6 +110,33 @@ com'erano. Non resta però nessuna copia dei dati sostituiti, quindi **scarica u
 Una richiesta su Vercel dura al massimo un minuto. Gli aggiornamenti lunghi (partite, immagini, statistiche) lavorano a pezzi da circa
 40 secondi e dicono quanto manca: il sito li richiama da solo, mentre quelli notturni finiscono nei giorni successivi.
 
+## Rosa e tesseramenti da XFive (facoltativo, spento di serie)
+
+Il backend può leggere dall'area amministrazione di XFive, con il tuo account, la **rosa**: Squad List, scadenze dei certificati medici e
+stato dei tesseramenti. Solo lettura: non modifica nulla su XFive. Vale XFive per la Squad List e per la scadenza del certificato; la data
+di nascita e il ruolo si completano solo se mancano.
+
+Per accenderlo, nel progetto del **backend** su Vercel, **Settings**, **Environment Variables**, per Production:
+
+| Variabile | Valore |
+| --- | --- |
+| `XFIVE_ADMIN_EMAIL` | l'email del tuo account XFive |
+| `XFIVE_ADMIN_PASSWORD` | la password, **come variabile sensibile** |
+| `XFIVE_ADMIN_ENABLED` | `1` |
+
+Poi **Redeploy**. In **Impostazioni**, scheda **Area amministrazione XFive**, premi **Prova accesso** e poi **Leggi rosa da XFive**.
+
+Come è protetto:
+- Email e password stanno solo qui, nelle variabili del server: non nel database, non nel codice, non nei backup. Vanno solo a XFive, in HTTPS.
+- Non si conserva nessuna sessione: a ogni lettura si fa un accesso nuovo. Per questo non esistono token che scadono.
+- Se XFive rifiuta l'accesso, il backend non riprova per 2 ore (`XFIVE_ADMIN_COOLDOWN_MINUTES`), così una password sbagliata non fa bloccare l'account.
+- Senza `XFIVE_ADMIN_ENABLED=1` non parte nessun accesso: nemmeno dagli aggiornamenti automatici.
+
+Prima di accenderlo ti consiglio di chiedere a XFive un ok scritto: i loro termini d'uso vietano i robot che raccolgono informazioni sugli
+utenti «per scopi non autorizzati» e non parlano dell'automazione del proprio account amministratore. L'aggiornamento notturno automatico
+della rosa non è attivo: la lettura parte quando premi il pulsante, o da un servizio esterno che chiama
+`GET /api/v1/cron/admin` con `Authorization: Bearer IL-TUO-CRON_SECRET`.
+
 ## Cose da sapere
 
 - **Piano gratuito di Vercel (Hobby)**: è pensato per uso personale e senza scopo di lucro. Per una squadra amatoriale va bene;

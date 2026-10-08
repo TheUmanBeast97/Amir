@@ -118,6 +118,17 @@ return [
         'hash' => env('AMIR_ADMIN_HASH'),
     ],
 
+    // Lettura dell'area amministrazione di XFive (rosa, tesseramenti, certificati, Squad List) con il tuo account.
+    // Spenta finché non si imposta XFIVE_ADMIN_ENABLED=1. Email e password stanno solo nelle variabili protette del server,
+    // mai nel database né nel codice; a ogni lettura si fa un accesso nuovo e non si conserva nessuna sessione.
+    'xfive_admin' => [
+        'enabled' => filter_var(env('XFIVE_ADMIN_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN),
+        'email' => env('XFIVE_ADMIN_EMAIL'),
+        'password' => env('XFIVE_ADMIN_PASSWORD'),
+        // dopo un accesso rifiutato non si riprova per questo tempo: una password sbagliata ripetuta potrebbe far bloccare l'account
+        'cooldown_minutes' => (int) env('XFIVE_ADMIN_COOLDOWN_MINUTES', 120),
+    ],
+
     // segreto delle esecuzioni pianificate (Vercel lo manda come «Authorization: Bearer ...»); vuoto = rotte disattivate
     'cron_secret' => env('CRON_SECRET'),
 
