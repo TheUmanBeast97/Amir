@@ -90,30 +90,10 @@ return [
             'driver' => 'pgsql',
             // l'indirizzo lo dà l'integrazione Postgres di Vercel (Neon): si preferisce quello diretto, non quello del "pooler",
             // perché con i pooler che riutilizzano le connessioni le richieste preparate possono confondersi
-            'url' => (static function (): ?string {
-                if (filled(env('DB_URL'))) {
-                    return env('DB_URL');
-                }
-
-                $names = ['DATABASE_URL_UNPOOLED', 'POSTGRES_URL_NON_POOLING', 'DATABASE_URL', 'POSTGRES_URL'];
-                foreach ($names as $name) {
-                    if (filled(env($name))) {
-                        return env($name);
-                    }
-                }
-
-                // nella schermata di collegamento di Neon si può scegliere un prefisso (es. STORAGE_DATABASE_URL): si cerca anche così
-                $present = array_unique([...array_keys(getenv()), ...array_keys($_ENV), ...array_keys($_SERVER)]);
-                foreach ($names as $name) {
-                    foreach ($present as $key) {
-                        if (is_string($key) && str_ends_with($key, '_'.$name) && filled(env($key))) {
-                            return env($key);
-                        }
-                    }
-                }
-
-                return null;
-            })(),
+            // Solo nomi FISSI, mai una ricerca fra tutte le variabili: in un runtime di tipo CGI le intestazioni di una richiesta
+            // diventano variabili (HTTP_*) e chi le manda sceglierebbe il database a cui ci si collega.
+            // Con un prefisso scelto nel collegamento di Neon l'indirizzo va copiato a mano in DB_URL.
+            'url' => env('DB_URL') ?: env('DATABASE_URL_UNPOOLED') ?: env('POSTGRES_URL_NON_POOLING') ?: env('DATABASE_URL') ?: env('POSTGRES_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),

@@ -127,6 +127,12 @@ se non usi `/data`; `APP_KEY` si crea da sola e resta nel volume.
 ## Se qualcosa non va
 
 - **Il primo deploy del backend fallisce con «Manca il database»**: collega Neon al progetto (punto 2) e premi Redeploy.
+- **Il build dice che manca il database ma Neon è già creato**: controlla che sia collegato al progetto del **backend** (Root Directory
+  `backend`), non a quello del sito. Dalla scheda **Storage** apri il database, **Projects**, e collega anche il progetto del backend.
+  Poi premi Redeploy sull'ultimo deploy del backend.
+- **Il build elenca variabili del database con un prefisso (per esempio `STORAGE_DATABASE_URL_UNPOOLED`) ma dice che manca il database**:
+  nel collegamento di Neon è stato scelto un prefisso. Il backend legge solo i nomi standard, per sicurezza. Crea una variabile `DB_URL`
+  con lo stesso indirizzo (meglio quello «UNPOOLED») e premi Redeploy. Oppure ricollega il database senza prefisso.
 - **Il sito è vuoto o dice che il server non risponde**: nel browser apri gli strumenti di sviluppo, scheda Rete, e guarda dove va la
   richiesta `public/home`. Se l'indirizzo contiene `tuo-backend`, la variabile su Vercel non è stata cambiata, oppure manca il Redeploy.
 - **L'indirizzo del backend risponde con un errore 500**: guarda **Logs** nel progetto del backend. Se parla di chiave di cifratura,

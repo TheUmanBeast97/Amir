@@ -88,19 +88,21 @@ class AmirDeployTest extends TestCase
         $this->assertSame('postgres://u:p@scelto-a-mano.example/db', $this->databaseConfig()['connections']['pgsql']['url'], 'DB_URL ha sempre la precedenza');
     }
 
-    public function test_an_address_with_a_prefix_chosen_when_connecting_neon_is_found(): void
+    public function test_an_address_smuggled_in_through_request_headers_is_never_used(): void
     {
         $this->withoutDatabaseVariables();
-        $this->setEnv('STORAGE_DATABASE_URL', 'postgres://u:p@prefisso.example/db');
-        $this->setEnv('REDIS_DB_URL', 'redis://non-e-postgres.example'); // un suffisso simile di un altro servizio non conta
+        // in un runtime di tipo CGI le intestazioni di una richiesta diventano variabili HTTP_*: chi le manda non sceglie il database
+        $this->setEnv('HTTP_X_STORAGE_DATABASE_URL', 'postgres://attaccante:x@attaccante.example/db');
+        $this->setEnv('HTTP_DATABASE_URL', 'postgres://attaccante:x@attaccante.example/db');
+        $this->setEnv('STORAGE_DATABASE_URL', 'postgres://u:p@prefisso.example/db'); // un prefisso non si indovina: va copiato in DB_URL
+        $this->setEnv('REDIS_DB_URL', 'redis://non-e-postgres.example');
 
-        $this->assertSame('postgres://u:p@prefisso.example/db', $this->databaseConfig()['connections']['pgsql']['url']);
+        $this->assertNull($this->databaseConfig()['connections']['pgsql']['url']);
     }
 
     public function test_without_any_address_the_config_has_none(): void
     {
         $this->withoutDatabaseVariables();
-        $this->setEnv('REDIS_DB_URL', 'redis://non-e-postgres.example');
 
         $this->assertNull($this->databaseConfig()['connections']['pgsql']['url']);
     }

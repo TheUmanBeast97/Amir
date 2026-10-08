@@ -25,7 +25,7 @@ class AmirDeploy extends Command
                 $names = $this->visibleDatabaseVariables();
                 $this->line($names === []
                     ? 'Il build non vede nessuna variabile del database (DATABASE_URL, POSTGRES_URL, PG...). Controlla in Settings, Environment Variables che siano attive per Production.'
-                    : 'Variabili del database che il build vede: '.implode(', ', $names).'. Nessuna è un indirizzo di connessione riconosciuto (DATABASE_URL, POSTGRES_URL, anche con un prefisso).');
+                    : 'Variabili del database che il build vede: '.implode(', ', $names).'. Nessuna ha un nome riconosciuto (DB_URL, DATABASE_URL_UNPOOLED, POSTGRES_URL_NON_POOLING, DATABASE_URL, POSTGRES_URL): se ne vedi una con un prefisso, copia il suo indirizzo in una nuova variabile DB_URL.');
 
                 return self::FAILURE;
             }
