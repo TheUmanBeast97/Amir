@@ -5,6 +5,11 @@ namespace App\Console\Commands;
 use App\Services\Xfive\Archive\Archive;
 use App\Services\Xfive\Archive\Limiter;
 use App\Services\Xfive\Archive\SiteMapper;
+use App\Services\Xfive\Archive\XfiveArchiver;
+use App\Services\Xfive\MatchPageParser;
+use App\Services\Xfive\PlayerInfoParser;
+use App\Services\Xfive\PrintableCalendarParser;
+use App\Services\Xfive\StatsTableParser;
 use App\Services\Xfive\XfiveClient;
 use Illuminate\Console\Command;
 use RuntimeException;
@@ -20,11 +25,15 @@ use Throwable;
 class XfiveArchive extends Command
 {
     protected $signature = 'xfive:archive
-        {stage=map : la tappa: map}
+        {stage=all : la tappa: all, tournaments, details, teams, clubs, players, matches, images, markdown (oppure map e probe per studiare il sito)}
         {--dir= : cartella dell\'archivio (di serie XFIVE_ARCHIVE_DIR oppure Desktop\\AMIR\\xfive-archive)}
         {--gap=1.0 : secondi fra una richiesta e l\'altra}
         {--hours= : finestra oraria consentita, es. 23-6 (fuori si aspetta)}
+        {--limit=0 : massimo di richieste in questa esecuzione (0 = senza limite); il resto alla prossima}
+        {--seasons= : per «tournaments»: id delle stagioni da elencare, es. 6,7,8 (di serie quelle in config)}
+        {--scan= : per «tournaments»: intervallo di id di torneo da provare uno a uno, es. 1-200 (per le stagioni vecchie)}
         {--page=* : per «map»: altre pagine da leggere oltre alla home, es. /it/tournaments/}
+        {--post=* : per «probe»: una chiamata interna da provare, come «league.php op=21&tid=187»}
         {--refresh : rilegge anche le pagine già salvate}';
 
     protected $description = 'Scarica in locale i dati pubblici di XFive, piano e riprendendo da dove si era fermato';
@@ -41,9 +50,13 @@ class XfiveArchive extends Command
         $this->line("Archivio: {$this->archive->root()}  (pausa {$this->limiter->gap()} s, ".($this->window() ? 'ore '.$this->option('hours') : 'nessuna finestra oraria').')');
 
         try {
-            return match ($this->argument('stage')) {
-                'map' => $this->map($client, $mapper),
-                default => $this->fail("Tappa sconosciuta: {$this->argument('stage')}."),
+            $stage = (string) $this->argument('stage');
+
+            return match (true) {
+                $stage === 'map' => $this->map($client, $mapper),
+                $stage === 'probe' => $this->probe($client, $mapper),
+                $stage === 'all' || in_array($stage, XfiveArchiver::STAGES, true) => $this->archiveStages($client, $stage),
+                default => $this->fail("Tappa sconosciuta: {$stage}."),
             };
         } catch (RuntimeException $e) {
             $this->error($e->getMessage());
@@ -52,6 +65,41 @@ class XfiveArchive extends Command
         } finally {
             $this->line("Richieste fatte: {$this->limiter->requests}, rallentamenti: {$this->limiter->slowdowns}.");
         }
+    }
+
+    /** Le tappe dello scarico vero, una o tutte in fila. */
+    private function archiveStages(XfiveClient $client, string $stage): int
+    {
+        $archiver = new XfiveArchiver(
+            $client, $this->limiter, $this->archive,
+            app(PrintableCalendarParser::class), app(StatsTableParser::class), app(MatchPageParser::class), app(PlayerInfoParser::class),
+            refresh: (bool) $this->option('refresh'),
+        );
+        $archiver->reportTo(fn (string $line) => $this->line($line));
+        if ((int) $this->option('limit') > 0) {
+            $archiver->withBudget((int) $this->option('limit'));
+        }
+
+        $seasons = $this->option('seasons')
+            ? array_map('intval', explode(',', (string) $this->option('seasons')))
+            : array_keys((array) config('amir.xfive.seasons'));
+        $scan = null;
+        if ($this->option('scan') && preg_match('/^(\d+)-(\d+)$/', (string) $this->option('scan'), $m)) {
+            $scan = [(int) $m[1], (int) $m[2]];
+        }
+
+        $stages = $stage === 'all' ? XfiveArchiver::STAGES : [$stage];
+        foreach ($stages as $s) {
+            $this->info("Tappa «{$s}»…");
+            $stats = $s === 'tournaments' ? $archiver->tournaments($seasons, $scan) : $archiver->{$s}();
+            $this->line('  '.implode(', ', array_map(fn ($k, $v) => "{$k}: {$v}", array_keys($stats), $stats)));
+            if ($archiver->requestsLeft() <= 0) {
+                $this->warn('Budget di richieste finito: la prossima esecuzione riprende da qui.');
+                break;
+            }
+        }
+
+        return self::SUCCESS;
     }
 
     private function map(XfiveClient $client, SiteMapper $mapper): int
@@ -98,6 +146,54 @@ class XfiveArchive extends Command
         $this->archive->putJson('map', $report);
         $this->archive->markDone('map', ['pages' => count($report)]);
         $this->line('Mappa salvata in json/map.json; le pagine in raw/.');
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * Prova le chiamate interne del sito (quelle che le pagine fanno da sole per riempirsi): salva la risposta e,
+     * se contiene HTML, ne stampa la mappa. Serve a capire come sono fatti elenchi e tabelle prima di leggerli davvero.
+     */
+    private function probe(XfiveClient $client, SiteMapper $mapper): int
+    {
+        $host = (string) parse_url((string) config('amir.xfive.base_url'), PHP_URL_HOST);
+
+        foreach ((array) $this->option('post') as $spec) {
+            [$script, $query] = array_pad(explode(' ', trim((string) $spec), 2), 2, '');
+            parse_str($query, $data);
+            $data += ['lid' => config('amir.xfive.league_id')];
+            $key = 'ajax-'.$script.'-'.$query;
+
+            $json = $this->option('refresh') ? null : $this->archive->getRaw($key, 'json');
+            if ($json === null) {
+                $this->line("Chiamo {$script} con {$query}…");
+                $answer = $this->fetch(fn () => json_encode($client->post('/system/include/ajax/public/'.$script, $data), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+                if ($answer === null) {
+                    $this->warn('  non esiste (404).');
+
+                    continue;
+                }
+                $json = $answer;
+                $this->archive->putRaw($key, $json, 'json');
+            }
+
+            $obj = json_decode($json, true) ?: [];
+            $this->info("{$script} {$query}: chiavi ".implode(', ', array_keys($obj)).' ('.strlen($json).' byte)');
+            if (! empty($obj['errors'])) {
+                $this->warn('  errori: '.json_encode($obj['errors'], JSON_UNESCAPED_UNICODE));
+            }
+            $html = is_string($obj['html'] ?? null) ? $obj['html'] : null;
+            if ($html !== null && $html !== '') {
+                $m = $mapper->map($html, preg_replace('/^www\./', '', $host) ?? $host);
+                foreach (array_slice($m['links'], 0, 25, true) as $shape => $g) {
+                    $this->line(sprintf('    %4d  %-40s %s', $g['count'], $shape, implode('  ', $g['examples'])));
+                }
+                foreach ($m['selects'] as $s) {
+                    $this->line('  Tendina '.($s['name'] ?? $s['id'] ?? '?').': '.count($s['options']).' voci: '.implode(' | ', array_map(fn ($o) => "{$o['value']}={$o['label']}", array_slice($s['options'], 0, 12))));
+                }
+                $this->line('  Testo: '.mb_substr(trim(preg_replace('/\s+/', ' ', strip_tags($html)) ?? ''), 0, 400));
+            }
+        }
 
         return self::SUCCESS;
     }
