@@ -23,7 +23,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { cardRating, explain, tierLabel, tierRange, TIERS, type CardRating, type Tier } from "@/lib/card-rating";
+import {
+  cardRating,
+  explain,
+  tierLabel,
+  tierRange,
+  TIERS,
+  type CardRating,
+  type Tier,
+} from "@/lib/card-rating";
 import { canCutout, makeCutout, type CutoutProgress } from "@/lib/cutout";
 import { initials } from "@/lib/kit";
 import { dur, ease, tiltSpring } from "@/lib/motion";
@@ -89,6 +97,35 @@ const THEME: Record<Tier, Theme> = {
 
 /** Quanto grande scrivere il cognome perché stia in una riga. */
 const nameSize = (s: string) => (s.length > 15 ? 54 : s.length > 12 ? 64 : s.length > 9 ? 76 : 88);
+
+/** La finestra della foto: in alto a destra del corpo, con il bordo sinistro in diagonale. */
+const PHOTO_BOX = {
+  position: "absolute",
+  top: 0,
+  right: 0,
+  width: 468,
+  height: 566,
+  clipPath: "polygon(17% 0, 100% 0, 100% 100%, 0 100%)",
+} as const;
+
+/** Come la sagoma senza sfondo sta nella finestra: appoggiata in basso, intera. Stessa geometria nel fronte e nel «tappo» dell'anteprima. */
+const SILHOUETTE = {
+  position: "absolute",
+  left: "6%",
+  right: 0,
+  bottom: 0,
+  width: "94%",
+  height: "96%",
+  objectFit: "contain",
+  objectPosition: "50% 100%",
+} as const;
+
+/** La sfumatura scura in basso alla finestra della foto, che la fa morire nella targhetta. */
+const PHOTO_FADE = {
+  position: "absolute",
+  inset: 0,
+  background: "linear-gradient(to top, #0e0e12 0%, rgba(14,14,18,0.0) 34%)",
+} as const;
 
 interface FaceProps {
   page: PlayerPage;
@@ -195,20 +232,11 @@ export const PlayerCardFace = forwardRef<HTMLDivElement, FaceProps>(function Pla
         />
 
         {/* foto: bordo sinistro in diagonale, sfuma nella targhetta */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-            width: 468,
-            height: 566,
-            clipPath: "polygon(17% 0, 100% 0, 100% 100%, 0 100%)",
-            background: "linear-gradient(135deg,#3d3d44,#16161a)",
-          }}
-        >
+        <div style={{ ...PHOTO_BOX, background: "linear-gradient(135deg,#3d3d44,#16161a)" }}>
           {silhouette ? (
             <>
-              {/* dietro la sagoma: un alone del colore del tipo, come sulle figurine vere */}
+              {/* il fondale sta tutto dietro la sagoma: l'alone del colore del tipo, come sulle figurine vere, e la sfumatura scura;
+                  la sagoma si disegna per ultima, piena e nitida, senza nulla sopra */}
               <div
                 aria-hidden
                 style={{
@@ -217,60 +245,49 @@ export const PlayerCardFace = forwardRef<HTMLDivElement, FaceProps>(function Pla
                   background: `radial-gradient(70% 60% at 58% 42%, ${th.accent}55, transparent 70%)`,
                 }}
               />
+              <div aria-hidden style={PHOTO_FADE} />
               <img
                 src={silhouette}
                 alt=""
                 crossOrigin="anonymous"
-                style={{
-                  position: "absolute",
-                  left: "6%",
-                  right: 0,
-                  bottom: 0,
-                  width: "94%",
-                  height: "96%",
-                  objectFit: "contain",
-                  objectPosition: "50% 100%",
-                  filter: "drop-shadow(0 18px 28px rgba(0,0,0,0.55))",
-                }}
+                style={{ ...SILHOUETTE, filter: "drop-shadow(0 18px 28px rgba(0,0,0,0.55))" }}
               />
             </>
-          ) : p.photo_url ? (
-            <img
-              src={p.photo_url}
-              alt=""
-              crossOrigin="anonymous"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                objectPosition: "50% 8%",
-                transform: "scale(1.14)",
-                transformOrigin: "50% 50%",
-              }}
-            />
           ) : (
-            <div
-              className="font-display"
-              style={{
-                display: "grid",
-                placeItems: "center",
-                width: "100%",
-                height: "100%",
-                fontSize: 200,
-                color: "rgba(255,255,255,0.35)",
-              }}
-            >
-              {initials(p.full_name)}
-            </div>
+            <>
+              {p.photo_url ? (
+                <img
+                  src={p.photo_url}
+                  alt=""
+                  crossOrigin="anonymous"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "50% 8%",
+                    transform: "scale(1.14)",
+                    transformOrigin: "50% 50%",
+                  }}
+                />
+              ) : (
+                <div
+                  className="font-display"
+                  style={{
+                    display: "grid",
+                    placeItems: "center",
+                    width: "100%",
+                    height: "100%",
+                    fontSize: 200,
+                    color: "rgba(255,255,255,0.35)",
+                  }}
+                >
+                  {initials(p.full_name)}
+                </div>
+              )}
+              {/* la foto intera (o le iniziali) sfuma nella targhetta */}
+              <div aria-hidden style={PHOTO_FADE} />
+            </>
           )}
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(to top, #0e0e12 0%, rgba(14,14,18,0.0) 34%)",
-            }}
-          />
         </div>
 
         {/* colonna sinistra: voto, ruolo, stemma, nazionalità */}
@@ -607,6 +624,7 @@ interface HoloProps {
 function HoloCard({ page, rating, scale, faceRef, onFlipped, cutout }: HoloProps) {
   const reduce = useReducedMotion();
   const th = THEME[rating.tier];
+  const silhouette = cutout ?? page.player.cutout_url;
   const px = useMotionValue(0.5);
   const py = useMotionValue(0.5);
   const sx = useSpring(px, { stiffness: 120, damping: 20 });
@@ -715,7 +733,13 @@ function HoloCard({ page, rating, scale, faceRef, onFlipped, cutout }: HoloProps
                 position: "relative",
               }}
             >
-              <PlayerCardFace ref={faceRef} page={page} rating={rating} animateNumbers cutout={cutout} />
+              <PlayerCardFace
+                ref={faceRef}
+                page={page}
+                rating={rating}
+                animateNumbers
+                cutout={cutout}
+              />
               {/* lamina olografica: solo oro, platino e fuoco */}
               {th.foil && (
                 <motion.div
@@ -750,6 +774,24 @@ function HoloCard({ page, rating, scale, faceRef, onFlipped, cutout }: HoloProps
                   opacity: 0.28,
                 }}
               />
+              {/* il «tappo»: la sagoma di nuovo, sopra riflesso e lamina, nella stessa posizione del fronte. Così i due effetti
+                  restano solo attorno a lei e il volto non si schiarisce. Tagliata al taglio rosso, che nel fronte le passa
+                  davanti insieme alla targhetta. Sta fuori dal nodo esportato: il PNG scaricato non cambia. */}
+              {silhouette && (
+                <div
+                  aria-hidden
+                  style={{
+                    position: "absolute",
+                    inset: 8,
+                    clipPath: "polygon(0 0, 100% 0, 100% 478px, 0 512px)",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <div style={PHOTO_BOX}>
+                    <img src={silhouette} alt="" crossOrigin="anonymous" style={SILHOUETTE} />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           {/* retro */}
@@ -801,10 +843,18 @@ function useCardScale() {
 function CreatingCard({ step, scale }: { step: CutoutProgress; scale: number }) {
   const reduce = useReducedMotion();
   return (
-    <div className="relative mx-auto" style={{ width: W * scale, height: H * scale }} role="status" aria-live="polite">
+    <div
+      className="relative mx-auto"
+      style={{ width: W * scale, height: H * scale }}
+      role="status"
+      aria-live="polite"
+    >
       <motion.div
         className="absolute inset-0 overflow-hidden"
-        style={{ clipPath: shape(46 * scale), background: "linear-gradient(150deg,#2a2a31,#121216)" }}
+        style={{
+          clipPath: shape(46 * scale),
+          background: "linear-gradient(150deg,#2a2a31,#121216)",
+        }}
         animate={reduce ? {} : { scale: [1, 1.015, 1] }}
         transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
       >
@@ -812,7 +862,10 @@ function CreatingCard({ step, scale }: { step: CutoutProgress; scale: number }) 
           <motion.div
             aria-hidden
             className="absolute inset-y-0 w-1/3"
-            style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent)" }}
+            style={{
+              background:
+                "linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent)",
+            }}
             animate={{ x: ["-120%", "420%"] }}
             transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
           />
@@ -824,9 +877,13 @@ function CreatingCard({ step, scale }: { step: CutoutProgress; scale: number }) 
               animate={reduce ? {} : { rotate: 360 }}
               transition={{ duration: 1.1, repeat: Infinity, ease: "linear" }}
             />
-            <div className="font-display text-3xl uppercase text-white">Sto creando la figurina</div>
+            <div className="font-display text-3xl uppercase text-white">
+              Sto creando la figurina
+            </div>
             <div className="mt-2 text-sm text-white/70">{step}…</div>
-            <div className="mt-3 text-xs text-white/50">Solo la prima volta: ritaglio la foto senza sfondo e la salvo per tutti.</div>
+            <div className="mt-3 text-xs text-white/50">
+              Solo la prima volta: ritaglio la foto senza sfondo e la salvo per tutti.
+            </div>
           </div>
         </div>
       </motion.div>
@@ -840,7 +897,9 @@ function RatingExplainer({ page, rating }: { page: PlayerPage; rating: CardRatin
   const row = "grid grid-cols-[1fr_auto] items-baseline gap-x-3 gap-y-0.5";
   return (
     <div className="space-y-3 rounded-xl border border-border bg-secondary/40 p-3 text-sm">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{e.roleLabel}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {e.roleLabel}
+      </p>
       <ul className="space-y-2">
         {e.parts.map((part) => (
           <li key={part.key} className={row}>
@@ -848,12 +907,19 @@ function RatingExplainer({ page, rating }: { page: PlayerPage; rating: CardRatin
               <div className="font-semibold">{part.label}</div>
               <div className="text-xs text-muted-foreground">{part.value}</div>
               <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-border">
-                <div className="h-full rounded-full bg-primary" style={{ width: `${part.score}%` }} />
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{ width: `${part.score}%` }}
+                />
               </div>
             </div>
             <div className="text-right">
-              <div className="font-display text-xl tabular-nums">+{part.points.toFixed(1).replace(".", ",")}</div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">peso {part.weight}%</div>
+              <div className="font-display text-xl tabular-nums">
+                +{part.points.toFixed(1).replace(".", ",")}
+              </div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                peso {part.weight}%
+              </div>
             </div>
           </li>
         ))}
@@ -878,8 +944,9 @@ function RatingExplainer({ page, rating }: { page: PlayerPage; rating: CardRatin
         )}
       </ul>
       <p className="border-t border-border pt-2 text-xs text-muted-foreground">
-        Si parte da 75 e ogni voce aggiunge fino alla sua quota di 24 punti: {rating.ovr} = {tierLabel[rating.tier]}.
-        Le medie sono «corrette» come se ci fossero 12 partite in più, così una partita fortunata non basta. Fasce:{" "}
+        Si parte da 75 e ogni voce aggiunge fino alla sua quota di 24 punti: {rating.ovr} ={" "}
+        {tierLabel[rating.tier]}. Le medie sono «corrette» come se ci fossero 12 partite in più,
+        così una partita fortunata non basta. Fasce:{" "}
         {TIERS.map((t) => `${tierLabel[t]} ${tierRange[t]}`).join(", ")}.
       </p>
     </div>
@@ -1002,8 +1069,7 @@ export function PlayerCardButton({ page }: { page: PlayerPage }) {
             </button>
           </DialogTitle>
           <DialogDescription>
-            Il voto va da 75 a 99 e dipende dal ruolo: premi «i» per vedere come è calcolato. Muovi il puntatore
-            sulla figurina (o trascinala con un dito) per inclinarla.
+            Per maggiori informazioni sulla valutazione clicca sulla i
           </DialogDescription>
         </DialogHeader>
         <Dialog open={showInfo} onOpenChange={setShowInfo}>
