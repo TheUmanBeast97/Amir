@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/dialog";
 import { cardRating, explain, tierLabel, tierRange, TIERS, type CardRating, type Tier } from "@/lib/card-rating";
 import { canCutout, makeCutout, type CutoutProgress } from "@/lib/cutout";
-import { cn } from "@/lib/utils";
 import { initials } from "@/lib/kit";
 import { dur, ease, tiltSpring } from "@/lib/motion";
 
@@ -959,12 +958,8 @@ export function PlayerCardButton({ page }: { page: PlayerPage }) {
             <button
               type="button"
               aria-label="Come è calcolato il voto"
-              aria-pressed={showInfo}
-              onClick={() => setShowInfo((v) => !v)}
-              className={cn(
-                "press grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-foreground hover:text-foreground",
-                showInfo && "bg-primary text-primary-foreground hover:text-primary-foreground",
-              )}
+              onClick={() => setShowInfo(true)}
+              className="press grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-foreground hover:text-foreground"
             >
               <Info className="h-4 w-4" />
             </button>
@@ -974,7 +969,17 @@ export function PlayerCardButton({ page }: { page: PlayerPage }) {
             sulla figurina (o trascinala con un dito) per inclinarla.
           </DialogDescription>
         </DialogHeader>
-        {showInfo && <RatingExplainer page={page} rating={rating} />}
+        <Dialog open={showInfo} onOpenChange={setShowInfo}>
+          <DialogContent className="max-h-[90vh] max-w-[calc(100vw-1.5rem)] overflow-y-auto sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Come è calcolato il voto {rating.ovr}</DialogTitle>
+              <DialogDescription>
+                {page.player.full_name}: ogni voce rende da 0 a 100 e pesa secondo il ruolo.
+              </DialogDescription>
+            </DialogHeader>
+            <RatingExplainer page={page} rating={rating} />
+          </DialogContent>
+        </Dialog>
         <div className="py-4">
           <HoloCard
             page={page}
