@@ -113,6 +113,30 @@ personalizzato sul computer, usa **Impostazioni**, **Dati e backup**, **Porta qu
 - **Accedi** in alto o nel menu, entra nell'area staff.
 - Una figurina si apre e il pulsante **Scarica PNG** funziona.
 
+## Velocità
+
+Il server dei dati (`amir-c4xi`) e il database Neon stanno negli Stati Uniti (Washington): ogni richiesta che li raggiunge da
+un browser italiano paga il viaggio oltre l'Atlantico, più l'avvio a freddo di PHP e del database quando nessuno li usa da qualche
+minuto. Per questo:
+
+- **Risposte pubbliche in cache** (`PublicCache`, `/api/v1/public/*`): la rete di Vercel le tiene a Francoforte per 1 minuto e per
+  un'ora dopo serve subito la copia vecchia mentre ne prepara una nuova, quindi nessun visitatore aspetta il server americano. Quello
+  che lo staff cambia compare entro un paio di minuti. Area staff, link personali (`/me/...`) ed errori non si tengono mai in cache.
+  Se un giorno si restringe `CORS_ALLOWED_ORIGINS` a **due o più** siti, la copia in cache va resa valida per tutti (intestazione
+  `Vary: Origin` oppure `*`): con uno solo o con `*` è già a posto.
+- **Server del sito a Francoforte** (`frontend/vite.config.ts`, `functions.regions: ["fra1"]`) e font e immagini fisse con cache lunga.
+- **Stemmi e foto a misura**: sono salvati grandi (fino a 415 KB l'uno) perché servono alle grafiche da esportare, ma nelle pagine
+  passano dall'ottimizzatore di immagini di Vercel (`/_vercel/image`, `src/lib/img.ts`): da centinaia di KB a pochi, in WebP. Gli
+  indirizzi consentiti si ricavano da `VITE_API_BASE_URL` al momento della costruzione. In locale si usa l'originale.
+- **Dove si perde il tempo**: ogni risposta dell'API ha l'intestazione `Server-Timing` (durata, parte nel database, numero di
+  interrogazioni): si legge negli strumenti del browser, scheda Rete, Timing, oppure con `curl -D - <indirizzo>`.
+
+Ancora lento nell'area staff (che non si può mettere in cache)? Il passo successivo è spostare anche il database in Europa: creare un
+database Neon a Francoforte (**Storage**, regione `eu-central-1`), collegarlo al progetto `amir-c4xi`, portarci i dati con
+**Impostazioni**, **Dati e backup** (scarica il backup prima, ripristina dopo) e mettere `"regions": ["fra1"]` in `backend/vercel.json`.
+Il server e il database devono stare nella stessa regione: se il server va a Francoforte mentre il database resta a Washington, ogni
+interrogazione costa un viaggio oltre l'oceano e va molto peggio.
+
 ## Aggiornamenti da XFive
 
 - **Ogni notte**, da soli: Vercel lancia gli indirizzi `/api/v1/cron/...` elencati in `backend/vercel.json` (calendario, partite giocate,

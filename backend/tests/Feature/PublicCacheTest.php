@@ -31,6 +31,14 @@ class PublicCacheTest extends TestCase
         }
     }
 
+    public function test_a_kept_copy_carries_the_permission_for_the_browser_even_without_an_origin(): void
+    {
+        $this->ownTeam();
+
+        // chi riempie la cache (per esempio un controllo senza «Origin») non deve lasciare una copia che il browser rifiuterebbe
+        $this->getJson('/api/v1/public/roster')->assertOk()->assertHeader('Access-Control-Allow-Origin', '*');
+    }
+
     public function test_errors_are_never_kept(): void
     {
         $this->ownTeam();
