@@ -40,6 +40,7 @@ import type {
   SyncRun,
   SyncScope,
   TeamEvent,
+  LocalImportResult,
   XfiveAdminCheck,
   XfiveAdminStatus,
   User,
@@ -164,6 +165,8 @@ export interface ApiClient {
   downloadBackup(): Promise<Blob>;
   /** Sostituisce tutti i dati con quelli di un backup; `confirm` deve essere "RIPRISTINA". */
   restoreBackup(file: File, confirm: string): Promise<{ restored: boolean }>;
+  /** Porta online le info dei giocatori e i pagamenti del gestionale sul computer (database.sqlite o un backup), senza sostituire nulla. */
+  importLocalData(file: File): Promise<LocalImportResult>;
   syncXfive(scope: SyncScope): Promise<SyncRun>;
   getSyncRuns(): Promise<SyncRun[]>;
   getXfiveAdminStatus(): Promise<XfiveAdminStatus>;
@@ -226,6 +229,31 @@ const post = (body: unknown, method = "POST"): RequestInit => ({
   method,
   body: JSON.stringify(body),
 });
+
+/** Invia un file (e qualche campo) a un endpoint che risponde {data}; gli errori di convalida diventano ApiError 422 con i messaggi del server. */
+async function postFile<T>(path: string, fields: Record<string, string | File>, failure: string): Promise<T> {
+  const token = getToken();
+  const body = new FormData();
+  for (const [name, value] of Object.entries(fields)) body.append(name, value);
+  let res: Response;
+  try {
+    // niente Content-Type: lo mette il browser, con il confine del modulo
+    res = await fetch(`${BASE}${path}`, {
+      method: "POST",
+      headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body,
+    });
+  } catch {
+    throw new ApiError(0, "Impossibile contattare il server. Controlla la connessione.");
+  }
+  if (res.status === 401) throw new ApiError(401, "Sessione scaduta. Accedi di nuovo.");
+  if (res.status === 422) {
+    const b = (await res.json()) as { message: string; errors?: Record<string, string[]> };
+    throw new ApiError(422, b.message, b.errors ?? {});
+  }
+  if (!res.ok) throw new ApiError(res.status, failure);
+  return ((await res.json()) as { data: T }).data;
+}
 
 export const api: ApiClient = {
   login: (email, password) => request("/auth/login", post({ email, password })),
@@ -311,30 +339,8 @@ export const api: ApiClient = {
     if (!res.ok) throw new ApiError(res.status, "Non riesco a preparare il backup.");
     return res.blob();
   },
-  restoreBackup: async (file, confirm) => {
-    const token = getToken();
-    const body = new FormData();
-    body.append("file", file);
-    body.append("confirm", confirm);
-    let res: Response;
-    try {
-      // niente Content-Type: lo mette il browser, con il confine del modulo
-      res = await fetch(`${BASE}/backup/restore`, {
-        method: "POST",
-        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body,
-      });
-    } catch {
-      throw new ApiError(0, "Impossibile contattare il server. Controlla la connessione.");
-    }
-    if (res.status === 401) throw new ApiError(401, "Sessione scaduta. Accedi di nuovo.");
-    if (res.status === 422) {
-      const b = (await res.json()) as { message: string; errors?: Record<string, string[]> };
-      throw new ApiError(422, b.message, b.errors ?? {});
-    }
-    if (!res.ok) throw new ApiError(res.status, "Ripristino non riuscito.");
-    return ((await res.json()) as { data: { restored: boolean } }).data;
-  },
+  restoreBackup: (file, confirm) => postFile("/backup/restore", { file, confirm }, "Ripristino non riuscito."),
+  importLocalData: (file) => postFile("/backup/import-local", { file }, "Importazione non riuscita."),
   syncXfive: (scope) => request("/sync/xfive", post({ scope })),
   getSyncRuns: () => request("/sync/runs"),
   getXfiveAdminStatus: () => request("/xfive-admin"),

@@ -243,7 +243,7 @@ function PlayersPage() {
           {q.data.length === 0 ? (
             <>
               Nessun giocatore. Premi «Importa da XFive» per prendere la rosa dall'area amministrazione (serve l'accesso acceso in
-              Impostazioni), oppure ripristina i dati del tuo computer da Impostazioni, «Dati e backup».
+              Impostazioni). Poi, da Impostazioni, «Dati e backup», porta qui maglie, telefoni e pagamenti del gestionale sul computer.
             </>
           ) : (
             "Nessun giocatore con questi filtri."

@@ -691,6 +691,19 @@ export interface XfiveAdminCheck {
   state: "ok" | "not_configured" | "disabled" | "blocked" | "login_failed" | "unreachable" | "unexpected_page";
   message: string;
 }
+/** Quello che è successo portando online le info dei giocatori e i pagamenti del gestionale sul computer. */
+export interface LocalImportResult {
+  players_matched: number;
+  players_filled: number;
+  fields_filled: number;
+  players_ambiguous: number;
+  players_not_found: number;
+  charges_created: number;
+  player_charges_created: number;
+  payments_created: number;
+  payments_already_there: number;
+  finance_skipped: number;
+}
 export interface ReminderMessage {
   text: string; // WhatsApp-ready text to paste
   wa_link: string; // https://wa.me/?text=...
@@ -849,6 +862,7 @@ export interface ImportResult {
 //  POST /documents/ask {question}                          -> DocAnswer
 //  POST /sync/xfive {scope: SyncScope}                     -> SyncRun (in locale HTTP 202 e poi GET /sync/runs; sul server HTTP 200 con l'esito, stats.remaining > 0 = c'è ancora da fare, si richiama)
 //  GET  /sync/runs                                         -> SyncRun[]
+//  POST /backup/import-local (file)                        -> LocalImportResult (unisce info giocatori e pagamenti di un database.sqlite o di un backup, senza sostituire nulla)
 //  GET  /xfive-admin                                       -> XfiveAdminStatus (nessuna richiesta a XFive)
 //  POST /xfive-admin/check                                 -> XfiveAdminCheck (fa un accesso vero a XFive)
 // PLAYER (personal link, no login)

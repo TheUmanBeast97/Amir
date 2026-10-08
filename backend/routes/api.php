@@ -109,5 +109,7 @@ Route::prefix('v1')->group(function () {
         // Copia di sicurezza di tutti i dati (file SQLite) e ripristino da un file
         Route::get('/backup', [BackupController::class, 'download'])->middleware('throttle:backup');
         Route::post('/backup/restore', [BackupController::class, 'restore'])->middleware('throttle:restore');
+        // Info dei giocatori e pagamenti dal gestionale sul computer, uniti a quello che c'è già online
+        Route::post('/backup/import-local', [BackupController::class, 'importLocal'])->middleware('throttle:restore');
     });
 });

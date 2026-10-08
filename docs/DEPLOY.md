@@ -91,6 +91,21 @@ Il backup contiene i dati e gli utenti, **non** le immagini, le sessioni, i toke
 ripristino tutti devono accedere di nuovo. Il ripristino è fatto in una sola operazione: se qualcosa non va, i dati di prima restano
 com'erano. Non resta però nessuna copia dei dati sostituiti, quindi **scarica un backup prima di ripristinare**.
 
+### Se online hai già i giocatori (importati da XFive): unire invece di sostituire
+
+Il ripristino sostituisce tutto. Se online hai già la rosa (**Giocatori**, **Importa da XFive**) e vuoi solo aggiungere quello che hai
+personalizzato sul computer, usa **Impostazioni**, **Dati e backup**, **Porta qui info e pagamenti del computer**:
+
+1. Scegli lo stesso file `backend/database/database.sqlite` (o un backup) e premi **Importa info e pagamenti**.
+2. I giocatori si riconoscono dal nome (cognome e nome in qualunque ordine, senza accenti né maiuscole; gli omonimi si distinguono
+   dalla data di nascita). Si completa **solo quello che online è vuoto**: soprannome, maglie, ruolo, telefono, email, data di nascita,
+   note, nazionalità e scheda scout. Squad List, tesseramento, certificati, foto e link personale restano quelli di XFive.
+3. Addebiti, quote e versamenti si aggiungono se mancano. Se un addebito con lo stesso titolo, importo e scadenza c'è già, si
+   riusa; un versamento con stessa quota, importo, data e metodo non si duplica. Si può quindi ripetere senza fare doppioni.
+4. Chi sul computer era un ex giocatore e online non c'è viene ignorato; un giocatore attivo che online manca viene segnalato (prima
+   premi **Importa da XFive** e poi ripeti). Gli utenti, le partite e il resto non si toccano.
+5. È tutto in una sola operazione: se qualcosa non va non resta nulla a metà.
+
 ## 5. Controlli finali
 
 - Apri https://amir-taupe.vercel.app: devono comparire la prossima partita e la classifica.

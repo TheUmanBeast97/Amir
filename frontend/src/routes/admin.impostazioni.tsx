@@ -1,10 +1,11 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChartColumn, ClipboardList, Download, History, Images, KeyRound, LogOut, RefreshCw, Upload, Users } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api, TOKEN_KEY } from "@/api/client";
 import { useCheckXfiveAdmin, useXfiveAdminStatus } from "@/api/hooks";
-import type { SyncScope } from "@/api/types";
+import type { LocalImportResult, SyncScope } from "@/api/types";
 import { Card, EmptyState, ErrorState, PageTitle, Skeleton } from "@/components/ui-kit";
 import { Btn, TextInput, toastError } from "@/components/admin/kit";
 import { useLogout } from "@/components/admin/AdminShell";
@@ -27,12 +28,50 @@ export const Route = createFileRoute("/admin/impostazioni")({
 const statusCls = { running: "bg-warning/15 text-warning", ok: "bg-success/15 text-success", error: "bg-primary/15 text-primary" };
 const statusLbl = { running: "In corso", ok: "Riuscita", error: "Errore" };
 
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** Le righe che raccontano cosa è successo portando online info e pagamenti del computer. */
+function importSummary(r: LocalImportResult): string[] {
+  const lines = [
+    `${plural(r.players_matched, "giocatore abbinato", "giocatori abbinati")}: ${r.players_filled} completati con ${plural(r.fields_filled, "dato", "dati")} (maglie, telefoni, note...).`,
+    `Pagamenti: ${plural(r.charges_created, "addebito", "addebiti")}, ${plural(r.player_charges_created, "quota", "quote")} e ${plural(r.payments_created, "versamento", "versamenti")} aggiunti${r.payments_already_there > 0 ? `, ${r.payments_already_there} c'erano già` : ""}.`,
+  ];
+  if (r.players_not_found > 0)
+    lines.push(
+      `${plural(r.players_not_found, "giocatore del computer non c'è", "giocatori del computer non ci sono")} ancora online: premi «Importa da XFive» in Giocatori e poi ripeti qui.`,
+    );
+  if (r.players_ambiguous > 0)
+    lines.push(`${plural(r.players_ambiguous, "giocatore non si capisce", "giocatori non si capiscono")} (omonimi): vanno completati a mano.`);
+  if (r.finance_skipped > 0)
+    lines.push(`${plural(r.finance_skipped, "voce di pagamento lasciata", "voci di pagamento lasciate")} fuori perché il giocatore non c'è online.`);
+  return lines;
+}
+
 /** Copia di sicurezza di tutti i dati: serve anche a portarli dal computer a un server. */
 function BackupCard() {
   const navigate = useNavigate();
-  const [busy, setBusy] = useState<"download" | "restore" | null>(null);
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState<"download" | "restore" | "import" | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [word, setWord] = useState("");
+  const [localFile, setLocalFile] = useState<File | null>(null);
+  const [imported, setImported] = useState<string[] | null>(null);
+
+  const importLocal = async () => {
+    if (!localFile) return;
+    setBusy("import");
+    setImported(null);
+    try {
+      const r = await api.importLocalData(localFile);
+      setImported(importSummary(r));
+      toast.success("Fatto: info e pagamenti del computer sono online.");
+      await queryClient.invalidateQueries(); // giocatori, pagamenti e saldi si rileggono
+    } catch (e) {
+      toastError(e);
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const download = async () => {
     setBusy("download");
@@ -75,6 +114,36 @@ function BackupCard() {
       <Btn onClick={download} disabled={busy !== null}>
         <Download className="h-4 w-4" /> {busy === "download" ? "Preparo la copia…" : "Scarica backup"}
       </Btn>
+
+      <h3 className="mb-2 mt-6 text-lg">Porta qui info e pagamenti del computer</h3>
+      <p className="mb-3 text-sm text-muted-foreground">
+        Carica il file <code>database.sqlite</code> del gestionale sul computer (o un backup). I giocatori si riconoscono dal nome e si
+        completa solo quello che online è vuoto: maglie, telefono, email, soprannome, note, scheda scout. Squad List, tesseramenti e
+        certificati di XFive non si toccano. Addebiti, quote e versamenti si aggiungono se mancano. Non sostituisce niente e si può
+        ripetere senza fare doppioni. Prima servono i giocatori online: «Importa da XFive» in Giocatori.
+      </p>
+      <div className="space-y-3">
+        <input
+          type="file"
+          accept=".gz,.json,.sqlite,.db,application/gzip,application/json,application/vnd.sqlite3,application/x-sqlite3"
+          aria-label="File del gestionale sul computer"
+          onChange={(e) => {
+            setLocalFile(e.target.files?.[0] ?? null);
+            setImported(null);
+          }}
+          className="block w-full text-sm file:mr-3 file:min-h-11 file:cursor-pointer file:rounded-lg file:border-0 file:bg-secondary file:px-4 file:font-semibold file:text-foreground"
+        />
+        <Btn onClick={importLocal} disabled={!localFile || busy !== null}>
+          <Upload className="h-4 w-4" /> {busy === "import" ? "Importo…" : "Importa info e pagamenti"}
+        </Btn>
+        {imported && (
+          <ul className="space-y-1 rounded-lg border border-success/40 bg-success/5 p-3 text-sm" role="status">
+            {imported.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       <h3 className="mb-2 mt-6 text-lg">Ripristina da un backup</h3>
       <p className="mb-3 rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">

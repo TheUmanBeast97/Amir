@@ -145,6 +145,30 @@ class DatabaseBackup
         }
     }
 
+    /**
+     * Le tabelle di un backup (JSON, compresso o no, oppure database SQLite del gestionale) senza applicarlo: nome della tabella
+     * in minuscolo => righe come liste associative. Serve a chi vuole solo prenderne una parte (vedi LocalDataImporter).
+     *
+     * @return array<string, array<int, array<string, mixed>>>
+     *
+     * @throws InvalidArgumentException se il file non è un backup di questa app
+     */
+    public function load(string $file): array
+    {
+        $backup = $this->read($file);
+        $tables = [];
+
+        foreach ($backup['tables'] as $name => $table) {
+            $rows = [];
+            foreach ($table['rows'] as $row) {
+                $rows[] = array_combine($table['columns'], $row);
+            }
+            $tables[strtolower((string) $name)] = $rows;
+        }
+
+        return $tables;
+    }
+
     // ------------------------------------------------------------------ lettura dei file
 
     /** @return array{tables: array<string, array{columns: array<int,string>, rows: array<int, array<int,mixed>>}>, migrations: array<int,string>|null} */
