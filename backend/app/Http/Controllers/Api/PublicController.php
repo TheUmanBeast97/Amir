@@ -136,6 +136,14 @@ class PublicController extends Controller
         return $this->image($request, $media, $player->photo_path);
     }
 
+    /** La sagoma senza sfondo per la figurina (vedi PlayerController::cutout). */
+    public function cutout(Request $request, Player $player, MediaStore $media): Response
+    {
+        abort_unless($player->cutout_path, 404);
+
+        return $this->image($request, $media, $player->cutout_path);
+    }
+
     /** Immagine salvata da noi: cache di un giorno (anche sulla rete di Vercel) e risposta «non cambiata» se il browser ha già la stessa. */
     private function image(Request $request, MediaStore $media, string $path): Response
     {

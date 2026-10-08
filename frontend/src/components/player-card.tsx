@@ -1,5 +1,5 @@
 import { toPng } from "html-to-image";
-import { Download, Share2, Sparkles } from "lucide-react";
+import { Download, Info, Share2, Sparkles } from "lucide-react";
 import {
   animate,
   motion,
@@ -10,6 +10,7 @@ import {
   useTransform,
 } from "motion/react";
 import { forwardRef, useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { PlayerPage } from "@/api/types";
 import { Btn } from "@/components/admin/kit";
@@ -22,7 +23,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { cardRating, tierLabel, type CardRating, type Tier } from "@/lib/card-rating";
+import { cardRating, explain, tierLabel, tierRange, TIERS, type CardRating, type Tier } from "@/lib/card-rating";
+import { canCutout, makeCutout, type CutoutProgress } from "@/lib/cutout";
+import { cn } from "@/lib/utils";
 import { initials } from "@/lib/kit";
 import { dur, ease, tiltSpring } from "@/lib/motion";
 
@@ -69,6 +72,13 @@ const THEME: Record<Tier, Theme> = {
     accent: "#ffe9a0",
     foil: true,
   },
+  platino: {
+    body: "linear-gradient(150deg,#ffffff 0%,#e9edf2 30%,#9aa4b1 62%,#2b3038 100%)",
+    rim: "linear-gradient(160deg,#ffffff,#3a4049 36%,#dfe5ec 64%,#14171c)",
+    ink: "#0d1014",
+    accent: "#f4f7fa",
+    foil: true,
+  },
   fuoco: {
     body: "linear-gradient(150deg,#ff5043 0%,#c4151d 36%,#4d080e 76%,#17030a 100%)",
     rim: "linear-gradient(160deg,#ffddd6,#d61f26 38%,#ff806f 66%,#7d0c14)",
@@ -86,6 +96,8 @@ interface FaceProps {
   rating: CardRating;
   /** Il voto sale da zero (solo nell'anteprima: il PNG scaricato ha sempre il valore finale). */
   animateNumbers?: boolean;
+  /** La sagoma senza sfondo appena ritagliata (prima che la scheda si ricarichi dal server). */
+  cutout?: string | null | undefined;
 }
 
 /**
@@ -94,11 +106,12 @@ interface FaceProps {
  * Stili in linea e nessun effetto dipendente dal puntatore: è questo nodo che si esporta in PNG.
  */
 export const PlayerCardFace = forwardRef<HTMLDivElement, FaceProps>(function PlayerCardFace(
-  { page, rating, animateNumbers = false },
+  { page, rating, animateNumbers = false, cutout },
   ref,
 ) {
   const { player: p } = page;
   const th = THEME[rating.tier];
+  const silhouette = cutout ?? p.cutout_url;
   const [first, ...rest] = p.full_name.split(" ");
   const last = (rest.length ? rest.join(" ") : first) ?? "";
   const firstName = rest.length ? (first ?? "") : "";
@@ -194,7 +207,35 @@ export const PlayerCardFace = forwardRef<HTMLDivElement, FaceProps>(function Pla
             background: "linear-gradient(135deg,#3d3d44,#16161a)",
           }}
         >
-          {p.photo_url ? (
+          {silhouette ? (
+            <>
+              {/* dietro la sagoma: un alone del colore del tipo, come sulle figurine vere */}
+              <div
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: `radial-gradient(70% 60% at 58% 42%, ${th.accent}55, transparent 70%)`,
+                }}
+              />
+              <img
+                src={silhouette}
+                alt=""
+                crossOrigin="anonymous"
+                style={{
+                  position: "absolute",
+                  left: "6%",
+                  right: 0,
+                  bottom: 0,
+                  width: "94%",
+                  height: "96%",
+                  objectFit: "contain",
+                  objectPosition: "50% 100%",
+                  filter: "drop-shadow(0 18px 28px rgba(0,0,0,0.55))",
+                }}
+              />
+            </>
+          ) : p.photo_url ? (
             <img
               src={p.photo_url}
               alt=""
@@ -556,6 +597,7 @@ interface HoloProps {
   scale: number;
   faceRef: React.Ref<HTMLDivElement>;
   onFlipped: () => void;
+  cutout?: string | null | undefined;
 }
 
 /**
@@ -563,7 +605,7 @@ interface HoloProps {
  * con un riflesso di luce e, sui tipi rari, una lamina olografica che cambia colore con l'angolo.
  * Riflesso e lamina stanno fuori dal fronte esportabile: il PNG scaricato è piatto.
  */
-function HoloCard({ page, rating, scale, faceRef, onFlipped }: HoloProps) {
+function HoloCard({ page, rating, scale, faceRef, onFlipped, cutout }: HoloProps) {
   const reduce = useReducedMotion();
   const th = THEME[rating.tier];
   const px = useMotionValue(0.5);
@@ -674,8 +716,8 @@ function HoloCard({ page, rating, scale, faceRef, onFlipped }: HoloProps) {
                 position: "relative",
               }}
             >
-              <PlayerCardFace ref={faceRef} page={page} rating={rating} animateNumbers />
-              {/* lamina olografica: solo oro e fuoco */}
+              <PlayerCardFace ref={faceRef} page={page} rating={rating} animateNumbers cutout={cutout} />
+              {/* lamina olografica: solo oro, platino e fuoco */}
               {th.foil && (
                 <motion.div
                   aria-hidden
@@ -756,13 +798,88 @@ function useCardScale() {
   return scale;
 }
 
+/** Il pannello «i»: come è venuto fuori il voto, voce per voce, con i pesi del ruolo. */
+function RatingExplainer({ page, rating }: { page: PlayerPage; rating: CardRating }) {
+  const e = explain(page.card);
+  const row = "grid grid-cols-[1fr_auto] items-baseline gap-x-3 gap-y-0.5";
+  return (
+    <div className="space-y-3 rounded-xl border border-border bg-secondary/40 p-3 text-sm">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{e.roleLabel}</p>
+      <ul className="space-y-2">
+        {e.parts.map((part) => (
+          <li key={part.key} className={row}>
+            <div>
+              <div className="font-semibold">{part.label}</div>
+              <div className="text-xs text-muted-foreground">{part.value}</div>
+              <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-border">
+                <div className="h-full rounded-full bg-primary" style={{ width: `${part.score}%` }} />
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="font-display text-xl tabular-nums">+{part.points.toFixed(1).replace(".", ",")}</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">peso {part.weight}%</div>
+            </div>
+          </li>
+        ))}
+        {e.penalty && (
+          <li className={row}>
+            <div>
+              <div className="font-semibold">{e.penalty.label}</div>
+              <div className="text-xs text-muted-foreground">{e.penalty.value}</div>
+            </div>
+            <div className="font-display text-xl tabular-nums text-primary">
+              {e.penalty.points.toFixed(1).replace(".", ",")}
+            </div>
+          </li>
+        )}
+        {e.confidence && (
+          <li className={row}>
+            <div>
+              <div className="font-semibold">{e.confidence.label}</div>
+              <div className="text-xs text-muted-foreground">{e.confidence.value}</div>
+            </div>
+          </li>
+        )}
+      </ul>
+      <p className="border-t border-border pt-2 text-xs text-muted-foreground">
+        Si parte da 75 e ogni voce aggiunge fino alla sua quota di 24 punti: {rating.ovr} = {tierLabel[rating.tier]}.
+        Le medie sono «corrette» come se ci fossero 12 partite in più, così una partita fortunata non basta. Fasce:{" "}
+        {TIERS.map((t) => `${tierLabel[t]} ${tierRange[t]}`).join(", ")}.
+      </p>
+    </div>
+  );
+}
+
 /** Pulsante «Figurina»: apre l'anteprima viva e permette di scaricare o condividere il PNG piatto. */
 export function PlayerCardButton({ page }: { page: PlayerPage }) {
   const node = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
+  const [cutout, setCutout] = useState<string | null>(null);
+  const [cutting, setCutting] = useState<CutoutProgress | null>(null);
+  const queryClient = useQueryClient();
   const scale = useCardScale();
   const rating = cardRating(page);
+
+  // la prima volta che lo staff apre la figurina, la foto si ritaglia e si salva: da lì in poi è pronta per tutti
+  const prepareCutout = async () => {
+    const { id, photo_url, cutout_url } = page.player;
+    if (cutout_url || cutout || cutting || !photo_url || !canCutout()) return;
+    setCutting("scarico il modello");
+    try {
+      const url = await makeCutout(id, photo_url, setCutting);
+      if (url) {
+        setCutout(url);
+        toast.success("Sagoma ritagliata e salvata: d'ora in poi la figurina è così per tutti.");
+        await queryClient.invalidateQueries({ queryKey: ["player-page", id] });
+      } else {
+        toast("La foto non si può ritagliare (troppo piccola o non leggibile): resta intera.");
+      }
+    } finally {
+      setCutting(null);
+    }
+  };
 
   const render = async () => {
     if (!node.current) throw new Error("Anteprima non pronta");
@@ -816,7 +933,15 @@ export function PlayerCardButton({ page }: { page: PlayerPage }) {
   };
 
   return (
-    <Dialog onOpenChange={(open) => !open && setReady(false)}>
+    <Dialog
+      onOpenChange={(open) => {
+        if (open) void prepareCutout();
+        else {
+          setReady(false);
+          setShowInfo(false);
+        }
+      }}
+    >
       <DialogTrigger asChild>
         <button
           type="button"
@@ -827,15 +952,29 @@ export function PlayerCardButton({ page }: { page: PlayerPage }) {
       </DialogTrigger>
       <DialogContent className="max-h-[94vh] max-w-[calc(100vw-1.5rem)] overflow-y-auto overflow-x-hidden sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {page.player.full_name} · {tierLabel[rating.tier]} {rating.ovr}
+          <DialogTitle className="flex items-center gap-2">
+            <span>
+              {page.player.full_name} · {tierLabel[rating.tier]} {rating.ovr}
+            </span>
+            <button
+              type="button"
+              aria-label="Come è calcolato il voto"
+              aria-pressed={showInfo}
+              onClick={() => setShowInfo((v) => !v)}
+              className={cn(
+                "press grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border text-muted-foreground hover:text-foreground",
+                showInfo && "bg-primary text-primary-foreground hover:text-primary-foreground",
+              )}
+            >
+              <Info className="h-4 w-4" />
+            </button>
           </DialogTitle>
           <DialogDescription>
-            Il voto (da 40 a 95) viene dai gol a partita, dalle presenze, dalle vittorie con lui in
-            campo, dalle volte miglior giocatore e dai cartellini. Muovi il puntatore sulla figurina
-            (o trascinala con un dito) per inclinarla.
+            Il voto va da 75 a 99 e dipende dal ruolo: premi «i» per vedere come è calcolato. Muovi il puntatore
+            sulla figurina (o trascinala con un dito) per inclinarla.
           </DialogDescription>
         </DialogHeader>
+        {showInfo && <RatingExplainer page={page} rating={rating} />}
         <div className="py-4">
           <HoloCard
             page={page}
@@ -843,8 +982,14 @@ export function PlayerCardButton({ page }: { page: PlayerPage }) {
             scale={scale}
             faceRef={node}
             onFlipped={() => setReady(true)}
+            cutout={cutout}
           />
         </div>
+        {cutting && (
+          <p className="text-center text-xs text-muted-foreground" role="status">
+            Preparo la sagoma senza sfondo: {cutting}… (solo la prima volta, poi resta salvata)
+          </p>
+        )}
         <div className="flex flex-wrap justify-center gap-2">
           <Btn onClick={download} disabled={busy || !ready}>
             <Download className="h-4 w-4" /> Scarica PNG

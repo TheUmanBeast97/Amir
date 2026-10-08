@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Player;
 use App\Models\Team;
+use App\Services\MediaStore;
 use App\Services\PlayerImporter;
 use App\Services\ScoutProfileGenerator;
 use App\Support\Present;
@@ -95,6 +96,21 @@ class PlayerController extends Controller
         $player->update($text === ''
             ? ['scout_text' => null, 'scout_source' => null, 'scout_generated_at' => null]
             : ['scout_text' => $text, 'scout_source' => 'manual', 'scout_generated_at' => now()]);
+
+        return $this->ok(Present::player($player->refresh()));
+    }
+
+    /**
+     * Salva la sagoma senza sfondo per la figurina. La ritaglia il browser dello staff (la prima volta che apre la figurina)
+     * e da qui in poi la vedono tutti, anche nel sito pubblico. Una sola per giocatore: caricarla di nuovo la sostituisce.
+     */
+    public function cutout(Request $request, Player $player, MediaStore $media): JsonResponse
+    {
+        $request->validate(['file' => ['required', 'file', 'mimes:png', 'max:4096']]);
+
+        $path = "media/cutouts/{$player->id}.png";
+        $media->put($path, (string) file_get_contents($request->file('file')->getRealPath()), 'image/png');
+        $player->update(['cutout_path' => $path]);
 
         return $this->ok(Present::player($player->refresh()));
     }

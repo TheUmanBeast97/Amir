@@ -1,7 +1,9 @@
-import type { PlayerPage, PlayerRole } from "@/api/types";
+import type { CardPart, CardScore, PlayerPage, PlayerRole } from "@/api/types";
 
-/** I quattro tipi di figurina: dal voto dipende il metallo. «Fuoco» è la speciale AMIR, nera e rossa. */
-export type Tier = "bronzo" | "argento" | "oro" | "fuoco";
+/** Le cinque fasce della figurina, dal voto: 75-79, 80-84, 85-89, 90-94, 95-99. «Fuoco» è la speciale AMIR, nera e rossa. */
+export type Tier = "bronzo" | "argento" | "oro" | "platino" | "fuoco";
+
+export const TIERS: Tier[] = ["bronzo", "argento", "oro", "platino", "fuoco"];
 
 export interface CardStat {
   label: string;
@@ -9,12 +11,12 @@ export interface CardStat {
 }
 
 export interface CardRating {
-  /** Il voto da 40 a 95. */
+  /** Il voto da 75 a 99, calcolato dal server con pesi diversi per ruolo (vedi `page.card`). */
   ovr: number;
   tier: Tier;
   /** Sigla del ruolo: POR, DIF, CEN, ATT. */
   pos: string;
-  /** I sei numeri in basso, tutti dalle statistiche vere. */
+  /** I sei numeri in basso, tutti dalle statistiche vere; cambiano con il ruolo. */
   stats: CardStat[];
 }
 
@@ -25,51 +27,118 @@ const POS: Partial<Record<PlayerRole, string>> = {
   attaccante: "ATT",
 };
 
-const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
-
-/**
- * Il voto della figurina: parte da 42 e sale con i gol a partita (fino a +26), le presenze (+14), le vittorie
- * della squadra con lui in campo (da -6 a +8), le volte miglior giocatore (+1,5 l'una, fino a 8) e scende con
- * i cartellini (fino a -6). I gol a partita si correggono sul numero di partite (la media della squadra pesa come
- * 12 partite), così 9 gol in 6 partite non valgono come 9 gol in 20. Usa solo le statistiche della scheda: chi ha
- * poche partite ha un voto basso per mancanza di dati, non di valore.
- */
-export function ovrOf(t: PlayerPage["totals"]): number {
-  const gpm = (t.goals + 0.4 * 12) / (t.matches + 12);
-  const attack = clamp(gpm / 0.9, 0, 1) * 26;
-  const presence = clamp(t.matches / 100, 0, 1) * 14;
-  const winning = clamp((t.win_rate - 0.35) * 30, -6, 8);
-  const stars = Math.min(t.mvp, 8) * 1.5;
-  const discipline = Math.min(t.red * 3 + t.yellow * 0.3, 6);
-  return Math.round(clamp(42 + attack + presence + winning + stars - discipline, 40, 95));
-}
-
 export const tierOf = (ovr: number): Tier =>
-  ovr >= 74 ? "fuoco" : ovr >= 64 ? "oro" : ovr >= 52 ? "argento" : "bronzo";
+  ovr >= 95 ? "fuoco" : ovr >= 90 ? "platino" : ovr >= 85 ? "oro" : ovr >= 80 ? "argento" : "bronzo";
 
 export const tierLabel: Record<Tier, string> = {
   bronzo: "Bronzo",
   argento: "Argento",
   oro: "Oro",
+  platino: "Platino",
   fuoco: "Fuoco",
 };
+
+/** Intervallo di voto di una fascia, per la legenda. */
+export const tierRange: Record<Tier, string> = {
+  bronzo: "75-79",
+  argento: "80-84",
+  oro: "85-89",
+  platino: "90-94",
+  fuoco: "95-99",
+};
+
+const it = (n: number, digits = 2) => n.toFixed(digits).replace(".", ",");
 
 /** Tutto quello che serve a disegnare una figurina, ricavato dalla scheda del giocatore. */
 export function cardRating(page: PlayerPage): CardRating {
   const t = page.totals;
-  const ovr = ovrOf(t);
+  const role = page.player.role;
+  const defensive = role === "portiere" || role === "difensore";
   const pct = Math.round(t.win_rate * 100);
   return {
-    ovr,
-    tier: tierOf(ovr),
-    pos: (page.player.role && POS[page.player.role]) || "GIO",
+    ovr: page.card.ovr,
+    tier: tierOf(page.card.ovr),
+    pos: (role && POS[role]) || "GIO",
     stats: [
       { label: "Presenze", value: String(t.matches) },
-      { label: "Gol", value: String(t.goals) },
-      { label: "Gol a partita", value: t.goals_per_match.toFixed(2).replace(".", ",") },
+      role === "portiere"
+        ? { label: "Porte inviolate", value: String(t.clean_sheets) }
+        : { label: "Gol", value: String(t.goals) },
+      defensive
+        ? { label: "Subiti a partita", value: it(t.conceded_per_match) }
+        : { label: "Gol a partita", value: it(t.goals_per_match) },
       { label: "Migliore", value: String(t.mvp) },
       { label: "Vittorie", value: `${pct}%` },
-      { label: "Punti a partita", value: t.points_per_match.toFixed(2).replace(".", ",") },
+      { label: "Punti a partita", value: it(t.points_per_match) },
     ],
   };
+}
+
+/** Una voce della scomposizione, scritta per il pannello «i». */
+export interface ExplainedPart {
+  key: string;
+  label: string;
+  /** Il numero di partenza, in parole: «0,9 a partita (squadra 1,6)». */
+  value: string;
+  /** Quanto rende da 0 a 100 su quella voce. */
+  score: number;
+  /** Il peso del ruolo, in percento. */
+  weight: number;
+  /** I punti portati al voto. */
+  points: number;
+}
+
+const describe = (p: CardPart): string => {
+  switch (p.unit) {
+    case "per_match":
+      return p.key === "conceded"
+        ? `${it(p.value)} a partita (squadra ${it(p.reference ?? 0)})`
+        : `${it(p.value)} a partita (pieno a ${it(p.reference ?? 0, 1)})`;
+    case "share":
+      return `${Math.round(p.value * 100)}% (pieno al ${Math.round((p.reference ?? 1) * 100)}%)`;
+    default:
+      return `${p.value} (pieno a ${p.reference ?? ""})`;
+  }
+};
+
+/** La scomposizione del voto pronta da mostrare, più le righe speciali (cartellini e poche partite). */
+export function explain(card: CardScore): {
+  parts: ExplainedPart[];
+  penalty: { label: string; value: string; points: number } | null;
+  confidence: { label: string; value: string } | null;
+  roleLabel: string;
+} {
+  const parts = card.parts.map((p) => ({
+    key: p.key,
+    label: p.label,
+    value: describe(p),
+    score: Math.round(p.score * 100),
+    weight: Math.round(p.weight * 100),
+    points: p.points,
+  }));
+  const pen = card.penalty;
+  const penalty =
+    pen.yellow + pen.red > 0
+      ? {
+          label: "Cartellini",
+          value: `${pen.yellow} gialli, ${pen.red} rossi (tolgono fino al ${Math.round(pen.max_weight * 100)}%)`,
+          points: -pen.points,
+        }
+      : null;
+  const confidence =
+    card.confidence < 1
+      ? {
+          label: "Poche partite",
+          value: `${card.matches} su 10: il voto vale il ${Math.round(card.confidence * 100)}% di quello pieno`,
+        }
+      : null;
+  const roleLabel =
+    card.role === "portiere"
+      ? "Portiere: conta soprattutto quanto si subisce"
+      : card.role === "difensore"
+        ? "Difensore: pesano i gol subiti e le vittorie"
+        : card.role === "attaccante"
+          ? "Attaccante: pesano i gol fatti"
+          : "Centrocampista: gol, vittorie e premi";
+  return { parts, penalty, confidence, roleLabel };
 }

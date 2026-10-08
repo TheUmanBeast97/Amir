@@ -126,6 +126,8 @@ export interface ApiClient {
   generateScout(id: Id): Promise<ScoutResult>;
   /** Salva la scheda scout corretta a mano; un testo vuoto la toglie. */
   saveScout(id: Id, text: string): Promise<Player>;
+  /** Salva la sagoma senza sfondo (PNG) per la figurina del giocatore. */
+  uploadCutout(id: Id, file: File): Promise<Player>;
   getAdminMatches(p: { competition_id?: Id | undefined; scope?: Scope }): Promise<Match[]>;
   getMatchDetail(id: Id): Promise<MatchDetail>;
   updateMatch(id: Id, v: MatchSettings): Promise<MatchDetail>;
@@ -279,6 +281,7 @@ export const api: ApiClient = {
   importPlayers: (rows) => request("/players/import", post({ rows })),
   generateScout: (id) => request(`/players/${id}/scout`, { method: "POST" }),
   saveScout: (id, text) => request(`/players/${id}/scout`, post({ text }, "PUT")),
+  uploadCutout: (id, file) => postFile(`/players/${id}/cutout`, { file }, "Sagoma non salvata."),
   getAdminMatches: ({ competition_id, scope }) =>
     request(`/matches${qs({ competition_id, scope })}`),
   getMatchDetail: (id) => request(`/matches/${id}`),

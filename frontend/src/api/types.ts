@@ -104,6 +104,7 @@ export interface PublicPlayer {
   shirt_number_white: string | null; // numero con la divisa bianca
   role: PlayerRole | null;
   photo_url: string | null;
+  cutout_url: string | null; // la sagoma senza sfondo per la figurina, se lo staff l'ha già ritagliata
   nationality: string | null;
   is_active: boolean; // false = ex giocatore (resta nello storico)
 }
@@ -293,8 +294,34 @@ export interface PlayerTotals {
   losses: number;
   win_rate: number;
   points_per_match: number;
+  // la squadra con lui in campo: gol subiti e porte inviolate (contano per portieri e difensori)
+  conceded: number;
+  conceded_per_match: number;
+  clean_sheets: number;
+  team_conceded_per_match: number; // il riferimento: media della squadra su tutte le partite contate
   competitions: number;
   mvp_points: number; // mvp_points = punti "miglior giocatore" delle classifiche XFive
+}
+/** Una voce del voto della figurina: numero di partenza, resa da 0 a 1, peso del ruolo e punti portati. */
+export interface CardPart {
+  key: "conceded" | "clean_sheets" | "goals" | "wins" | "presence" | "mvp";
+  label: string;
+  value: number;
+  reference: number | null;
+  unit: "per_match" | "share" | "count";
+  score: number;
+  weight: number;
+  points: number;
+}
+/** Il voto della figurina (da 75 a 99) con la sua scomposizione, calcolato dal server con pesi diversi per ruolo. */
+export interface CardScore {
+  ovr: number;
+  tier: "bronzo" | "argento" | "oro" | "platino" | "fuoco";
+  role: "portiere" | "difensore" | "centrocampista" | "attaccante";
+  matches: number;
+  confidence: number; // 1 = voto pieno; sotto 10 partite il voto è scalato
+  parts: CardPart[];
+  penalty: { yellow: number; red: number; max_weight: number; points: number };
 }
 export interface TeamRecordLine {
   played: number;
@@ -313,6 +340,7 @@ export interface PlayerPage {
     seasons_count: number;
   };
   totals: PlayerTotals;
+  card: CardScore;
   rank: { appearances: number | null; goals: number | null; of: number };
   by_season: {
     season: string;
@@ -838,6 +866,7 @@ export interface ImportResult {
 //  POST /players/import   {rows: Record<string,string>[]}  -> ImportResult
 //  POST /players/{id}/scout                                -> ScoutResult  (scrive e salva la scheda scout: IA o modello di testo)
 //  PUT  /players/{id}/scout {text}                         -> Player       (testo corretto a mano; vuoto = la toglie)
+//  POST /players/{id}/cutout (file PNG)                    -> Player       (la sagoma senza sfondo per la figurina; GET /public/players/{id}/cutout la serve)
 //  GET  /matches?competition_id=&scope=own|all             -> Match[]
 //  GET  /matches/{id}                                      -> MatchDetail
 //  GET/PUT /matches/{id}/lineup                            -> Lineup | null   (PUT accepts is_published)

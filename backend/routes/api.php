@@ -41,6 +41,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/badges/{team}', [PublicController::class, 'badge']);
         Route::get('/players/{player}', [PublicController::class, 'playerProfile']);
         Route::get('/players/{player}/photo', [PublicController::class, 'photo']);
+        Route::get('/players/{player}/cutout', [PublicController::class, 'cutout']);
         Route::get('/stats/career', [PublicController::class, 'careerStats']);
         Route::get('/matches/{game}', [PublicController::class, 'match']);
     });
@@ -66,6 +67,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/players/import', [PlayerController::class, 'import']);
         Route::post('/players/{player}/scout', [PlayerController::class, 'scout'])->middleware('throttle:20,1');
         Route::put('/players/{player}/scout', [PlayerController::class, 'saveScout']);
+        // la sagoma senza sfondo per la figurina: la ritaglia il browser dello staff la prima volta, poi resta salvata
+        Route::post('/players/{player}/cutout', [PlayerController::class, 'cutout'])->middleware('throttle:30,1');
         Route::apiResource('players', PlayerController::class);
 
         Route::get('/matches', [MatchController::class, 'index']);

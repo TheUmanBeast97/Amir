@@ -29,7 +29,7 @@ final class PlayerStatsService
             ->whereHas('competition', fn ($c) => $c->counted())
             ->get();
         $career = $this->career($rows, $official);
-        $totals = $this->withOfficial($this->totals($rows), $career);
+        $totals = $this->withOfficial($this->totals($rows), $career) + ['team_conceded_per_match' => $this->teamConcededPerMatch($own)];
 
         return [
             'player' => $this->playerBlock($player, $rows),
@@ -37,6 +37,7 @@ final class PlayerStatsService
                 'competitions' => count($career),
                 'mvp_points' => (int) $official->sum('mvp_points'),
             ],
+            'card' => (new CardRating)->rate($player->role, $totals),
             'rank' => $this->rank($player, $own),
             'by_season' => $this->bySeason($rows, $career),
             'by_kind' => $this->byKind($rows),
@@ -170,11 +171,16 @@ final class PlayerStatsService
         $wins = $rows->where('result', 'W')->count();
         $draws = $rows->where('result', 'D')->count();
         $goals = (int) $rows->sum('goals');
+        $conceded = (int) $rows->sum('against');
 
         return [
             'matches' => $matches,
             'goals' => $goals,
             'goals_per_match' => $matches > 0 ? round($goals / $matches, 2) : 0.0,
+            // la squadra con lui in campo: gol subiti e porte inviolate (contano per portieri e difensori)
+            'conceded' => $conceded,
+            'conceded_per_match' => $matches > 0 ? round($conceded / $matches, 2) : 0.0,
+            'clean_sheets' => $rows->where('against', 0)->count(),
             'yellow' => (int) $rows->sum('yellow'),
             'red' => (int) $rows->sum('red'),
             'mvp' => (int) $rows->where('mvp', true)->count(),
@@ -184,6 +190,24 @@ final class PlayerStatsService
             'win_rate' => $matches > 0 ? round($wins / $matches, 3) : 0.0,
             'points_per_match' => $matches > 0 ? round(($wins * 3 + $draws) / $matches, 2) : 0.0,
         ];
+    }
+
+    /** Gol subiti a partita dalla squadra in tutte le partite contate: il termine di confronto per il voto di chi difende. */
+    private function teamConcededPerMatch(Team $own): float
+    {
+        $games = Game::query()
+            ->involving($own->id)
+            ->where('status', Game::PLAYED)
+            ->whereHas('competition', fn ($c) => $c->counted())
+            ->get(['home_team_id', 'away_team_id', 'home_score', 'away_score']);
+
+        if ($games->isEmpty()) {
+            return 0.0;
+        }
+
+        $against = $games->sum(fn (Game $g) => (int) ($g->home_team_id === $own->id ? $g->away_score : $g->home_score));
+
+        return round($against / $games->count(), 2);
     }
 
     /** @return array{appearances:?int, goals:?int, of:int} */
