@@ -155,7 +155,8 @@ final class XfiveArchiver
             }
             ($this->say)("  dettagli torneo {$id}: {$t['name']}");
 
-            $calendar = $this->cachedGet("printable-{$id}", "/t-printable.php?t={$id}&sk=calendar");
+            // niente indirizzo con «?»: il client passa i parametri a parte, altrimenti la libreria HTTP li cancella e torna la home
+            $calendar = $this->cachedPrintable($id);
             $fixtures = $calendar !== null ? $this->calendar->parse($calendar) : [];
             $this->archive->putJson("tournaments/{$id}/calendar", $fixtures);
             $stats['fixtures'] += count($fixtures);
@@ -533,6 +534,21 @@ final class XfiveArchiver
             return $html;
         }
         $html = $this->guarded(fn () => $this->client->get($path), $tolerant);
+        if ($html !== null) {
+            $this->archive->putRaw($key, $html);
+        }
+
+        return $html;
+    }
+
+    /** Il calendario stampabile di un torneo, dalla cache se c'è. */
+    private function cachedPrintable(int $tournamentId): ?string
+    {
+        $key = "printable-{$tournamentId}";
+        if (! $this->refresh && ($html = $this->archive->getRaw($key)) !== null) {
+            return $html;
+        }
+        $html = $this->guarded(fn () => $this->client->printableCalendar($tournamentId));
         if ($html !== null) {
             $this->archive->putRaw($key, $html);
         }
