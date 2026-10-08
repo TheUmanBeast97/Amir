@@ -111,7 +111,8 @@ personalizzato sul computer, usa **Impostazioni**, **Dati e backup**, **Porta qu
 - Apri https://amir-taupe.vercel.app: devono comparire la prossima partita e la classifica.
 - Uno stemma e una foto si vedono (se mancano: **Impostazioni**, **Stemmi e foto**).
 - **Accedi** in alto o nel menu, entra nell'area staff.
-- Una figurina si apre e il pulsante **Scarica PNG** funziona.
+- Una figurina si apre e il pulsante **Scarica PNG** funziona. Da staff, la prima apertura della figurina di ogni giocatore
+  ritaglia la foto senza sfondo nel browser (scarica una volta un modello di qualche decina di MB) e la salva: poi è pronta per tutti.
 
 ## Velocità
 
