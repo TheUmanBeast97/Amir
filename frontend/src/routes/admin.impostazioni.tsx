@@ -300,7 +300,8 @@ function SettingsPage() {
       <Card>
         <h2 className="mb-3 text-2xl">XFive</h2>
         <div className="flex flex-wrap gap-2">
-          <Btn onClick={() => start("current")} disabled={busy}><RefreshCw className={cn("h-4 w-4", busy && "animate-spin")} /> Aggiorna calendario</Btn>
+          <Btn onClick={() => start(["current", "history", "details", "media", "stats"])} disabled={busy}><Download className="h-4 w-4" /> Scarica tutto da XFive</Btn>
+          <Btn variant="outline" onClick={() => start("current")} disabled={busy}><RefreshCw className={cn("h-4 w-4", busy && "animate-spin")} /> Aggiorna calendario</Btn>
           <Btn variant="outline" onClick={() => start("details")} disabled={busy}><ClipboardList className="h-4 w-4" /> Partite giocate</Btn>
           <Btn variant="outline" onClick={() => start("media")} disabled={busy}><Images className="h-4 w-4" /> Stemmi e foto</Btn>
           <Btn variant="outline" onClick={() => start("stats")} disabled={busy}><ChartColumn className="h-4 w-4" /> Statistiche</Btn>
@@ -312,7 +313,8 @@ function SettingsPage() {
           </p>
         )}
         <p className="mt-3 text-xs text-muted-foreground">
-          Il calendario si aggiorna da solo ogni notte. «Stemmi e foto» serve dopo un ripristino dei dati: le immagini non stanno nei backup e
+          «Scarica tutto da XFive» fa in fila calendario, storico, partite giocate, stemmi e foto e statistiche (qualche minuto, lascia aperta
+          la pagina): serve quando il database è nuovo o vuoto. Il calendario si aggiorna da solo ogni notte. «Stemmi e foto» serve dopo un ripristino dei dati: le immagini non stanno nei backup e
           si riscaricano da XFive a più riprese (un minuto circa ogni volta, il sito richiama da solo finché finisce).
         </p>
         <h3 className="mb-2 mt-5 text-lg">Ultime sincronizzazioni</h3>
