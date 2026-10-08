@@ -118,7 +118,8 @@ final class Present
             'shirt_number_red' => $p->shirt_number_red,
             'shirt_number_white' => $p->shirt_number_white,
             'role' => $p->role,
-            'photo_url' => $p->photo_path ? url("/api/v1/public/players/{$p->id}/photo") : $p->photo_url,
+            // la versione nell'indirizzo cambia a ogni foto nuova: così nessuna cache (browser, rete di Vercel) mostra quella vecchia
+            'photo_url' => $p->photo_path ? url("/api/v1/public/players/{$p->id}/photo").($p->photo_updated_at ? '?v='.$p->photo_updated_at->getTimestamp() : '') : $p->photo_url,
             // la sagoma senza sfondo per la figurina, se lo staff l'ha già ritagliata
             'cutout_url' => $p->cutout_path ? url("/api/v1/public/players/{$p->id}/cutout") : null,
             'nationality' => $p->nationality,
@@ -139,6 +140,8 @@ final class Present
             'email' => $p->email,
             'birth_date' => $p->birth_date?->toDateString(),
             'xfive_player_id' => $p->xfive_player_id,
+            // da dove viene la foto: null o xfive = da XFive (si aggiorna da sola), upload = caricata dallo staff, none = tolta
+            'photo_source' => $p->photo_source,
             'notes' => $p->notes,
             'scout_text' => $p->scout_text,
             'scout_source' => $p->scout_source,

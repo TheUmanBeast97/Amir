@@ -26,6 +26,7 @@ class Player extends Model
             'xfive_membership' => 'array',
             'xfive_admin_synced_at' => 'datetime',
             'scout_generated_at' => 'datetime',
+            'photo_updated_at' => 'datetime',
         ];
     }
 

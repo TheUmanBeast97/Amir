@@ -305,6 +305,7 @@ function SettingsPage() {
           <Btn variant="outline" onClick={() => start("details")} disabled={busy}><ClipboardList className="h-4 w-4" /> Partite giocate</Btn>
           <Btn variant="outline" onClick={() => start("media")} disabled={busy}><Images className="h-4 w-4" /> Stemmi e foto</Btn>
           <Btn variant="outline" onClick={() => start("stats")} disabled={busy}><ChartColumn className="h-4 w-4" /> Statistiche</Btn>
+          <Btn variant="outline" onClick={() => start("roster")} disabled={busy}><Users className="h-4 w-4" /> Profili e foto della rosa</Btn>
           <Btn variant="outline" onClick={() => start("history")} disabled={busy}><History className="h-4 w-4" /> Importa storico</Btn>
         </div>
         {working && (

@@ -119,6 +119,8 @@ export interface Player extends PublicPlayer {
   email: string | null;
   birth_date: ISODate | null; // personal data: admin only
   xfive_player_id: number | null;
+  // da dove viene la foto: null o "xfive" = da XFive (si aggiorna da sola), "upload" = caricata dallo staff, "none" = tolta
+  photo_source: "xfive" | "upload" | "none" | null;
   notes: string | null;
   scout_text: string | null; // scheda scout (scritta dall'IA o dallo staff), mostrata sulla pagina del giocatore
   scout_source: "ai" | "template" | "manual" | null;
@@ -313,7 +315,7 @@ export interface CardPart {
   weight: number;
   points: number;
 }
-/** Il voto della figurina (da 75 a 99) con la sua scomposizione, calcolato dal server con pesi diversi per ruolo. */
+/** Il voto della figurina (da 80 a 99) con la sua scomposizione, calcolato dal server con pesi diversi per ruolo. */
 export interface CardScore {
   ovr: number;
   tier: "bronzo" | "argento" | "oro" | "platino" | "fuoco";
@@ -690,7 +692,15 @@ export interface MeResponse {
   balance: PlayerBalance;
 }
 /** current = calendario e risultati, history = storico, details = referti delle partite, media = stemmi e foto, stats = statistiche dei giocatori, admin = rosa e tesseramenti dall'area amministrazione di XFive, players = come admin ma crea anche i giocatori che da noi mancano */
-export type SyncScope = "current" | "history" | "details" | "media" | "stats" | "admin" | "players";
+export type SyncScope =
+  "current" | "history" | "details" | "media" | "stats" | "roster" | "admin" | "players";
+/** Esito della rilettura da XFive di un solo giocatore (POST /players/{id}/sync). */
+export interface PlayerSyncResult {
+  player: Player;
+  profile: "matched" | "not_found" | "ambiguous";
+  photo: boolean; // true = la foto è cambiata
+  stats_rows: number;
+}
 export interface SyncRun {
   id: Id;
   scope: SyncScope;
@@ -716,7 +726,14 @@ export interface XfiveAdminStatus {
 }
 export interface XfiveAdminCheck {
   ok: boolean;
-  state: "ok" | "not_configured" | "disabled" | "blocked" | "login_failed" | "unreachable" | "unexpected_page";
+  state:
+    | "ok"
+    | "not_configured"
+    | "disabled"
+    | "blocked"
+    | "login_failed"
+    | "unreachable"
+    | "unexpected_page";
   message: string;
 }
 /** Quello che è successo portando online le info dei giocatori e i pagamenti del gestionale sul computer. */

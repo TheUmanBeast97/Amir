@@ -10,6 +10,7 @@ export const syncLabel: Record<SyncScope, string> = {
   details: "Partite giocate",
   media: "Stemmi e foto",
   stats: "Statistiche",
+  roster: "Profili e foto della rosa",
   admin: "Rosa da XFive",
   players: "Giocatori da XFive",
 };
@@ -44,6 +45,18 @@ function finished(scope: SyncScope, run: SyncRun) {
       parts.length
         ? `Rosa da XFive: ${parts.join(", ")}`
         : "Rosa da XFive: era già tutto allineato",
+    );
+    return;
+  }
+
+  if (scope === "roster") {
+    const parts: string[] = [];
+    if (st["players"]) parts.push(`${st["players"]} giocatori riletti`);
+    if (st["photos"]) parts.push(`${st["photos"]} foto nuove`);
+    if (st["not_found"]) parts.push(`${st["not_found"]} non trovati su XFive`);
+    if (st["ambiguous"]) parts.push(`${st["ambiguous"]} con più profili possibili`);
+    toast.success(
+      parts.length ? `Rosa riletta: ${parts.join(", ")}` : "Rosa riletta: nessun giocatore attivo",
     );
     return;
   }

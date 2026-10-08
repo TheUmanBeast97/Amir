@@ -69,6 +69,10 @@ Route::prefix('v1')->group(function () {
         Route::put('/players/{player}/scout', [PlayerController::class, 'saveScout']);
         // la sagoma senza sfondo per la figurina: la ritaglia il browser dello staff la prima volta, poi resta salvata
         Route::post('/players/{player}/cutout', [PlayerController::class, 'cutout'])->middleware('throttle:30,1');
+        // la foto del giocatore: caricata dallo staff, tolta, oppure riletta da XFive insieme a profilo e statistiche
+        Route::post('/players/{player}/photo', [PlayerController::class, 'photo'])->middleware('throttle:30,1');
+        Route::delete('/players/{player}/photo', [PlayerController::class, 'removePhoto']);
+        Route::post('/players/{player}/sync', [PlayerController::class, 'sync'])->middleware('throttle:20,1');
         Route::apiResource('players', PlayerController::class);
 
         Route::get('/matches', [MatchController::class, 'index']);

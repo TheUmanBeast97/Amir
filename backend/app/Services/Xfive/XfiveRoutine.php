@@ -17,16 +17,17 @@ use Throwable;
  *   history  stagioni passate del club (storico)
  *   details  referti delle partite giocate (arbitro, distinta, marcatori, cartellini)
  *   media    stemmi e foto mancanti
- *   stats    statistiche per torneo dei nostri giocatori (stagione in corso)
+ *   stats    statistiche per torneo dei nostri giocatori (stagione in corso) e, a turno, profili e foto di chi non si rilegge da una settimana
+ *   roster   profili e foto di tutta la rosa, riletti da XFive anche se c'erano già (pulsante «Aggiorna rosa da XFive»)
  *   admin    rosa, tesseramenti, certificati e Squad List dall'area amministrazione (serve l'accesso con il tuo account, spento di serie)
  *   players  come admin, ma crea anche i giocatori che su XFive ci sono e da noi no (pulsante «Importa giocatori da XFive»)
  *
- * Sul server (Vercel) una richiesta può durare poco: gli ultimi tre lavorano entro un tempo massimo e, se c'è
+ * Sul server (Vercel) una richiesta può durare poco: details, media, stats e roster lavorano entro un tempo massimo e, se c'è
  * ancora da fare, lo dicono in "remaining": basta lanciarli di nuovo.
  */
 final class XfiveRoutine
 {
-    public const SCOPES = ['current', 'history', 'details', 'media', 'stats', 'admin', 'players'];
+    public const SCOPES = ['current', 'history', 'details', 'media', 'stats', 'roster', 'admin', 'players'];
 
     public function __construct(
         private readonly XfiveSyncService $calendar,
@@ -55,6 +56,7 @@ final class XfiveRoutine
                 'details' => $this->details($own, $deadline),
                 'media' => $this->media($own, $deadline),
                 'stats' => $this->stats($own, $deadline),
+                'roster' => $this->roster($own, $deadline),
                 'admin' => $this->admin($own, create: false),
                 'players' => $this->admin($own, create: true),
                 default => throw new RuntimeException("Aggiornamento sconosciuto: {$scope}."),
@@ -123,11 +125,39 @@ final class XfiveRoutine
         return $this->admin->sync($own, $create);
     }
 
-    /** @return array<string, int> */
+    /**
+     * Statistiche della stagione e poi, col tempo che resta, profili e foto dei giocatori che non si rileggono da una
+     * settimana: così ogni notte qualcuno viene rinfrescato e in una settimana tutta la rosa (senza un'altra pianificazione).
+     *
+     * @return array<string, int>
+     */
     private function stats(Team $own, float $deadline): array
     {
         $r = $this->players->syncStats($own, currentOnly: true, deadline: $deadline);
+        $roster = $this->players->refreshRoster($own, $deadline, staleOnly: true);
 
-        return ['competitions' => $r['competitions'], 'rows' => $r['rows'], 'remaining' => $r['stopped'] ? 1 : 0];
+        return [
+            'competitions' => $r['competitions'],
+            'rows' => $r['rows'],
+            'refreshed' => $roster['players'],
+            'photos' => $roster['photos'],
+            'remaining' => ($r['stopped'] ? 1 : 0) + $roster['remaining'],
+        ];
+    }
+
+    /** Tutta la rosa attiva riletta da XFive: profili, foto (non quelle caricate dallo staff) e statistiche della stagione. */
+    private function roster(Team $own, float $deadline): array
+    {
+        $r = $this->players->refreshRoster($own, $deadline);
+        $stats = $r['remaining'] === 0 ? $this->players->syncStats($own, currentOnly: true, deadline: $deadline) : ['rows' => 0, 'stopped' => false];
+
+        return [
+            'players' => $r['players'],
+            'photos' => $r['photos'],
+            'not_found' => $r['not_found'],
+            'ambiguous' => $r['ambiguous'],
+            'rows' => $stats['rows'],
+            'remaining' => $r['remaining'] + ($stats['stopped'] ? 1 : 0),
+        ];
     }
 }

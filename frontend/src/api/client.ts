@@ -38,6 +38,7 @@ import type {
   ScoutResult,
   StandingRow,
   SyncRun,
+  PlayerSyncResult,
   SyncScope,
   TeamEvent,
   LocalImportResult,
@@ -128,6 +129,12 @@ export interface ApiClient {
   saveScout(id: Id, text: string): Promise<Player>;
   /** Salva la sagoma senza sfondo (PNG) per la figurina del giocatore. */
   uploadCutout(id: Id, file: File): Promise<Player>;
+  /** Foto caricata dallo staff (JPG o PNG): da qui in poi vale questa, XFive non la tocca più. */
+  uploadPhoto(id: Id, file: File): Promise<Player>;
+  /** Toglie la foto; non torna da sola dagli aggiornamenti. */
+  removePhoto(id: Id): Promise<Player>;
+  /** Rilegge da XFive profilo, foto e statistiche di un giocatore; con photo la foto si riscarica anche al posto di una caricata. */
+  syncPlayer(id: Id, photo?: boolean): Promise<PlayerSyncResult>;
   getAdminMatches(p: { competition_id?: Id | undefined; scope?: Scope }): Promise<Match[]>;
   getMatchDetail(id: Id): Promise<MatchDetail>;
   updateMatch(id: Id, v: MatchSettings): Promise<MatchDetail>;
@@ -199,7 +206,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     res = await fetch(`${BASE}${path}`, { ...init, headers });
   } catch {
     // per chi gestisce il sito: l'indirizzo che il sito sta provando è scritto nella console del browser
-    console.error(`Il sito non raggiunge il server dei dati (${BASE}). Controlla VITE_API_BASE_URL e che il backend sia online.`);
+    console.error(
+      `Il sito non raggiunge il server dei dati (${BASE}). Controlla VITE_API_BASE_URL e che il backend sia online.`,
+    );
     throw new ApiError(0, "Il server dei dati non risponde. Riprova tra poco.");
   }
   if (res.status === 401) {
@@ -233,7 +242,11 @@ const post = (body: unknown, method = "POST"): RequestInit => ({
 });
 
 /** Invia un file (e qualche campo) a un endpoint che risponde {data}; gli errori di convalida diventano ApiError 422 con i messaggi del server. */
-async function postFile<T>(path: string, fields: Record<string, string | File>, failure: string): Promise<T> {
+async function postFile<T>(
+  path: string,
+  fields: Record<string, string | File>,
+  failure: string,
+): Promise<T> {
   const token = getToken();
   const body = new FormData();
   for (const [name, value] of Object.entries(fields)) body.append(name, value);
@@ -242,7 +255,10 @@ async function postFile<T>(path: string, fields: Record<string, string | File>, 
     // niente Content-Type: lo mette il browser, con il confine del modulo
     res = await fetch(`${BASE}${path}`, {
       method: "POST",
-      headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      headers: {
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body,
     });
   } catch {
@@ -282,6 +298,9 @@ export const api: ApiClient = {
   generateScout: (id) => request(`/players/${id}/scout`, { method: "POST" }),
   saveScout: (id, text) => request(`/players/${id}/scout`, post({ text }, "PUT")),
   uploadCutout: (id, file) => postFile(`/players/${id}/cutout`, { file }, "Sagoma non salvata."),
+  uploadPhoto: (id, file) => postFile(`/players/${id}/photo`, { file }, "Foto non salvata."),
+  removePhoto: (id) => request(`/players/${id}/photo`, { method: "DELETE" }),
+  syncPlayer: (id, photo = false) => request(`/players/${id}/sync`, post({ photo })),
   getAdminMatches: ({ competition_id, scope }) =>
     request(`/matches${qs({ competition_id, scope })}`),
   getMatchDetail: (id) => request(`/matches/${id}`),
@@ -334,7 +353,9 @@ export const api: ApiClient = {
     const token = getToken();
     let res: Response;
     try {
-      res = await fetch(`${BASE}/backup`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      res = await fetch(`${BASE}/backup`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
     } catch {
       throw new ApiError(0, "Impossibile contattare il server. Controlla la connessione.");
     }
@@ -342,8 +363,10 @@ export const api: ApiClient = {
     if (!res.ok) throw new ApiError(res.status, "Non riesco a preparare il backup.");
     return res.blob();
   },
-  restoreBackup: (file, confirm) => postFile("/backup/restore", { file, confirm }, "Ripristino non riuscito."),
-  importLocalData: (file) => postFile("/backup/import-local", { file }, "Importazione non riuscita."),
+  restoreBackup: (file, confirm) =>
+    postFile("/backup/restore", { file, confirm }, "Ripristino non riuscito."),
+  importLocalData: (file) =>
+    postFile("/backup/import-local", { file }, "Importazione non riuscita."),
   syncXfive: (scope) => request("/sync/xfive", post({ scope })),
   getSyncRuns: () => request("/sync/runs"),
   getXfiveAdminStatus: () => request("/xfive-admin"),

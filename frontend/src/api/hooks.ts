@@ -103,6 +103,28 @@ export const useDeletePlayer = () => {
     onSuccess: () => inv(["players"], ["dashboard"], ["roster"]),
   });
 };
+// ---- foto del giocatore: caricata dallo staff, tolta, o riletta da XFive insieme a profilo e statistiche ----
+export const useUploadPhoto = () => {
+  const inv = useInvalidate();
+  return useMutation({
+    mutationFn: (v: { id: Id; file: File }) => api.uploadPhoto(v.id, v.file),
+    onSuccess: (_r, v) => inv(["players"], ["roster"], ["home"], ["player-page", v.id]),
+  });
+};
+export const useRemovePhoto = () => {
+  const inv = useInvalidate();
+  return useMutation({
+    mutationFn: (id: Id) => api.removePhoto(id),
+    onSuccess: (_r, id) => inv(["players"], ["roster"], ["home"], ["player-page", id]),
+  });
+};
+export const useSyncPlayer = () => {
+  const inv = useInvalidate();
+  return useMutation({
+    mutationFn: (v: { id: Id; photo?: boolean }) => api.syncPlayer(v.id, v.photo ?? false),
+    onSuccess: (_r, v) => inv(["players"], ["roster"], ["home"], ["career"], ["player-page", v.id]),
+  });
+};
 export const useImportPlayers = () => {
   const inv = useInvalidate();
   return useMutation({
@@ -282,6 +304,19 @@ export const useSync = () => {
   return useMutation({
     mutationFn: (scope: SyncScope) => api.syncXfive(scope),
     // un aggiornamento cambia partite, classifica, rosa e immagini: tutto si rilegge
-    onSuccess: () => inv(["sync-runs"], ["xfive-admin"], ["dashboard"], ["players"], ["roster"], ["matches"], ["admin-matches"], ["standings"], ["home"], ["history"], ["career"]),
+    onSuccess: () =>
+      inv(
+        ["sync-runs"],
+        ["xfive-admin"],
+        ["dashboard"],
+        ["players"],
+        ["roster"],
+        ["matches"],
+        ["admin-matches"],
+        ["standings"],
+        ["home"],
+        ["history"],
+        ["career"],
+      ),
   });
 };

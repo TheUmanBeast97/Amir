@@ -142,8 +142,12 @@ interrogazione costa un viaggio oltre l'oceano e va molto peggio.
 
 - **Ogni notte**, da soli: Vercel lancia gli indirizzi `/api/v1/cron/...` elencati in `backend/vercel.json` (calendario, partite giocate,
   stemmi e foto, statistiche; lo storico il lunedì). Servono `CRON_SECRET` e il piano gratuito li fa partire una volta al giorno,
-  in un'ora qualunque della fascia indicata.
-- **Quando vuoi**: **Impostazioni**, i pulsanti sotto **XFive**.
+  in un'ora qualunque della fascia indicata. L'aggiornamento delle statistiche rilegge anche, a turno, profilo e foto dei giocatori
+  che non vengono riletti da una settimana: così in sette giorni tutta la rosa è di nuovo allineata a XFive, foto comprese.
+- **Quando vuoi**: **Impostazioni**, i pulsanti sotto **XFive**. In **Giocatori**, «Profili e foto» rilegge subito tutta la rosa; nella
+  scheda di un giocatore, «Aggiorna da XFive» rilegge solo lui (profilo, foto e statistiche).
+- **Foto dei giocatori**: nella scheda del giocatore puoi caricarne una tua (JPG o PNG): da quel momento è tua e XFive non la sostituisce
+  più; «Togli» la leva e non torna da sola. L'indirizzo della foto cambia a ogni foto nuova, così nessuna cache mostra quella vecchia.
 - **Più spesso**: un servizio esterno (per esempio cron-job.org) che chiama `GET https://IL-TUO-BACKEND.vercel.app/api/v1/cron/current`
   con l'intestazione `Authorization: Bearer IL-TUO-CRON_SECRET`.
 

@@ -84,9 +84,8 @@ final class PlayerProfileSyncer
                 $update['role'] = $role;
             }
 
-            if ($match['avatar'] && ($refresh || ! $player->photo_path)) {
-                if ($path = $this->images->store($match['avatar'], 'player', $player->id)) {
-                    $update['photo_path'] = $path;
+            if ($match['avatar'] && ($refresh || ! $player->photo_path) && self::photoFollowsXfive($player)) {
+                if ($this->replacePhoto($player, $match['avatar'], $update)) {
                     $result['photos']++;
                 }
             }
@@ -96,6 +95,124 @@ final class PlayerProfileSyncer
         }
 
         return $result;
+    }
+
+    /**
+     * La foto la gestisce XFive? No se lo staff ne ha caricata una propria («upload») o l'ha tolta apposta («none»):
+     * in quei casi gli aggiornamenti automatici non la toccano.
+     */
+    public static function photoFollowsXfive(Player $player): bool
+    {
+        return ! in_array($player->photo_source, ['upload', 'none'], true);
+    }
+
+    /**
+     * Rilegge da XFive un giocatore, anche se i dati c'erano già: profilo (nazionalità, tornei, ruolo se manca) e foto.
+     * La foto si riscarica solo se la gestisce XFive (vedi photoFollowsXfive), oppure sempre con $forcePhoto (il pulsante
+     * «Aggiorna da XFive» nella scheda). Se cambia, la sagoma della figurina si butta: si rifà dalla foto nuova.
+     * Segna comunque la data di lettura, così la rosa si rilegge a turno e non sempre gli stessi.
+     *
+     * @return array{profile: 'matched'|'not_found'|'ambiguous', photo: bool}
+     */
+    public function refreshPlayer(Player $player, bool $forcePhoto = false): array
+    {
+        $clubId = (int) config('amir.own.club_id');
+        $result = ['profile' => 'not_found', 'photo' => false];
+        $update = ['xfive_synced_at' => now()];
+
+        $match = $this->findProfile($player, $clubId);
+        $takenByOther = is_array($match) && Player::where('xfive_person_id', $match['id'])->where('id', '!=', $player->id)->exists();
+
+        if ($match === 'ambiguous' || $takenByOther) {
+            $result['profile'] = 'ambiguous';
+        } elseif ($match !== null) {
+            $result['profile'] = 'matched';
+            $club = $match['club'];
+            $update += [
+                'xfive_person_id' => $match['id'],
+                'nationality' => $match['page']['nationality'],
+                'xfive_profile' => ['age' => $match['page']['age'], 'role' => $club['role'], 'tournaments' => $club['tournaments']],
+            ];
+            $role = Str::lower((string) $club['role']);
+            if (! $player->role && in_array($role, self::ROLES, true)) {
+                $update['role'] = $role;
+            }
+            if ($match['avatar'] && ($forcePhoto || self::photoFollowsXfive($player))) {
+                $result['photo'] = $this->replacePhoto($player, $match['avatar'], $update);
+            }
+        }
+
+        $player->update($update);
+
+        return $result;
+    }
+
+    /**
+     * Rilegge profili e foto di tutta la rosa attiva; con $staleOnly solo chi non viene riletto da più di una settimana
+     * (è quello che fa l'aggiornamento notturno: a turno, qualche giocatore per notte). Due o tre richieste a giocatore,
+     * entro il tempo dato: il resto alla prossima volta.
+     *
+     * @param  float|null  $deadline  istante (microtime) oltre il quale ci si ferma
+     * @return array{players:int, photos:int, not_found:int, ambiguous:int, remaining:int}
+     */
+    public function refreshRoster(Team $own, ?float $deadline = null, bool $staleOnly = false): array
+    {
+        $result = ['players' => 0, 'photos' => 0, 'not_found' => 0, 'ambiguous' => 0, 'remaining' => 0];
+
+        $players = Player::where('team_id', $own->id)->where('is_active', true)
+            ->when($staleOnly, fn ($q) => $q->where(fn ($x) => $x->whereNull('xfive_synced_at')->orWhere('xfive_synced_at', '<', now()->subWeek())))
+            ->get()
+            ->sortBy(fn (Player $p) => [$p->xfive_synced_at?->getTimestamp() ?? 0, $p->last_name]); // prima chi aspetta da più tempo
+
+        foreach ($players as $player) {
+            if ($deadline !== null && microtime(true) > $deadline) {
+                $result['remaining']++;
+
+                continue;
+            }
+
+            $r = $this->refreshPlayer($player);
+            $result['players']++;
+            $result['photos'] += $r['photo'] ? 1 : 0;
+            if ($r['profile'] !== 'matched') {
+                $result[$r['profile']]++;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Scarica la foto e, se è diversa da quella salvata (o non c'era), scrive percorso, provenienza e data nel $update e
+     * butta la sagoma della figurina (fatta dalla foto vecchia). Dice se la foto è cambiata.
+     *
+     * @param  array<string, mixed>  $update
+     */
+    private function replacePhoto(Player $player, string $avatar, array &$update): bool
+    {
+        $before = $player->photo_path ? $this->media->get($player->photo_path) : null;
+        $path = $this->images->store($avatar, 'player', $player->id);
+        if ($path === null) {
+            return false;
+        }
+
+        $after = $this->media->get($path);
+        $changed = $before === null || $path !== $player->photo_path || ($after['body'] ?? null) !== $before['body'];
+        if (! $changed) {
+            if ($player->photo_source !== 'xfive') {
+                $update['photo_source'] = 'xfive';
+            }
+
+            return false;
+        }
+
+        $update += ['photo_path' => $path, 'photo_source' => 'xfive', 'photo_updated_at' => now()];
+        if ($player->cutout_path) {
+            $this->media->forget($player->cutout_path);
+            $update['cutout_path'] = null;
+        }
+
+        return true;
     }
 
     /**
@@ -200,6 +317,7 @@ final class PlayerProfileSyncer
 
         $players = $candidates
             ->reject(fn (Player $p) => $p->photo_path && isset($stored[$p->photo_path]))
+            ->reject(fn (Player $p) => $p->photo_source === 'none') // tolta dallo staff: non torna da sola
             ->reject(fn (Player $p) => Cache::has("amir:photo-missing:{$p->id}"));
 
         foreach ($players as $player) {
@@ -227,7 +345,7 @@ final class PlayerProfileSyncer
                 continue;
             }
 
-            $player->update(['photo_path' => $path]);
+            $player->update(['photo_path' => $path, 'photo_source' => $player->photo_source === 'upload' ? 'upload' : 'xfive', 'photo_updated_at' => now()]);
             $result['photos']++;
         }
 

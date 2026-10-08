@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Copy, Pencil, Plus, Search, Share2, Trash2, Upload, Users } from "lucide-react";
+import { Copy, Pencil, Plus, RefreshCw, Search, Share2, Trash2, Upload, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDeletePlayer, usePlayers } from "@/api/hooks";
@@ -15,7 +15,7 @@ import {
   waLink,
 } from "@/components/admin/kit";
 import { PlayerDrawer } from "@/components/admin/PlayerDrawer";
-import { ShirtBadge } from "@/components/player-ui";
+import { PlayerPhoto, ShirtBadge } from "@/components/player-ui";
 import { ImportDialog } from "@/components/admin/ImportDialog";
 import { useSyncFlow } from "@/components/admin/sync";
 import { fmtDay, regLabel, roleLabel, todayISO } from "@/lib/format";
@@ -172,6 +172,10 @@ function PlayersPage() {
           <Btn variant="outline" onClick={() => startSync(["players", "media"])} disabled={syncing}>
             <Users className="h-4 w-4" /> {syncing ? "Importo…" : "Importa da XFive"}
           </Btn>
+          {/* rilegge profili, foto e statistiche di tutta la rosa, anche di chi li ha già */}
+          <Btn variant="outline" onClick={() => startSync("roster")} disabled={syncing}>
+            <RefreshCw className={cn("h-4 w-4", syncing && "animate-spin")} /> Profili e foto
+          </Btn>
           <Btn variant="outline" onClick={() => setImportOpen(true)}>
             <Upload className="h-4 w-4" /> Importa righe
           </Btn>
@@ -242,8 +246,9 @@ function PlayersPage() {
         <EmptyState>
           {q.data.length === 0 ? (
             <>
-              Nessun giocatore. Premi «Importa da XFive» per prendere la rosa dall'area amministrazione (serve l'accesso acceso in
-              Impostazioni). Poi, da Impostazioni, «Dati e backup», porta qui maglie, telefoni e pagamenti del gestionale sul computer.
+              Nessun giocatore. Premi «Importa da XFive» per prendere la rosa dall'area
+              amministrazione (serve l'accesso acceso in Impostazioni). Poi, da Impostazioni, «Dati
+              e backup», porta qui maglie, telefoni e pagamenti del gestionale sul computer.
             </>
           ) : (
             "Nessun giocatore con questi filtri."
@@ -271,10 +276,17 @@ function PlayersPage() {
                       <Numbers p={p} />
                     </td>
                     <td className="px-3 py-2">
-                      <div className="font-semibold">{p.full_name}</div>
-                      {p.nickname && (
-                        <div className="text-xs italic text-muted-foreground">“{p.nickname}”</div>
-                      )}
+                      <div className="flex items-center gap-3">
+                        <PlayerPhoto key={p.photo_url ?? "none"} player={p} size={36} />
+                        <div className="min-w-0">
+                          <div className="font-semibold">{p.full_name}</div>
+                          {p.nickname && (
+                            <div className="text-xs italic text-muted-foreground">
+                              “{p.nickname}”
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-3 py-2">{p.role ? roleLabel[p.role] : "-"}</td>
                     <td className="px-3 py-2">
@@ -300,6 +312,7 @@ function PlayersPage() {
               <Card key={p.id} className="p-3">
                 {/* l'attenuazione sta dentro la scheda: l'opacità della scheda stessa la gestisce l'animazione d'ingresso */}
                 <div className={cn("flex items-start gap-3", !p.is_active && "opacity-60")}>
+                  <PlayerPhoto key={p.photo_url ?? "none"} player={p} size={44} />
                   <span className="w-14 shrink-0">
                     <Numbers p={p} />
                   </span>

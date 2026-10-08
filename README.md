@@ -87,7 +87,11 @@ php artisan xfive:players --stats-only   # solo statistiche (è quello che gira 
 
 - **Stemmi e foto** si scaricano dal CDN di XFive e si servono dalla nostra API
   (`/public/badges/{team}`, `/public/players/{id}/photo`): stessa origine, CORS aperto, quindi le grafiche
-  si esportano in PNG. I segnaposto di XFive ("ph_…") non vengono salvati.
+  si esportano in PNG. I segnaposto di XFive ("ph_…") non vengono salvati. Lo staff può caricare una foto propria
+  nella scheda del giocatore (`photo_source` = `upload`: XFive non la sostituisce) o toglierla (`none`: non torna
+  da sola); «Aggiorna da XFive» (`POST /players/{id}/sync`) rilegge profilo, foto e statistiche di un giocatore,
+  l'aggiornamento `roster` di tutta la rosa, e quello notturno `stats` rilegge a turno chi non lo è da una settimana.
+  L'indirizzo della foto porta `?v=` con la data dell'ultimo cambio, così le cache non mostrano quella vecchia.
 - **Abbinamento ai profili XFive**: nome che combacia **e** profilo con il nostro club; se i candidati sono
   più d'uno decide l'età (dalla data di nascita). Per un tesserato nuovo, senza storia con noi, basta il
   nome esatto **con** l'età uguale. Nel dubbio il giocatore resta non abbinato e il comando lo segnala.

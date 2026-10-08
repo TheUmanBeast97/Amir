@@ -1,11 +1,22 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { RefreshCw, Trash2, Upload } from "lucide-react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { useGenerateScout, useSavePlayer, useSaveScout } from "@/api/hooks";
+import {
+  useGenerateScout,
+  usePlayers,
+  useRemovePhoto,
+  useSavePlayer,
+  useSaveScout,
+  useSyncPlayer,
+  useUploadPhoto,
+} from "@/api/hooks";
 import type { PlayerInput } from "@/api/client";
-import type { Player, PlayerRole, RegistrationStatus } from "@/api/types";
+import type { Player, PlayerRole, PlayerSyncResult, RegistrationStatus } from "@/api/types";
+import { PlayerPhoto } from "@/components/player-ui";
 import { InfoBanner } from "@/components/ui-kit";
 import { regLabel, roleLabel } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { Btn, Field, NativeSelect, TextInput, Toggle, firstErr, inputCls, toastError } from "./kit";
 
 type Form = {
@@ -82,6 +93,111 @@ function validate(f: Form): Record<string, string> {
     e["shirt_number_white"] = "Numero da 0 a 99.";
   if (f.xfive_player_id && !/^\d+$/.test(f.xfive_player_id)) e["xfive_player_id"] = "Solo numeri.";
   return e;
+}
+
+/** Il messaggio dopo la rilettura di un giocatore da XFive. */
+function syncDone(r: PlayerSyncResult) {
+  if (r.profile === "not_found") {
+    toast.warning("Su XFive non ho trovato un profilo con questo nome: controlla nome e cognome.");
+    return;
+  }
+  if (r.profile === "ambiguous") {
+    toast.warning(
+      "Su XFive ci sono più profili possibili: serve la data di nascita per distinguerli.",
+    );
+    return;
+  }
+  toast.success(
+    r.photo
+      ? "Dati riletti da XFive, foto aggiornata"
+      : "Dati riletti da XFive, la foto era già uguale",
+  );
+}
+
+/**
+ * La foto del giocatore: quella di XFive (si aggiorna da sola), una caricata dallo staff (resta quella, XFive non la tocca)
+ * oppure nessuna. «Aggiorna da XFive» riscarica la foto e rilegge anche profilo e statistiche.
+ */
+function PhotoPanel({ player }: { player: Player }) {
+  const players = usePlayers();
+  // dopo un cambio la scheda mostra subito la foto nuova, senza chiudere e riaprire
+  const p = players.data?.find((x) => x.id === player.id) ?? player;
+  const upload = useUploadPhoto();
+  const remove = useRemovePhoto();
+  const sync = useSyncPlayer();
+  const file = useRef<HTMLInputElement>(null);
+  const busy = upload.isPending || remove.isPending || sync.isPending;
+
+  const source =
+    p.photo_source === "upload"
+      ? "Foto caricata da te: gli aggiornamenti da XFive non la toccano."
+      : p.photo_source === "none"
+        ? "Nessuna foto: non torna da sola, premi «Aggiorna da XFive» se la vuoi."
+        : p.photo_url
+          ? "Foto di XFive: si aggiorna da sola quando cambia."
+          : "Nessuna foto: XFive non ne ha una, oppure non è ancora stata scaricata.";
+
+  const onFile = (e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    upload.mutate(
+      { id: p.id, file: f },
+      { onSuccess: () => toast.success("Foto salvata"), onError: toastError },
+    );
+  };
+
+  return (
+    <section
+      aria-label="Foto del giocatore"
+      className="mx-4 mt-2 flex items-start gap-4 rounded-xl border p-3"
+    >
+      <PlayerPhoto key={p.photo_url ?? "none"} player={p} size={88} />
+      <div className="min-w-0 flex-1 space-y-2">
+        <p className="text-xs text-muted-foreground">{source}</p>
+        <div className="flex flex-wrap gap-2">
+          <input
+            ref={file}
+            type="file"
+            accept="image/png,image/jpeg"
+            className="sr-only"
+            onChange={onFile}
+            aria-label="Scegli la foto"
+          />
+          <Btn variant="outline" disabled={busy} onClick={() => file.current?.click()}>
+            <Upload className="h-4 w-4" /> {upload.isPending ? "Carico…" : "Carica foto"}
+          </Btn>
+          <Btn
+            variant="outline"
+            disabled={busy}
+            onClick={() =>
+              sync.mutate({ id: p.id, photo: true }, { onSuccess: syncDone, onError: toastError })
+            }
+          >
+            <RefreshCw className={cn("h-4 w-4", sync.isPending && "animate-spin")} /> Aggiorna da
+            XFive
+          </Btn>
+          {p.photo_url && (
+            <Btn
+              variant="ghost"
+              disabled={busy}
+              onClick={() =>
+                remove.mutate(p.id, {
+                  onSuccess: () => toast.success("Foto tolta"),
+                  onError: toastError,
+                })
+              }
+            >
+              <Trash2 className="h-4 w-4" /> Togli
+            </Btn>
+          )}
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          «Aggiorna da XFive» rilegge anche profilo e statistiche. JPG o PNG, al massimo 4 MB.
+        </p>
+      </div>
+    </section>
+  );
 }
 
 /**
@@ -236,6 +352,7 @@ export function PlayerDrawer({
         <SheetHeader>
           <SheetTitle>{player ? `Modifica ${player.full_name}` : "Nuovo giocatore"}</SheetTitle>
         </SheetHeader>
+        {player && <PhotoPanel player={player} />}
         <form onSubmit={submit} noValidate className="space-y-3 p-4">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Nome *" error={err("first_name")}>

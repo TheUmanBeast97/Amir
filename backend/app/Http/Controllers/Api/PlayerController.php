@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Services\MediaStore;
 use App\Services\PlayerImporter;
 use App\Services\ScoutProfileGenerator;
+use App\Services\Xfive\PlayerProfileSyncer;
 use App\Support\Present;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -113,6 +114,70 @@ class PlayerController extends Controller
         $player->update(['cutout_path' => $path]);
 
         return $this->ok(Present::player($player->refresh()));
+    }
+
+    /**
+     * Foto caricata dallo staff (JPG o PNG): da qui in poi vale questa e gli aggiornamenti da XFive non la toccano più.
+     * La sagoma della figurina, fatta dalla foto vecchia, si butta: si rifà alla prossima apertura della figurina.
+     */
+    public function photo(Request $request, Player $player, MediaStore $media): JsonResponse
+    {
+        $request->validate(['file' => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:4096']]);
+        $file = $request->file('file');
+        $ext = $file->getMimeType() === 'image/png' ? 'png' : 'jpg';
+        $path = "media/players/{$player->id}.{$ext}";
+
+        // una sola foto per giocatore: se cambia l'estensione si toglie la vecchia
+        foreach (['png', 'jpg'] as $other) {
+            if ($other !== $ext) {
+                $media->forget("media/players/{$player->id}.{$other}");
+            }
+        }
+        $media->put($path, (string) file_get_contents($file->getRealPath()), $ext === 'png' ? 'image/png' : 'image/jpeg');
+        $this->dropCutout($player, $media);
+        $player->update(['photo_path' => $path, 'photo_source' => 'upload', 'photo_updated_at' => now()]);
+
+        return $this->ok(Present::player($player->refresh()));
+    }
+
+    /** Toglie la foto (e la sagoma). Non torna da sola dagli aggiornamenti: solo con «Aggiorna da XFive» nella scheda. */
+    public function removePhoto(Player $player, MediaStore $media): JsonResponse
+    {
+        if ($player->photo_path) {
+            $media->forget($player->photo_path);
+        }
+        $this->dropCutout($player, $media);
+        $player->update(['photo_path' => null, 'photo_source' => 'none', 'photo_updated_at' => now()]);
+
+        return $this->ok(Present::player($player->refresh()));
+    }
+
+    /**
+     * Rilegge da XFive questo giocatore: profilo, foto e statistiche della stagione. La foto si riscarica se la gestisce
+     * XFive; con «photo: true» (il pulsante «Aggiorna da XFive» della foto) si riscarica comunque, anche al posto di una caricata.
+     */
+    public function sync(Request $request, Player $player, PlayerProfileSyncer $syncer): JsonResponse
+    {
+        $data = $request->validate(['photo' => ['sometimes', 'boolean']]);
+        $own = Team::ownOrFail();
+
+        $r = $syncer->refreshPlayer($player, forcePhoto: (bool) ($data['photo'] ?? false));
+        $stats = $syncer->syncStats($own, currentOnly: true);
+
+        return $this->ok([
+            'player' => Present::player($player->refresh()),
+            'profile' => $r['profile'],
+            'photo' => $r['photo'],
+            'stats_rows' => $stats['rows'],
+        ]);
+    }
+
+    private function dropCutout(Player $player, MediaStore $media): void
+    {
+        if ($player->cutout_path) {
+            $media->forget($player->cutout_path);
+            $player->update(['cutout_path' => null]);
+        }
     }
 
     public function import(Request $request, PlayerImporter $importer): JsonResponse
