@@ -435,8 +435,9 @@ final class XfiveArchiver
     /** Il percorso in img/ di un'immagine della CDN: la parte dopo /img/, così stemmi, foto e locandine restano divisi. */
     public static function imagePath(string $url): ?string
     {
-        $p = (string) parse_url($url, PHP_URL_PATH);
-        if (! preg_match('~/img/(.+)$~', $p, $m)) {
+        $p = rawurldecode((string) parse_url($url, PHP_URL_PATH));
+        // l'ultimo /img/ dell'indirizzo: quello vero della CDN, anche se prima ci sono pezzi strani
+        if (! preg_match('~.*/img/(.+)$~', $p, $m)) {
             return null;
         }
         // un segmento alla volta, senza «..» né segmenti vuoti: il file resta dentro img/ qualunque cosa dica l'indirizzo

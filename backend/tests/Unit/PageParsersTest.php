@@ -136,7 +136,8 @@ class PageParsersTest extends TestCase
     public function test_image_paths_stay_inside_the_images_folder(): void
     {
         $this->assertSame('team/badge/q/159P0F4VqfzqtoIt0V.png', \App\Services\Xfive\Archive\XfiveArchiver::imagePath('https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/q/159P0F4VqfzqtoIt0V.png'));
-        $this->assertSame('player/q/x.png', \App\Services\Xfive\Archive\XfiveArchiver::imagePath('https://cdn.enjore.com/wl/xfivesport_it/img/../../img/player/q/../../..//q/x.png'));
+        // conta l'ultimo /img/; i «..», i «.» e i segmenti vuoti si buttano: il file resta dentro la cartella giusta
+        $this->assertSame('player/q/x.png', \App\Services\Xfive\Archive\XfiveArchiver::imagePath('https://cdn.enjore.com/wl/xfivesport_it/img/../../img/player/q/../../..//x.png'));
         $this->assertSame('a_b.png', \App\Services\Xfive\Archive\XfiveArchiver::imagePath('https://cdn.enjore.com/img/a%20b.png'));
         $this->assertNull(\App\Services\Xfive\Archive\XfiveArchiver::imagePath('https://cdn.enjore.com/wl/x/doc/file.pdf'));
         $this->assertNull(\App\Services\Xfive\Archive\XfiveArchiver::imagePath('https://cdn.enjore.com/img/../..'));
