@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Nessuna pagina di login da raggiungere: senza token si risponde 401 (JSON), mai un redirect
         $middleware->redirectGuestsTo(fn () => null);
+
+        // Durata della risposta e parte spesa nel database, nell'intestazione Server-Timing (per capire dove va piano)
+        $middleware->prepend(\App\Http\Middleware\ServerTiming::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // L'app è solo API: errori e validazioni sempre in JSON
