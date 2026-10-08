@@ -56,6 +56,7 @@ function BackupCard() {
   const [word, setWord] = useState("");
   const [localFile, setLocalFile] = useState<File | null>(null);
   const [imported, setImported] = useState<string[] | null>(null);
+  const { start: startSync, busy: syncing, left } = useSyncFlow();
 
   const importLocal = async () => {
     if (!localFile) return;
@@ -66,6 +67,10 @@ function BackupCard() {
       setImported(importSummary(r));
       toast.success("Fatto: info e pagamenti del computer sono online.");
       await queryClient.invalidateQueries(); // giocatori, pagamenti e saldi si rileggono
+      setBusy(null);
+      // il resto si prende da XFive: partite giocate, foto salvate e statistiche (ora che i giocatori hanno il loro profilo)
+      await startSync(["details", "media", "stats"]);
+      await queryClient.invalidateQueries();
     } catch (e) {
       toastError(e);
     } finally {
@@ -120,7 +125,8 @@ function BackupCard() {
         Carica il file <code>database.sqlite</code> del gestionale sul computer (o un backup). I giocatori si riconoscono dal nome e si
         completa solo quello che online è vuoto: maglie, telefono, email, soprannome, note, scheda scout. Squad List, tesseramenti e
         certificati di XFive non si toccano. Addebiti, quote e versamenti si aggiungono se mancano. Non sostituisce niente e si può
-        ripetere senza fare doppioni. Prima servono i giocatori online: «Importa da XFive» in Giocatori.
+        ripetere senza fare doppioni. Prima servono i giocatori online: «Importa da XFive» in Giocatori. Finito, scarica da solo da XFive
+        partite giocate, foto e statistiche.
       </p>
       <div className="space-y-3">
         <input
@@ -133,9 +139,15 @@ function BackupCard() {
           }}
           className="block w-full text-sm file:mr-3 file:min-h-11 file:cursor-pointer file:rounded-lg file:border-0 file:bg-secondary file:px-4 file:font-semibold file:text-foreground"
         />
-        <Btn onClick={importLocal} disabled={!localFile || busy !== null}>
+        <Btn onClick={importLocal} disabled={!localFile || busy !== null || syncing}>
           <Upload className="h-4 w-4" /> {busy === "import" ? "Importo…" : "Importa info e pagamenti"}
         </Btn>
+        {syncing && (
+          <p className="text-sm text-muted-foreground" role="status">
+            Scarico da XFive partite giocate, foto e statistiche{left ? ` (ne mancano ancora ${left})` : ""}. Ci vuole un paio di minuti:
+            lascia aperta la pagina.
+          </p>
+        )}
         {imported && (
           <ul className="space-y-1 rounded-lg border border-success/40 bg-success/5 p-3 text-sm" role="status">
             {imported.map((line) => (
@@ -175,7 +187,7 @@ function BackupCard() {
 }
 
 /** L'accesso all'area amministrazione di XFive con l'account dello staff: rosa, Squad List, certificati e tesseramenti. */
-function XfiveAdminCard({ start, busy, working }: { start: (scope: SyncScope) => void; busy: boolean; working: SyncScope | null }) {
+function XfiveAdminCard({ start, busy, working }: { start: (scope: SyncScope | SyncScope[]) => void; busy: boolean; working: SyncScope | null }) {
   const status = useXfiveAdminStatus();
   const check = useCheckXfiveAdmin();
   const s = status.data;
@@ -236,7 +248,7 @@ function XfiveAdminCard({ start, busy, working }: { start: (scope: SyncScope) =>
             <Btn variant="outline" onClick={tryLogin} disabled={!s?.configured || check.isPending || busy}>
               <KeyRound className="h-4 w-4" /> {check.isPending ? "Provo l'accesso…" : "Prova accesso"}
             </Btn>
-            <Btn onClick={() => start("players")} disabled={!s?.enabled || busy || check.isPending}>
+            <Btn onClick={() => start(["players", "media"])} disabled={!s?.enabled || busy || check.isPending}>
               <Users className={cn("h-4 w-4", working === "players" && "animate-pulse")} /> Importa giocatori da XFive
             </Btn>
             <Btn variant="outline" onClick={() => start("admin")} disabled={!s?.enabled || busy || check.isPending}>

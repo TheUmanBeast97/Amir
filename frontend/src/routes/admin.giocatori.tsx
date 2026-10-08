@@ -169,7 +169,7 @@ function PlayersPage() {
     <div>
       <PageTitle kicker="Area staff" title="Giocatori">
         <div className="flex gap-2">
-          <Btn variant="outline" onClick={() => startSync("players")} disabled={syncing}>
+          <Btn variant="outline" onClick={() => startSync(["players", "media"])} disabled={syncing}>
             <Users className="h-4 w-4" /> {syncing ? "Importo…" : "Importa da XFive"}
           </Btn>
           <Btn variant="outline" onClick={() => setImportOpen(true)}>

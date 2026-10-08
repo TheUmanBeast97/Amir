@@ -22,7 +22,9 @@ function finished(scope: SyncScope, run: SyncRun) {
   const st = run.stats;
 
   if (st["disabled"]) {
-    toast.warning("L'accesso a XFive è spento: si accende in Impostazioni, scheda «Area amministrazione XFive».");
+    toast.warning(
+      "L'accesso a XFive è spento: si accende in Impostazioni, scheda «Area amministrazione XFive».",
+    );
     return;
   }
 
@@ -38,11 +40,19 @@ function finished(scope: SyncScope, run: SyncRun) {
     if (st["new_links"]) parts.push(`${st["new_links"]} già presenti e collegati`);
     if (st["updated"]) parts.push(`${st["updated"]} aggiornati`);
     if (st["unmatched"]) parts.push(`${st["unmatched"]} su XFive senza corrispondenza`);
-    toast.success(parts.length ? `Rosa da XFive: ${parts.join(", ")}` : "Rosa da XFive: era già tutto allineato");
+    toast.success(
+      parts.length
+        ? `Rosa da XFive: ${parts.join(", ")}`
+        : "Rosa da XFive: era già tutto allineato",
+    );
     return;
   }
 
-  toast.success(scope === "current" || scope === "history" ? "Dati XFive aggiornati" : `${syncLabel[scope]}: aggiornato`);
+  toast.success(
+    scope === "current" || scope === "history"
+      ? "Dati XFive aggiornati"
+      : `${syncLabel[scope]}: aggiornato`,
+  );
 }
 
 /**
@@ -66,24 +76,35 @@ export function useSyncFlow() {
     }
   }, [polling, running, runs.data]);
 
-  const start = async (scope: SyncScope) => {
-    setWorking(scope);
+  /** Un aggiornamento, oppure una lista da fare in fila (si ferma al primo che non riesce o che è spento). */
+  const start = async (scopes: SyncScope | SyncScope[]) => {
     try {
-      let run: SyncRun = await sync.mutateAsync(scope);
+      for (const scope of Array.isArray(scopes) ? scopes : [scopes]) {
+        setWorking(scope);
+        let run: SyncRun = await sync.mutateAsync(scope);
 
-      if (run.status === "running") {
-        setPolling(true);
-        toast("Aggiornamento avviato…");
-        return;
+        if (run.status === "running") {
+          setPolling(true);
+          toast("Aggiornamento avviato…");
+          return;
+        }
+
+        for (
+          let round = 1;
+          run.status === "ok" && (run.stats["remaining"] ?? 0) > 0 && round < MAX_ROUNDS;
+          round++
+        ) {
+          setLeft(run.stats["remaining"] ?? 0);
+          run = await sync.mutateAsync(scope);
+        }
+
+        if (run.status === "error") {
+          toast.error(run.error ?? "Aggiornamento non riuscito");
+          return;
+        }
+        finished(scope, run);
+        if (run.stats["disabled"]) return;
       }
-
-      for (let round = 1; run.status === "ok" && (run.stats["remaining"] ?? 0) > 0 && round < MAX_ROUNDS; round++) {
-        setLeft(run.stats["remaining"] ?? 0);
-        run = await sync.mutateAsync(scope);
-      }
-
-      if (run.status === "error") toast.error(run.error ?? "Aggiornamento non riuscito");
-      else finished(scope, run);
     } catch (e) {
       toastError(e);
     } finally {
