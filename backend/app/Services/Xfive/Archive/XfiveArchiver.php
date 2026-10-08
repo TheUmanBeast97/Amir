@@ -160,22 +160,22 @@ final class XfiveArchiver
             $this->archive->putJson("tournaments/{$id}/calendar", $fixtures);
             $stats['fixtures'] += count($fixtures);
 
-            $standings = $this->cachedPost("league-op20-{$id}", 'league.php', ['op' => 20, 'tid' => $id]);
+            $standings = $this->cachedPost("league-op20-{$id}", 'league.php', ['op' => 20, 'tid' => $id], tolerant: true);
             $this->archive->putJson("tournaments/{$id}/standings", $standings !== null ? PageParsers::standings($standings) : []);
 
             $allStats = [];
             foreach (['score', 'top-player', 'discipline'] as $type) {
-                $html = $this->cachedPost("league-op19-{$id}-{$type}", 'league.php', ['op' => 19, 'tid' => $id, 'type' => $type]);
+                $html = $this->cachedPost("league-op19-{$id}-{$type}", 'league.php', ['op' => 19, 'tid' => $id, 'type' => $type], tolerant: true);
                 $allStats[$type] = $html !== null ? $this->tables->parse($html) : null;
             }
             $this->archive->putJson("tournaments/{$id}/player-stats", $allStats);
 
-            $teams = $this->cachedPost("league-op21-{$id}", 'league.php', ['op' => 21, 'tid' => $id]);
+            $teams = $this->cachedPost("league-op21-{$id}", 'league.php', ['op' => 21, 'tid' => $id], tolerant: true);
             $teamList = $teams !== null ? PageParsers::teamList($teams) : [];
             $this->archive->putJson("tournaments/{$id}/teams", $teamList);
             $stats['teams'] += count($teamList);
 
-            $docs = $this->cachedGet("docs-{$id}", "/it/docs/{$id}/x/");
+            $docs = $this->cachedGet("docs-{$id}", "/it/docs/{$id}/x/", tolerant: true);
             $this->archive->putJson("tournaments/{$id}/docs", $docs !== null ? PageParsers::docs($docs) : []);
 
             $this->archive->markDone("details.{$id}", ['fixtures' => count($fixtures), 'teams' => count($teamList)]);
@@ -205,7 +205,7 @@ final class XfiveArchiver
 
                     continue;
                 }
-                $html = $this->cachedGet("team-{$id}", "/it/team/{$id}/x/");
+                $html = $this->cachedGet("team-{$id}", "/it/team/{$id}/x/", tolerant: true);
                 $page = $html !== null ? PageParsers::teamPage($html) : null;
                 if ($page === null) {
                     continue;
@@ -252,7 +252,7 @@ final class XfiveArchiver
 
                 continue;
             }
-            $html = $this->cachedGet("club-{$id}", "/it/team-h/{$id}/x/");
+            $html = $this->cachedGet("club-{$id}", "/it/team-h/{$id}/x/", tolerant: true);
             if ($html === null) {
                 continue;
             }
@@ -288,7 +288,7 @@ final class XfiveArchiver
 
                 continue;
             }
-            $html = $this->cachedGet("player-info-{$id}", "/it/player-info/{$id}/x/");
+            $html = $this->cachedGet("player-info-{$id}", "/it/player-info/{$id}/x/", tolerant: true);
             if ($html === null) {
                 $stats['missing']++;
 
@@ -331,7 +331,7 @@ final class XfiveArchiver
 
                     continue;
                 }
-                $html = $this->cachedGet("match-{$id}", "/it/match/{$id}/x/");
+                $html = $this->cachedGet("match-{$id}", "/it/match/{$id}/x/", tolerant: true);
                 if ($html === null) {
                     $stats['missing']++;
 
@@ -398,7 +398,7 @@ final class XfiveArchiver
 
                 continue;
             }
-            $image = $this->guarded(fn () => $this->client->download($url));
+            $image = $this->guarded(fn () => $this->client->download($url), tolerant: true);
             if ($image === null) {
                 $stats['failed']++;
 
@@ -523,13 +523,16 @@ final class XfiveArchiver
         return preg_match('~https://cdn\.enjore\.com/[^"\']*/img/player/[^"\']+~', $html, $m) ? $m[0] : null;
     }
 
-    /** Una pagina: dalla cache raw/ se c'è, altrimenti dal sito (null se non esiste). */
-    private function cachedGet(string $key, string $path): ?string
+    /**
+     * Una pagina: dalla cache raw/ se c'è, altrimenti dal sito (null se non esiste).
+     * Con $tolerant = true un errore del server fa saltare solo questa pagina (vedi guarded).
+     */
+    private function cachedGet(string $key, string $path, bool $tolerant = false): ?string
     {
         if (! $this->refresh && ($html = $this->archive->getRaw($key)) !== null) {
             return $html;
         }
-        $html = $this->guarded(fn () => $this->client->get($path));
+        $html = $this->guarded(fn () => $this->client->get($path), $tolerant);
         if ($html !== null) {
             $this->archive->putRaw($key, $html);
         }
@@ -538,14 +541,14 @@ final class XfiveArchiver
     }
 
     /** Una chiamata interna: l'HTML dentro la risposta JSON, dalla cache se c'è. */
-    private function cachedPost(string $key, string $script, array $data): ?string
+    private function cachedPost(string $key, string $script, array $data, bool $tolerant = false): ?string
     {
         if (! $this->refresh && ($json = $this->archive->getRaw($key, 'json')) !== null) {
             $obj = json_decode($json, true);
 
             return is_string($obj['html'] ?? null) ? $obj['html'] : null;
         }
-        $obj = $this->guarded(fn () => $this->client->post('/system/include/ajax/public/'.$script, $data + ['lid' => config('amir.xfive.league_id')]));
+        $obj = $this->guarded(fn () => $this->client->post('/system/include/ajax/public/'.$script, $data + ['lid' => config('amir.xfive.league_id')]), $tolerant);
         if ($obj === null) {
             return null;
         }
@@ -554,25 +557,51 @@ final class XfiveArchiver
         return is_string($obj['html'] ?? null) ? $obj['html'] : null;
     }
 
+    /** Errori di fila delle richieste tolleranti: XFive risponde male a certe pagine (es. statistiche di un torneo di padel). */
+    private int $softFailures = 0;
+
+    /** Dopo tanti salti di fila il problema non è la singola pagina: ci si ferma. */
+    private const MAX_SOFT_FAILURES = 10;
+
     /**
-     * Una richiesta attraverso il freno e il budget. Null se la pagina non esiste (404). Gli errori del sito fanno
-     * attendere e riprovare; dopo troppi, il freno ferma tutto con un'eccezione che la tappa lascia salire.
+     * Una richiesta attraverso il freno e il budget. Null se la pagina non esiste (404).
+     *
+     * Normale: gli errori del sito fanno attendere e riprovare; dopo troppi, il freno ferma tutto con un'eccezione.
+     * Tollerante (dati accessori: classifiche, statistiche, pagine di squadre, giocatori, partite, immagini): al primo
+     * errore si salta solo quell'elemento, senza attese; dopo 5 salti di fila si fa una pausa di due minuti, dopo 10 ci
+     * si ferma perché il sito ha chiaramente un problema.
      *
      * @template T
      *
      * @param  Closure():T  $request
      * @return T|null
      */
-    private function guarded(Closure $request): mixed
+    private function guarded(Closure $request, bool $tolerant = false): mixed
     {
         $this->budget--;
         try {
-            return $this->limiter->run($request, fn (Throwable $e) => str_contains($e->getMessage(), 'HTTP 404'));
+            $result = $this->limiter->run($request, fn (Throwable $e) => $tolerant || str_contains($e->getMessage(), 'HTTP 404'));
+            $this->softFailures = 0;
+
+            return $result;
         } catch (RuntimeException $e) {
             if (str_contains($e->getMessage(), 'HTTP 404')) {
                 return null;
             }
-            throw $e;
+            if (! $tolerant) {
+                throw $e;
+            }
+            $this->softFailures++;
+            ($this->say)('  saltato (il sito ha risposto male): '.mb_substr($e->getMessage(), 0, 120));
+            if ($this->softFailures >= self::MAX_SOFT_FAILURES) {
+                throw new RuntimeException('XFive risponde male a '.self::MAX_SOFT_FAILURES.' richieste di fila: mi fermo. Riprova più tardi.', 0, $e);
+            }
+            if ($this->softFailures % 5 === 0) {
+                ($this->say)('  cinque errori di fila: pausa di due minuti.');
+                sleep(120);
+            }
+
+            return null;
         }
     }
 }
