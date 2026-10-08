@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import type { Match, MatchStatus, Team } from "@/api/types";
 import { RollDigits } from "@/components/motion";
 import { dist, dur, ease, spring } from "@/lib/motion";
+import { sized } from "@/lib/img";
 import { cn } from "@/lib/utils";
 import { outcomeLabel, type Outcome } from "@/lib/format";
 
@@ -18,7 +19,7 @@ export function Crest({ team, size = 40 }: { team: Team; size?: number }) {
         style={{ width: size, height: size, padding: size * 0.08 }}
       >
         <img
-          src={team.badge_url}
+          src={sized(team.badge_url, size)}
           alt={`Stemma di ${team.name}`}
           crossOrigin="anonymous"
           onError={() => setBroken(true)}

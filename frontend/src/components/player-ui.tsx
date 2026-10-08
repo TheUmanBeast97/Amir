@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { useState, type ReactNode } from "react";
 import type { Id, KitColor, LineupSlot, PublicPlayer } from "@/api/types";
 import { KIT_LABEL, KIT_STYLE, initials, shirtFor, shortName } from "@/lib/kit";
+import { sized } from "@/lib/img";
 import { ease, spring } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +30,7 @@ export function PlayerPhoto({
     >
       {player.photo_url && !broken ? (
         <img
-          src={player.photo_url}
+          src={sized(player.photo_url, size)}
           alt=""
           crossOrigin="anonymous"
           onError={() => setBroken(true)}

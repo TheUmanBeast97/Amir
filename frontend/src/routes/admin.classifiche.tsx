@@ -5,6 +5,7 @@ import { useAttendance, useHistory } from "@/api/hooks";
 import type { AttendanceRow } from "@/api/types";
 import { ActivePill, CountUp, Reveal } from "@/components/motion";
 import { Card, EmptyState, ErrorState, PageTitle, Select, Skeleton } from "@/components/ui-kit";
+import { sized } from "@/lib/img";
 import { dur, ease, spring } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -64,7 +65,7 @@ const initials = (n: string) =>
 function Avatar({ r, size }: { r: AttendanceRow; size: number }) {
   return r.photo_url ? (
     <img
-      src={r.photo_url}
+      src={sized(r.photo_url, size)}
       alt=""
       className="rounded-full object-cover"
       style={{ width: size, height: size }}

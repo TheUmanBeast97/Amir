@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, PageTitle, Skeleton } from "@/components/ui-kit
 import { Reveal } from "@/components/motion";
 import { ShirtBadge } from "@/components/player-ui";
 import { roleLabel } from "@/lib/format";
+import { sized } from "@/lib/img";
 import { initials } from "@/lib/kit";
 import { cn } from "@/lib/utils";
 
@@ -57,7 +58,7 @@ function RosterPage() {
                 <div className="relative grid aspect-[4/3] place-items-center overflow-hidden bg-hero">
                   {p.photo_url ? (
                     <img
-                      src={p.photo_url}
+                      src={sized(p.photo_url, 300)}
                       alt=""
                       className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
                     />
