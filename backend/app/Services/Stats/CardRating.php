@@ -3,7 +3,8 @@
 namespace App\Services\Stats;
 
 /**
- * Il voto della figurina, da 75 a 99, con pesi diversi per ruolo.
+ * Il voto della figurina, da 80 a 99, con pesi diversi per ruolo. Cinque fasce di quattro punti:
+ * bronzo 80-83, argento 84-87, oro 88-91, platino 92-95, fuoco 96-99.
  *
  * Ogni voce dà un punteggio da 0 a 1 e vale una quota del voto (i pesi di un ruolo fanno 100%):
  *   conceded      gol subiti a partita con lui in campo, confrontati con la media della squadra (meno è meglio)
@@ -19,7 +20,7 @@ namespace App\Services\Stats;
  */
 final class CardRating
 {
-    public const MIN = 75;
+    public const MIN = 80;
 
     public const MAX = 99;
 
@@ -51,10 +52,10 @@ final class CardRating
     public static function tierOf(int $ovr): string
     {
         return match (true) {
-            $ovr >= 95 => 'fuoco',
-            $ovr >= 90 => 'platino',
-            $ovr >= 85 => 'oro',
-            $ovr >= 80 => 'argento',
+            $ovr >= 96 => 'fuoco',
+            $ovr >= 92 => 'platino',
+            $ovr >= 88 => 'oro',
+            $ovr >= 84 => 'argento',
             default => 'bronzo',
         };
     }

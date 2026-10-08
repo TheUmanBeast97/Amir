@@ -944,7 +944,7 @@ function RatingExplainer({ page, rating }: { page: PlayerPage; rating: CardRatin
         )}
       </ul>
       <p className="border-t border-border pt-2 text-xs text-muted-foreground">
-        Si parte da 75 e ogni voce aggiunge fino alla sua quota di 24 punti: {rating.ovr} ={" "}
+        Si parte da 80 e ogni voce aggiunge fino alla sua quota di 19 punti: {rating.ovr} ={" "}
         {tierLabel[rating.tier]}. Le medie sono «corrette» come se ci fossero 12 partite in più,
         così una partita fortunata non basta. Fasce:{" "}
         {TIERS.map((t) => `${tierLabel[t]} ${tierRange[t]}`).join(", ")}.

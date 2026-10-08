@@ -74,7 +74,7 @@ class PlayerCardTest extends TestCase
         $card = $this->profile($this->gigi)['card'];
 
         $this->assertSame('portiere', $card['role']);
-        $this->assertGreaterThanOrEqual(75, $card['ovr']);
+        $this->assertGreaterThanOrEqual(80, $card['ovr']);
         $this->assertLessThanOrEqual(99, $card['ovr']);
         $this->assertContains($card['tier'], ['bronzo', 'argento', 'oro', 'platino', 'fuoco']);
         $this->assertContains('conceded', array_column($card['parts'], 'key'));

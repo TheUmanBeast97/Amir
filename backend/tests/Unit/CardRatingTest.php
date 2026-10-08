@@ -5,7 +5,7 @@ namespace Tests\Unit;
 use App\Services\Stats\CardRating;
 use PHPUnit\Framework\TestCase;
 
-/** Il voto della figurina: da 75 a 99, con pesi diversi per ruolo e una scomposizione che si può spiegare. */
+/** Il voto della figurina: da 80 a 99, con pesi diversi per ruolo e una scomposizione che si può spiegare. */
 class CardRatingTest extends TestCase
 {
     /** Totali di un giocatore come li produce la scheda; si passano solo le differenze. */
@@ -22,17 +22,21 @@ class CardRatingTest extends TestCase
         return (new CardRating)->rate($role, $this->totals($over));
     }
 
-    public function test_the_rating_always_stays_between_75_and_99_and_the_tier_follows_it(): void
+    public function test_the_rating_always_stays_between_80_and_99_and_the_tier_follows_it(): void
     {
         $nobody = $this->rate('attaccante');
-        $this->assertSame(75, $nobody['ovr']);
+        $this->assertSame(80, $nobody['ovr']);
         $this->assertSame('bronzo', $nobody['tier']);
 
         $legend = $this->rate('attaccante', ['matches' => 120, 'goals' => 150, 'wins' => 100, 'win_rate' => 0.83, 'mvp' => 20]);
         $this->assertSame(99, $legend['ovr']);
         $this->assertSame('fuoco', $legend['tier']);
 
-        $this->assertSame(['bronzo', 'argento', 'oro', 'platino', 'fuoco'], array_map(fn (int $o) => CardRating::tierOf($o), [79, 80, 89, 90, 95]));
+        // fasce di quattro punti: i due estremi di ognuna
+        $this->assertSame(
+            ['bronzo', 'bronzo', 'argento', 'argento', 'oro', 'oro', 'platino', 'platino', 'fuoco', 'fuoco'],
+            array_map(fn (int $o) => CardRating::tierOf($o), [80, 83, 84, 87, 88, 91, 92, 95, 96, 99]),
+        );
     }
 
     public function test_a_goalkeeper_is_rated_on_goals_conceded_and_clean_sheets_not_on_goals_scored(): void

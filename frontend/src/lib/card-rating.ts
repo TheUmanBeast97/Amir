@@ -1,6 +1,6 @@
 import type { CardPart, CardScore, PlayerPage, PlayerRole } from "@/api/types";
 
-/** Le cinque fasce della figurina, dal voto: 75-79, 80-84, 85-89, 90-94, 95-99. «Fuoco» è la speciale AMIR, nera e rossa. */
+/** Le cinque fasce della figurina, dal voto: 80-83, 84-87, 88-91, 92-95, 96-99. «Fuoco» è la speciale AMIR, nera e rossa. */
 export type Tier = "bronzo" | "argento" | "oro" | "platino" | "fuoco";
 
 export const TIERS: Tier[] = ["bronzo", "argento", "oro", "platino", "fuoco"];
@@ -11,7 +11,7 @@ export interface CardStat {
 }
 
 export interface CardRating {
-  /** Il voto da 75 a 99, calcolato dal server con pesi diversi per ruolo (vedi `page.card`). */
+  /** Il voto da 80 a 99, calcolato dal server con pesi diversi per ruolo (vedi `page.card`). */
   ovr: number;
   tier: Tier;
   /** Sigla del ruolo: POR, DIF, CEN, ATT. */
@@ -28,7 +28,15 @@ const POS: Partial<Record<PlayerRole, string>> = {
 };
 
 export const tierOf = (ovr: number): Tier =>
-  ovr >= 95 ? "fuoco" : ovr >= 90 ? "platino" : ovr >= 85 ? "oro" : ovr >= 80 ? "argento" : "bronzo";
+  ovr >= 96
+    ? "fuoco"
+    : ovr >= 92
+      ? "platino"
+      : ovr >= 88
+        ? "oro"
+        : ovr >= 84
+          ? "argento"
+          : "bronzo";
 
 export const tierLabel: Record<Tier, string> = {
   bronzo: "Bronzo",
@@ -40,11 +48,11 @@ export const tierLabel: Record<Tier, string> = {
 
 /** Intervallo di voto di una fascia, per la legenda. */
 export const tierRange: Record<Tier, string> = {
-  bronzo: "75-79",
-  argento: "80-84",
-  oro: "85-89",
-  platino: "90-94",
-  fuoco: "95-99",
+  bronzo: "80-83",
+  argento: "84-87",
+  oro: "88-91",
+  platino: "92-95",
+  fuoco: "96-99",
 };
 
 const it = (n: number, digits = 2) => n.toFixed(digits).replace(".", ",");
