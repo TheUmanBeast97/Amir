@@ -6,6 +6,7 @@ use App\Models\Player;
 use App\Models\SyncRun;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\Xfive\Admin\AdminRosterSyncer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -112,6 +113,8 @@ class XfiveAdminSyncTest extends TestCase
         $this->assertSame(1, $stats['missing_on_xfive']);
         $this->assertSame(2, $stats['squad_list_changes'], 'Rossi entra in Squad List, Bianchi esce');
         $this->assertSame(1, $stats['certificate_changes'], 'solo Rossi: quello di De Luca era già uguale');
+        $this->assertSame(4, $stats['registration_changes'], 'da «nessuno» a tesserato (3) o in attesa (1)');
+        $this->assertSame(0, $stats['created'], 'l\'aggiornamento normale non crea mai giocatori');
         $this->assertSame(5, Player::count(), 'nessun giocatore creato o cancellato');
 
         $rossi->refresh();
@@ -128,6 +131,8 @@ class XfiveAdminSyncTest extends TestCase
         $this->assertTrue($deLuca->refresh()->in_squad_list);
         $this->assertSame('2026-12-31', $neri->refresh()->medical_cert_expires_on->toDateString(), 'se XFive non ha una data, la nostra resta');
         $this->assertSame('pending', $neri->xfive_membership['status']);
+        $this->assertSame('approved', $rossi->registration_status);
+        $this->assertSame('pending', $neri->registration_status);
         $this->assertNull($assente->refresh()->xfive_admin_id);
 
         // la password parte una sola volta, verso il login di XFive, in HTTPS, e non compare in nessun altro indirizzo né nella risposta
@@ -146,6 +151,83 @@ class XfiveAdminSyncTest extends TestCase
             && $r->hasHeader('X-Requested-With', 'XMLHttpRequest') && str_contains($r->header('Referer')[0] ?? '', 'sk=team'));
         $this->assertStringNotContainsString(self::PASSWORD, $response->getContent());
         $this->assertStringNotContainsString(self::PASSWORD, (string) SyncRun::latest('id')->first()->toJson());
+    }
+
+    public function test_the_import_button_creates_who_is_on_xfive_and_not_here_and_never_twice(): void
+    {
+        $this->fakeAdminXfive();
+
+        $stats = $this->postJson('/api/v1/sync/xfive', ['scope' => 'players'])
+            ->assertOk()->assertJsonPath('data.status', 'ok')->json('data.stats');
+
+        $this->assertSame(5, $stats['created']);
+        $this->assertSame(0, $stats['unmatched']);
+        $this->assertSame(5, Player::count());
+        $this->assertSame(5, Player::where('team_id', $this->own->id)->where('is_active', true)->count());
+
+        $rossi = Player::where('xfive_admin_id', 9001)->firstOrFail();
+        $this->assertSame(['Rossi', 'Mario'], [$rossi->last_name, $rossi->first_name]);
+        $this->assertSame('portiere', $rossi->role);
+        $this->assertSame('1995-01-14', $rossi->birth_date->toDateString());
+        $this->assertSame('2024-11-27', $rossi->medical_cert_expires_on->toDateString());
+        $this->assertTrue($rossi->in_squad_list);
+        $this->assertSame('approved', $rossi->registration_status);
+        $this->assertSame('https://cdn.enjore.com/wl/xfivesport_it/img/player/q/1001-aaaaaaaaaa.jpg', $rossi->photo_url);
+        $this->assertNotEmpty($rossi->access_token, 'il link personale del giocatore si crea come sempre');
+
+        $deLuca = Player::where('xfive_admin_id', 9003)->firstOrFail();
+        $this->assertSame(['De Luca', 'Paolo'], [$deLuca->last_name, $deLuca->first_name], 'la particella resta nel cognome');
+
+        $neri = Player::where('xfive_admin_id', 9004)->firstOrFail();
+        $this->assertSame('pending', $neri->registration_status);
+        $this->assertNull($neri->photo_url, 'il segnaposto di XFive non è una foto');
+        $this->assertFalse($neri->in_squad_list);
+        $this->assertSame(2, Player::where('in_squad_list', true)->count());
+
+        // la seconda volta ritrova gli stessi, senza doppioni
+        $again = $this->postJson('/api/v1/sync/xfive', ['scope' => 'players'])->assertOk()->json('data.stats');
+        $this->assertSame(0, $again['created']);
+        $this->assertSame(0, $again['updated']);
+        $this->assertSame(5, Player::count());
+    }
+
+    public function test_the_import_matches_the_players_you_already_have_instead_of_creating_them_again(): void
+    {
+        $this->fakeAdminXfive();
+        $rossi = $this->player('Mario', 'Rossi', ['shirt_number' => 1, 'phone' => '333 000 0000']);
+
+        $stats = $this->postJson('/api/v1/sync/xfive', ['scope' => 'players'])->assertOk()->json('data.stats');
+
+        $this->assertSame(4, $stats['created'], 'gli altri quattro');
+        $this->assertSame(1, $stats['new_links']);
+        $this->assertSame(5, Player::count());
+        $this->assertSame(9001, $rossi->refresh()->xfive_admin_id);
+        $this->assertEquals(1, $rossi->shirt_number, 'quello che è solo nostro (maglia, telefono) non si tocca');
+        $this->assertSame('333 000 0000', $rossi->phone);
+    }
+
+    public function test_a_full_name_is_split_into_surname_and_first_name_keeping_particles_together(): void
+    {
+        $row = fn (int $id, string $name) => [
+            'admin_id' => $id, 'name' => $name, 'birth_date' => null, 'role' => null, 'certificate_expires_on' => null,
+            'photo_url' => null, 'documents' => 0,
+            'membership' => ['status' => 'none', 'title' => null, 'season' => null, 'date' => null, 'type' => null, 'is_squad_list' => false, 'fee' => null],
+        ];
+
+        $stats = app(AdminRosterSyncer::class)->apply($this->own, [
+            $row(1, 'Van Der Berg Jan'),
+            $row(2, 'Rossi Mario Luigi'),
+            $row(3, 'Di Maria Gianluca'),
+            $row(4, 'Della Rosa Marco'),
+            $row(5, 'Dall\'Orto Pietro'),
+            $row(6, 'Solo'),
+        ], create: true);
+
+        $names = Player::orderBy('xfive_admin_id')->get()->map(fn (Player $p) => $p->last_name.' | '.$p->first_name)->all();
+
+        $this->assertSame(['Van Der Berg | Jan', 'Rossi | Mario Luigi', 'Di Maria | Gianluca', 'Della Rosa | Marco', "Dall'Orto | Pietro"], $names);
+        $this->assertSame(5, $stats['created']);
+        $this->assertSame(1, $stats['unmatched'], 'una sola parola non basta per un nome e un cognome: non si crea');
     }
 
     public function test_reading_again_changes_nothing_that_is_already_right(): void

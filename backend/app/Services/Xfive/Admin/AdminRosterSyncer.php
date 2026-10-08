@@ -9,13 +9,20 @@ use Illuminate\Support\Str;
 
 /**
  * Porta nei nostri giocatori quello che XFive sa di loro nell'area amministrazione (sola lettura su XFive):
- *  - Squad List e scadenza del certificato medico: vale XFive, è la fonte;
- *  - stato del tesseramento (tipo, data, importo, documenti caricati): salvato così com'è, solo da consultare;
+ *  - Squad List, scadenza del certificato medico e stato del tesseramento: vale XFive, è la fonte;
+ *  - tipo, data e importo del tesseramento e documenti caricati: salvati così come sono, solo da consultare;
  *  - data di nascita e ruolo: si completano se mancano; se la data di nascita è diversa non si tocca, si segnala.
- * Non crea giocatori e non ne cancella: chi non si abbina o è in più si conta e si lascia stare.
+ * Senza `$create` non crea giocatori e non ne cancella: chi non si abbina o è in più si conta e si lascia stare.
+ * Con `$create` (il pulsante «Importa giocatori da XFive») chi su XFive c'è e da noi no viene creato; non si duplica mai.
  */
 final class AdminRosterSyncer
 {
+    /** Parole che, in «Cognome Nome», fanno parte del cognome: «De Luca Paolo» è Paolo De Luca. */
+    private const SURNAME_PARTICLES = [
+        'de', 'di', 'da', 'del', 'della', 'dello', 'dei', 'degli', 'delle', 'dal', 'dalla', 'dallo', 'dai', 'la', 'lo', 'le', 'li',
+        'van', 'von', 'der', 'den', 'mc', 'mac', 'san', 'santa', 'sant', 'ben', 'el', 'al',
+    ];
+
     public function __construct(
         private readonly XfiveAdminClient $client,
         private readonly AdminRosterParser $parser,
@@ -26,7 +33,7 @@ final class AdminRosterSyncer
      *
      * @throws XfiveAdminException
      */
-    public function sync(Team $own): array
+    public function sync(Team $own, bool $create = false): array
     {
         $rows = $this->parser->parse($this->client->rosterData());
 
@@ -34,14 +41,14 @@ final class AdminRosterSyncer
             throw new XfiveAdminException('unexpected_page', "XFive non ha restituito nessun giocatore che riconosco: l'elenco è vuoto oppure la struttura è cambiata. Non è stato modificato nulla.");
         }
 
-        return $this->apply($own, $rows);
+        return $this->apply($own, $rows, $create);
     }
 
     /**
      * @param  array<int, array<string, mixed>>  $rows  vedi AdminRosterParser::parse
      * @return array<string, int>
      */
-    public function apply(Team $own, array $rows): array
+    public function apply(Team $own, array $rows, bool $create = false): array
     {
         $players = Player::where('team_id', $own->id)->orderBy('id')->get();
 
@@ -52,28 +59,40 @@ final class AdminRosterSyncer
         }
 
         $stats = [
-            'rows' => count($rows), 'matched' => 0, 'updated' => 0, 'new_links' => 0,
-            'squad_list_changes' => 0, 'certificate_changes' => 0, 'birth_mismatch' => 0,
+            'rows' => count($rows), 'matched' => 0, 'created' => 0, 'updated' => 0, 'new_links' => 0,
+            'squad_list_changes' => 0, 'registration_changes' => 0, 'certificate_changes' => 0, 'birth_mismatch' => 0,
             'unmatched' => 0, 'ambiguous' => 0, 'missing_on_xfive' => 0,
         ];
         $seen = [];
 
-        DB::transaction(function () use ($rows, $byAdminId, $byName, &$stats, &$seen) {
+        DB::transaction(function () use ($rows, $own, $create, $byAdminId, $byName, &$stats, &$seen) {
             foreach ($rows as $row) {
                 $player = $byAdminId->get($row['admin_id']);
 
                 if ($player === null) {
                     $found = $this->matchByName($row, $byName, $seen);
+
                     if ($found === 'ambiguous') {
                         $stats['ambiguous']++;
 
                         continue;
                     }
+
                     if ($found === null) {
-                        $stats['unmatched']++;
+                        $created = $create ? $this->createPlayer($own, $row) : null;
+                        if ($created === null) {
+                            $stats['unmatched']++;
+
+                            continue;
+                        }
+
+                        $seen[$created->id] = true;
+                        $stats['created']++;
+                        $stats['matched']++;
 
                         continue;
                     }
+
                     $player = $found;
                     $stats['new_links']++;
                 }
@@ -87,6 +106,37 @@ final class AdminRosterSyncer
         $stats['missing_on_xfive'] = $players->filter(fn (Player $p) => $p->is_active && ! isset($seen[$p->id]))->count();
 
         return $stats;
+    }
+
+    /**
+     * Un giocatore che su XFive c'è e da noi no. Con tutto quello che XFive dice; il resto (maglie, telefono, note) lo aggiungi tu.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function createPlayer(Team $own, array $row): ?Player
+    {
+        [$last, $first] = $this->splitName((string) $row['name']);
+        if ($first === '' || $last === '') {
+            return null; // senza nome e cognome non si crea
+        }
+
+        $membership = $row['membership'];
+
+        return Player::create([
+            'team_id' => $own->id,
+            'first_name' => $first,
+            'last_name' => $last,
+            'role' => $row['role'],
+            'birth_date' => $row['birth_date'],
+            'medical_cert_expires_on' => $row['certificate_expires_on'],
+            'photo_url' => $row['photo_url'],
+            'is_active' => true,
+            'in_squad_list' => $membership['status'] !== 'none' && $membership['is_squad_list'],
+            'registration_status' => $this->registration($membership['status']),
+            'xfive_admin_id' => $row['admin_id'],
+            'xfive_membership' => $membership + ['documents' => $row['documents']],
+            'xfive_admin_synced_at' => now(),
+        ]);
     }
 
     /**
@@ -105,11 +155,20 @@ final class AdminRosterSyncer
             'xfive_admin_synced_at' => now(),
         ];
 
-        // Squad List: solo se XFive dà un tesseramento a questo giocatore
-        if ($membership['status'] !== 'none' && (bool) $player->in_squad_list !== $membership['is_squad_list']) {
-            $update['in_squad_list'] = $membership['is_squad_list'];
-            $stats['squad_list_changes']++;
-            $changed = true;
+        // Squad List e stato del tesseramento: solo se XFive dà un tesseramento a questo giocatore
+        if ($membership['status'] !== 'none') {
+            if ((bool) $player->in_squad_list !== $membership['is_squad_list']) {
+                $update['in_squad_list'] = $membership['is_squad_list'];
+                $stats['squad_list_changes']++;
+                $changed = true;
+            }
+
+            $registration = $this->registration($membership['status']);
+            if ($player->registration_status !== $registration) {
+                $update['registration_status'] = $registration;
+                $stats['registration_changes']++;
+                $changed = true;
+            }
         }
 
         // certificato: se XFive ha una data vale quella; se non ne ha, la nostra (magari presa dalla carta) resta
@@ -142,6 +201,16 @@ final class AdminRosterSyncer
         return $stats;
     }
 
+    /** Lo stato di XFive nei tre valori del gestionale (none, pending, approved). */
+    private function registration(string $status): string
+    {
+        return match ($status) {
+            'approved' => 'approved',
+            'pending' => 'pending',
+            default => 'none',
+        };
+    }
+
     /**
      * Abbina per nome (le parole in qualunque ordine: XFive scrive «Cognome Nome»), a parità con la data di nascita.
      *
@@ -166,6 +235,27 @@ final class AdminRosterSyncer
         $sameBirth = array_values(array_filter($candidates, fn (Player $p) => $row['birth_date'] !== null && $p->birth_date?->toDateString() === $row['birth_date']));
 
         return count($sameBirth) === 1 ? $sameBirth[0] : 'ambiguous';
+    }
+
+    /**
+     * «De Luca Paolo» diventa [«De Luca», «Paolo»]; «Rossi Mario Luigi» [«Rossi», «Mario Luigi»]. Non si può essere sicuri
+     * (un cognome composto senza particella, un nome doppio): chi è sbagliato si corregge a mano nella scheda del giocatore.
+     *
+     * @return array{0: string, 1: string} [cognome, nome]
+     */
+    private function splitName(string $full): array
+    {
+        $words = preg_split('/\s+/u', trim($full), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if (count($words) < 2) {
+            return [$full, ''];
+        }
+
+        $surname = [$words[0]];
+        for ($i = 1; $i < count($words) - 1 && in_array(mb_strtolower(end($surname)), self::SURNAME_PARTICLES, true); $i++) {
+            $surname[] = $words[$i];
+        }
+
+        return [implode(' ', $surname), implode(' ', array_slice($words, count($surname)))];
     }
 
     /** «De Luca Paolo» e «Paolo De Luca» danno la stessa chiave. */

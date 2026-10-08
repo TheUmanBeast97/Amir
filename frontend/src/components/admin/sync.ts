@@ -11,10 +11,39 @@ export const syncLabel: Record<SyncScope, string> = {
   media: "Stemmi e foto",
   stats: "Statistiche",
   admin: "Rosa da XFive",
+  players: "Giocatori da XFive",
 };
 
 /** Quante volte al massimo si richiama un aggiornamento che dichiara di avere ancora da fare. */
 const MAX_ROUNDS = 20;
+
+/** Il messaggio finale di un aggiornamento riuscito, con i numeri che contano. */
+function finished(scope: SyncScope, run: SyncRun) {
+  const st = run.stats;
+
+  if (st["disabled"]) {
+    toast.warning("L'accesso a XFive è spento: si accende in Impostazioni, scheda «Area amministrazione XFive».");
+    return;
+  }
+
+  const remaining = st["remaining"] ?? 0;
+  if (remaining > 0) {
+    toast.warning(`Fatto un pezzo: ne mancano ancora ${remaining}. Premi di nuovo.`);
+    return;
+  }
+
+  if (scope === "players" || scope === "admin") {
+    const parts: string[] = [];
+    if (st["created"]) parts.push(`${st["created"]} giocatori creati`);
+    if (st["new_links"]) parts.push(`${st["new_links"]} già presenti e collegati`);
+    if (st["updated"]) parts.push(`${st["updated"]} aggiornati`);
+    if (st["unmatched"]) parts.push(`${st["unmatched"]} su XFive senza corrispondenza`);
+    toast.success(parts.length ? `Rosa da XFive: ${parts.join(", ")}` : "Rosa da XFive: era già tutto allineato");
+    return;
+  }
+
+  toast.success(scope === "current" || scope === "history" ? "Dati XFive aggiornati" : `${syncLabel[scope]}: aggiornato`);
+}
 
 /**
  * Avvia un aggiornamento da XFive. In locale parte dopo la risposta e se ne segue lo stato a intervalli; sul server la risposta
@@ -32,10 +61,8 @@ export function useSyncFlow() {
     if (polling && runs.data && !running) {
       setPolling(false);
       const last = runs.data[0];
-      if (last?.status === "ok") {
-        const remaining = last.stats["remaining"] ?? 0;
-        toast.success(remaining > 0 ? `Fatto un pezzo: ne mancano ancora ${remaining}. Premi di nuovo.` : "Dati XFive aggiornati");
-      } else if (last?.status === "error") toast.error(last.error ?? "Aggiornamento non riuscito");
+      if (last?.status === "ok") finished(last.scope, last);
+      else if (last?.status === "error") toast.error(last.error ?? "Aggiornamento non riuscito");
     }
   }, [polling, running, runs.data]);
 
@@ -56,8 +83,7 @@ export function useSyncFlow() {
       }
 
       if (run.status === "error") toast.error(run.error ?? "Aggiornamento non riuscito");
-      else if ((run.stats["remaining"] ?? 0) > 0) toast.warning(`Fatto un pezzo: ne mancano ancora ${run.stats["remaining"]}. Premi di nuovo.`);
-      else toast.success(`${syncLabel[scope]}: aggiornato`);
+      else finished(scope, run);
     } catch (e) {
       toastError(e);
     } finally {

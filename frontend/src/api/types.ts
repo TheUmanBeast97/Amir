@@ -661,8 +661,8 @@ export interface MeResponse {
   upcoming_events: TeamEvent[]; // each with my_rsvp
   balance: PlayerBalance;
 }
-/** current = calendario e risultati, history = storico, details = referti delle partite, media = stemmi e foto, stats = statistiche dei giocatori, admin = rosa e tesseramenti dall'area amministrazione di XFive */
-export type SyncScope = "current" | "history" | "details" | "media" | "stats" | "admin";
+/** current = calendario e risultati, history = storico, details = referti delle partite, media = stemmi e foto, stats = statistiche dei giocatori, admin = rosa e tesseramenti dall'area amministrazione di XFive, players = come admin ma crea anche i giocatori che da noi mancano */
+export type SyncScope = "current" | "history" | "details" | "media" | "stats" | "admin" | "players";
 export interface SyncRun {
   id: Id;
   scope: SyncScope;

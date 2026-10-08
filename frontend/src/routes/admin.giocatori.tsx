@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Copy, Pencil, Plus, Search, Share2, Trash2, Upload } from "lucide-react";
+import { Copy, Pencil, Plus, Search, Share2, Trash2, Upload, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDeletePlayer, usePlayers } from "@/api/hooks";
@@ -17,6 +17,7 @@ import {
 import { PlayerDrawer } from "@/components/admin/PlayerDrawer";
 import { ShirtBadge } from "@/components/player-ui";
 import { ImportDialog } from "@/components/admin/ImportDialog";
+import { useSyncFlow } from "@/components/admin/sync";
 import { fmtDay, regLabel, roleLabel, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -76,6 +77,7 @@ function PlayersPage() {
   const [role, setRole] = useState("");
   const [editing, setEditing] = useState<Player | null | undefined>(undefined);
   const [importOpen, setImportOpen] = useState(false);
+  const { start: startSync, busy: syncing } = useSyncFlow();
 
   const rows = useMemo(
     () =>
@@ -167,8 +169,11 @@ function PlayersPage() {
     <div>
       <PageTitle kicker="Area staff" title="Giocatori">
         <div className="flex gap-2">
+          <Btn variant="outline" onClick={() => startSync("players")} disabled={syncing}>
+            <Users className="h-4 w-4" /> {syncing ? "Importo…" : "Importa da XFive"}
+          </Btn>
           <Btn variant="outline" onClick={() => setImportOpen(true)}>
-            <Upload className="h-4 w-4" /> Importa
+            <Upload className="h-4 w-4" /> Importa righe
           </Btn>
           <Btn onClick={() => setEditing(null)}>
             <Plus className="h-4 w-4" /> Nuovo
@@ -234,7 +239,16 @@ function PlayersPage() {
       ) : q.isError ? (
         <ErrorState error={q.error} onRetry={() => q.refetch()} />
       ) : rows.length === 0 ? (
-        <EmptyState>Nessun giocatore con questi filtri.</EmptyState>
+        <EmptyState>
+          {q.data.length === 0 ? (
+            <>
+              Nessun giocatore. Premi «Importa da XFive» per prendere la rosa dall'area amministrazione (serve l'accesso acceso in
+              Impostazioni), oppure ripristina i dati del tuo computer da Impostazioni, «Dati e backup».
+            </>
+          ) : (
+            "Nessun giocatore con questi filtri."
+          )}
+        </EmptyState>
       ) : (
         <>
           <div className="hidden overflow-hidden rounded-xl border md:block">

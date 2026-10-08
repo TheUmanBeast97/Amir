@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChartColumn, ClipboardList, Download, History, Images, KeyRound, LogOut, RefreshCw, Upload } from "lucide-react";
+import { ChartColumn, ClipboardList, Download, History, Images, KeyRound, LogOut, RefreshCw, Upload, Users } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api, TOKEN_KEY } from "@/api/client";
@@ -133,7 +133,8 @@ function XfiveAdminCard({ start, busy, working }: { start: (scope: SyncScope) =>
         {badge && <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold uppercase", badge.cls)}>{badge.text}</span>}
       </div>
       <p className="mb-3 text-sm text-muted-foreground">
-        Legge dal tuo account amministratore su XFive la rosa: Squad List, scadenze dei certificati e stato dei tesseramenti. Solo lettura.
+        Legge dal tuo account amministratore su XFive la rosa: crea i giocatori che mancano e tiene allineati Squad List, scadenze dei
+        certificati e stato dei tesseramenti. Solo lettura su XFive. Maglie, telefoni, note e pagamenti restano tuoi: non vengono da XFive.
         Email e password stanno solo nelle variabili protette del server: qui non si digitano e non si salvano.
       </p>
 
@@ -166,8 +167,11 @@ function XfiveAdminCard({ start, busy, working }: { start: (scope: SyncScope) =>
             <Btn variant="outline" onClick={tryLogin} disabled={!s?.configured || check.isPending || busy}>
               <KeyRound className="h-4 w-4" /> {check.isPending ? "Provo l'accesso…" : "Prova accesso"}
             </Btn>
-            <Btn onClick={() => start("admin")} disabled={!s?.enabled || busy || check.isPending}>
-              <RefreshCw className={cn("h-4 w-4", working === "admin" && "animate-spin")} /> Leggi rosa da XFive
+            <Btn onClick={() => start("players")} disabled={!s?.enabled || busy || check.isPending}>
+              <Users className={cn("h-4 w-4", working === "players" && "animate-pulse")} /> Importa giocatori da XFive
+            </Btn>
+            <Btn variant="outline" onClick={() => start("admin")} disabled={!s?.enabled || busy || check.isPending}>
+              <RefreshCw className={cn("h-4 w-4", working === "admin" && "animate-spin")} /> Aggiorna rosa da XFive
             </Btn>
           </div>
 
@@ -193,6 +197,7 @@ function XfiveAdminCard({ start, busy, working }: { start: (scope: SyncScope) =>
 /** I numeri che contano di una lettura, in italiano e senza gli zeri. */
 function summary(stats: Record<string, number>) {
   const parts: [string, string][] = [
+    ["created", "giocatori creati"],
     ["matched", "abbinati"],
     ["squad_list_changes", "cambi di Squad List"],
     ["certificate_changes", "certificati aggiornati"],

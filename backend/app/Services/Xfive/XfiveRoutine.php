@@ -19,13 +19,14 @@ use Throwable;
  *   media    stemmi e foto mancanti
  *   stats    statistiche per torneo dei nostri giocatori (stagione in corso)
  *   admin    rosa, tesseramenti, certificati e Squad List dall'area amministrazione (serve l'accesso con il tuo account, spento di serie)
+ *   players  come admin, ma crea anche i giocatori che su XFive ci sono e da noi no (pulsante «Importa giocatori da XFive»)
  *
  * Sul server (Vercel) una richiesta può durare poco: gli ultimi tre lavorano entro un tempo massimo e, se c'è
  * ancora da fare, lo dicono in "remaining": basta lanciarli di nuovo.
  */
 final class XfiveRoutine
 {
-    public const SCOPES = ['current', 'history', 'details', 'media', 'stats', 'admin'];
+    public const SCOPES = ['current', 'history', 'details', 'media', 'stats', 'admin', 'players'];
 
     public function __construct(
         private readonly XfiveSyncService $calendar,
@@ -54,7 +55,8 @@ final class XfiveRoutine
                 'details' => $this->details($own, $deadline),
                 'media' => $this->media($own, $deadline),
                 'stats' => $this->stats($own, $deadline),
-                'admin' => $this->admin($own),
+                'admin' => $this->admin($own, create: false),
+                'players' => $this->admin($own, create: true),
                 default => throw new RuntimeException("Aggiornamento sconosciuto: {$scope}."),
             };
             $status = 'ok';
@@ -112,13 +114,13 @@ final class XfiveRoutine
      *
      * @return array<string, int>
      */
-    private function admin(Team $own): array
+    private function admin(Team $own, bool $create): array
     {
         if (! $this->adminClient->enabled()) {
             return ['disabled' => 1];
         }
 
-        return $this->admin->sync($own);
+        return $this->admin->sync($own, $create);
     }
 
     /** @return array<string, int> */
