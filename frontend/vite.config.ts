@@ -44,7 +44,31 @@ export default defineConfig(({ command }) => ({
       server: { entry: "server" },
     }),
     // in locale un server Node (`bun run build` → `.output`); su Vercel (che imposta VERCEL=1) l'uscita nel formato che Vercel serve
-    ...(command === "build" ? [nitro({ preset: process.env["VERCEL"] ? "vercel" : "node-server" })] : []),
+    ...(command === "build"
+      ? [
+          nitro({
+            preset: process.env["VERCEL"] ? "vercel" : "node-server",
+            // il server del sito sta a Francoforte, vicino a chi lo usa (di serie sarebbe Washington): la pagina di base non attraversa l'Atlantico
+            vercel: { functions: { regions: ["fra1"] } },
+            // file che non cambiano: il browser e la rete di Vercel li tengono invece di chiederli ogni volta
+            routeRules: {
+              "/fonts/**": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
+              ...Object.fromEntries(
+                [
+                  "/stemma-amir.png",
+                  "/xfive-logo.png",
+                  "/sfondo_match.jpg",
+                  "/icon-192.png",
+                  "/icon-512.png",
+                  "/apple-touch-icon.png",
+                  "/favicon.ico",
+                  "/favicon-32.png",
+                ].map((file) => [file, { headers: { "cache-control": "public, max-age=86400, stale-while-revalidate=604800" } }]),
+              ),
+            },
+          }),
+        ]
+      : []),
     viteReact(),
   ],
 }));

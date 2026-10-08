@@ -15,6 +15,8 @@ return [
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
     'exposed_headers' => ['Content-Disposition'],
-    'max_age' => 600,
+    // il browser ricorda per due ore (il massimo che Chrome accetta) che può fare le richieste: ogni indirizzo nuovo dello staff
+    // altrimenti costa una richiesta di verifica in più verso l'America prima di quella vera
+    'max_age' => 7200,
     'supports_credentials' => false,
 ];

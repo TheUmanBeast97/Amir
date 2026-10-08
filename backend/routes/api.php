@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\PublicController;
 use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\Api\XfiveAdminController;
+use App\Http\Middleware\PublicCache;
 use App\Services\Xfive\XfiveRoutine;
 use Illuminate\Support\Facades\Route;
 
@@ -27,8 +28,8 @@ Route::prefix('v1')->group(function () {
 
     Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
-    // ---- Pubblico: nessun login, solo dati che si possono mostrare a tutti ----
-    Route::prefix('public')->group(function () {
+    // ---- Pubblico: nessun login, solo dati che si possono mostrare a tutti (la rete di Vercel li tiene in cache: PublicCache) ----
+    Route::prefix('public')->middleware(PublicCache::class)->group(function () {
         Route::get('/home', [PublicController::class, 'home']);
         Route::get('/matches', [MatchController::class, 'index']);
         Route::get('/standings', [PublicController::class, 'standings']);
