@@ -600,12 +600,13 @@ final class XfiveArchiver
             $this->softFailures = 0;
 
             return $result;
-        } catch (RuntimeException $e) {
+        } catch (Throwable $e) {
+            // anche un errore di collegamento (sito irraggiungibile, timeout) è un errore del sito, non nostro
             if (str_contains($e->getMessage(), 'HTTP 404')) {
                 return null;
             }
             if (! $tolerant) {
-                throw $e;
+                throw $e instanceof RuntimeException ? $e : new RuntimeException('XFive non raggiungibile: '.mb_substr($e->getMessage(), 0, 160), 0, $e);
             }
             $this->softFailures++;
             ($this->say)('  saltato (il sito ha risposto male): '.mb_substr($e->getMessage(), 0, 120));
