@@ -32,6 +32,7 @@ class XfiveArchive extends Command
         {--limit=0 : massimo di richieste in questa esecuzione (0 = senza limite); il resto alla prossima}
         {--seasons= : per «tournaments»: id delle stagioni da elencare, es. 6,7,8 (di serie quelle in config)}
         {--scan= : per «tournaments»: intervallo di id di torneo da provare uno a uno, es. 1-200 (per le stagioni vecchie)}
+        {--only= : per «details»: solo alcune parti, es. calendar,standings (anche: stats, teams, docs); con --refresh rilegge dal sito}
         {--page=* : per «map»: altre pagine da leggere oltre alla home, es. /it/tournaments/}
         {--post=* : per «probe»: una chiamata interna da provare, come «league.php op=21&tid=187»}
         {--refresh : rilegge anche le pagine già salvate}';
@@ -91,7 +92,12 @@ class XfiveArchive extends Command
         $stages = $stage === 'all' ? XfiveArchiver::STAGES : [$stage];
         foreach ($stages as $s) {
             $this->info("Tappa «{$s}»…");
-            $stats = $s === 'tournaments' ? $archiver->tournaments($seasons, $scan) : $archiver->{$s}();
+            $only = array_values(array_filter(array_map('trim', explode(',', (string) $this->option('only')))));
+            $stats = match ($s) {
+                'tournaments' => $archiver->tournaments($seasons, $scan),
+                'details' => $archiver->details($only),
+                default => $archiver->{$s}(),
+            };
             $this->line('  '.implode(', ', array_map(fn ($k, $v) => "{$k}: {$v}", array_keys($stats), $stats)));
             if ($archiver->requestsLeft() <= 0) {
                 $this->warn('Budget di richieste finito: la prossima esecuzione riprende da qui.');

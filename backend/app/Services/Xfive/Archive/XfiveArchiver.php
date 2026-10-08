@@ -139,47 +139,65 @@ final class XfiveArchiver
 
     // ------------------------------------------------------------------ dettagli dei tornei
 
-    /** @return array<string, int> */
-    public function details(): array
+    public const DETAIL_PARTS = ['calendar', 'standings', 'stats', 'teams', 'docs'];
+
+    /**
+     * @param  array<int, string>  $only  quali parti rifare (vedi DETAIL_PARTS); vuoto = tutte. Con una parte sola si
+     *                                    rifanno anche i tornei già segnati come fatti: è l'aggiornamento mirato
+     *                                    («solo i risultati», «solo le classifiche»), di solito insieme a --refresh.
+     * @return array<string, int>
+     */
+    public function details(array $only = []): array
     {
         $stats = ['tournaments' => 0, 'fixtures' => 0, 'teams' => 0, 'skipped' => 0];
+        $parts = $only === [] ? self::DETAIL_PARTS : array_values(array_intersect(self::DETAIL_PARTS, $only));
+        $all = $parts === self::DETAIL_PARTS;
 
         foreach ($this->knownTournaments() as $id => $t) {
             if ($this->budget <= 0) {
                 break;
             }
-            if (! $this->refresh && $this->archive->isDone("details.{$id}")) {
+            if ($all && ! $this->refresh && $this->archive->isDone("details.{$id}")) {
                 $stats['skipped']++;
 
                 continue;
             }
-            ($this->say)("  dettagli torneo {$id}: {$t['name']}");
+            ($this->say)("  dettagli torneo {$id}: {$t['name']}".($all ? '' : ' ('.implode(', ', $parts).')'));
 
-            // niente indirizzo con «?»: il client passa i parametri a parte, altrimenti la libreria HTTP li cancella e torna la home
-            $calendar = $this->cachedPrintable($id);
-            $fixtures = $calendar !== null ? $this->calendar->parse($calendar) : [];
-            $this->archive->putJson("tournaments/{$id}/calendar", $fixtures);
-            $stats['fixtures'] += count($fixtures);
-
-            $standings = $this->cachedPost("league-op20-{$id}", 'league.php', ['op' => 20, 'tid' => $id], tolerant: true);
-            $this->archive->putJson("tournaments/{$id}/standings", $standings !== null ? PageParsers::standings($standings) : []);
-
-            $allStats = [];
-            foreach (['score', 'top-player', 'discipline'] as $type) {
-                $html = $this->cachedPost("league-op19-{$id}-{$type}", 'league.php', ['op' => 19, 'tid' => $id, 'type' => $type], tolerant: true);
-                $allStats[$type] = $html !== null ? $this->tables->parse($html) : null;
+            $fixtures = $teamList = [];
+            if (in_array('calendar', $parts, true)) {
+                // niente indirizzo con «?»: il client passa i parametri a parte, altrimenti la libreria HTTP li cancella e torna la home
+                $calendar = $this->cachedPrintable($id);
+                $fixtures = $calendar !== null ? $this->calendar->parse($calendar) : [];
+                $this->archive->putJson("tournaments/{$id}/calendar", $fixtures);
+                $stats['fixtures'] += count($fixtures);
             }
-            $this->archive->putJson("tournaments/{$id}/player-stats", $allStats);
+            if (in_array('standings', $parts, true)) {
+                $standings = $this->cachedPost("league-op20-{$id}", 'league.php', ['op' => 20, 'tid' => $id], tolerant: true);
+                $this->archive->putJson("tournaments/{$id}/standings", $standings !== null ? PageParsers::standings($standings) : []);
+            }
+            if (in_array('stats', $parts, true)) {
+                $allStats = [];
+                foreach (['score', 'top-player', 'discipline'] as $type) {
+                    $html = $this->cachedPost("league-op19-{$id}-{$type}", 'league.php', ['op' => 19, 'tid' => $id, 'type' => $type], tolerant: true);
+                    $allStats[$type] = $html !== null ? $this->tables->parse($html) : null;
+                }
+                $this->archive->putJson("tournaments/{$id}/player-stats", $allStats);
+            }
+            if (in_array('teams', $parts, true)) {
+                $teams = $this->cachedPost("league-op21-{$id}", 'league.php', ['op' => 21, 'tid' => $id], tolerant: true);
+                $teamList = $teams !== null ? PageParsers::teamList($teams) : [];
+                $this->archive->putJson("tournaments/{$id}/teams", $teamList);
+                $stats['teams'] += count($teamList);
+            }
+            if (in_array('docs', $parts, true)) {
+                $docs = $this->cachedGet("docs-{$id}", "/it/docs/{$id}/x/", tolerant: true);
+                $this->archive->putJson("tournaments/{$id}/docs", $docs !== null ? PageParsers::docs($docs) : []);
+            }
 
-            $teams = $this->cachedPost("league-op21-{$id}", 'league.php', ['op' => 21, 'tid' => $id], tolerant: true);
-            $teamList = $teams !== null ? PageParsers::teamList($teams) : [];
-            $this->archive->putJson("tournaments/{$id}/teams", $teamList);
-            $stats['teams'] += count($teamList);
-
-            $docs = $this->cachedGet("docs-{$id}", "/it/docs/{$id}/x/", tolerant: true);
-            $this->archive->putJson("tournaments/{$id}/docs", $docs !== null ? PageParsers::docs($docs) : []);
-
-            $this->archive->markDone("details.{$id}", ['fixtures' => count($fixtures), 'teams' => count($teamList)]);
+            if ($all) {
+                $this->archive->markDone("details.{$id}", ['fixtures' => count($fixtures), 'teams' => count($teamList)]);
+            }
             $stats['tournaments']++;
         }
 
