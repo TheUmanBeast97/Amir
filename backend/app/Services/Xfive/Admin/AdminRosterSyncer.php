@@ -28,10 +28,10 @@ final class AdminRosterSyncer
      */
     public function sync(Team $own): array
     {
-        $rows = $this->parser->parse($this->client->rosterPage());
+        $rows = $this->parser->parse($this->client->rosterData());
 
         if ($rows === []) {
-            throw new XfiveAdminException('unexpected_page', 'La pagina della rosa non contiene nessun giocatore che riconosco: la struttura di XFive potrebbe essere cambiata. Non è stato modificato nulla.');
+            throw new XfiveAdminException('unexpected_page', "XFive non ha restituito nessun giocatore che riconosco: l'elenco è vuoto oppure la struttura è cambiata. Non è stato modificato nulla.");
         }
 
         return $this->apply($own, $rows);

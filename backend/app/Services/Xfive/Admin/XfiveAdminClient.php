@@ -47,21 +47,53 @@ final class XfiveAdminClient
     }
 
     /**
-     * La pagina «Rosa» (HTML), dopo un accesso nuovo.
+     * L'elenco dei giocatori della rosa (il JSON di team.php), dopo un accesso nuovo.
+     * Come fa il browser: prima si apre la pagina «Rosa» (e si controlla che l'accesso valga), poi si chiede l'elenco che la pagina
+     * riempie da sola in una seconda richiesta.
      *
      * @throws XfiveAdminException
      */
-    public function rosterPage(): string
+    public function rosterData(): string
     {
         $this->login();
 
-        $html = $this->get('/manage_tournament.php', ['tmid' => (int) config('amir.own.club_id'), 'sk' => 'team']);
+        $club = (int) config('amir.own.club_id');
+        $page = $this->get('/manage_tournament.php', ['tmid' => $club, 'sk' => 'team']);
 
-        if (! $this->parser->isLoggedIn($html)) {
+        if (! $this->parser->isLoggedIn($page)) {
             throw new XfiveAdminException('unexpected_page', 'XFive non ha restituito la pagina della rosa: la sessione non risulta valida.');
         }
 
-        return $html;
+        $json = $this->post('/system/include/ajax/manager/manage_tournament/team.php', $this->tableParams($club), "/manage_tournament.php?tmid={$club}&sk=team");
+
+        if (! str_starts_with(ltrim($json), '{')) {
+            throw new XfiveAdminException('unexpected_page', "XFive non ha restituito l'elenco della rosa nel formato atteso.");
+        }
+
+        return $json;
+    }
+
+    /**
+     * Gli stessi parametri che la tabella della pagina manda a XFive (tabella con paginazione lato server): tutto l'elenco, senza filtri.
+     *
+     * @return array<string, mixed>
+     */
+    private function tableParams(int $club): array
+    {
+        $columns = [];
+        foreach (range(0, 5) as $i) {
+            $columns[] = ['data' => $i, 'name' => '', 'searchable' => 'true', 'orderable' => 'false', 'search' => ['value' => '', 'regex' => 'false']];
+        }
+
+        return [
+            'draw' => 1,
+            'columns' => $columns,
+            'start' => 0,
+            'length' => -1,
+            'search' => ['value' => '', 'regex' => 'false'],
+            'op' => 1,
+            'tmid' => $club,
+        ];
     }
 
     /**
@@ -135,6 +167,32 @@ final class XfiveAdminClient
 
         try {
             $response = $this->http()->get($path, $query);
+        } catch (ConnectionException) {
+            throw new XfiveAdminException('unreachable', 'XFive non risponde. Riprova tra poco.');
+        }
+
+        $this->assertSuccessful($response);
+
+        return $response->body();
+    }
+
+    /**
+     * Una richiesta come quelle che la pagina fa da sola (AJAX): stessi parametri, segnalata come tale e con la pagina di partenza.
+     *
+     * @param  array<string, mixed>  $data
+     *
+     * @throws XfiveAdminException
+     */
+    private function post(string $path, array $data, string $referer): string
+    {
+        $this->pause();
+
+        try {
+            $response = $this->http()->asForm()->withHeaders([
+                'X-Requested-With' => 'XMLHttpRequest',
+                'Accept' => 'application/json, text/javascript, */*; q=0.01',
+                'Referer' => rtrim((string) config('amir.xfive.base_url'), '/').$referer,
+            ])->post($path, $data);
         } catch (ConnectionException) {
             throw new XfiveAdminException('unreachable', 'XFive non risponde. Riprova tra poco.');
         }

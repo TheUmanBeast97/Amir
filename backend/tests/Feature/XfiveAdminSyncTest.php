@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
+use Tests\Support\AdminRosterFixtures;
 use Tests\TestCase;
 
 /** Lettura dell'area amministrazione di XFive: accesso, rosa, tesseramenti, certificati, Squad List. XFive è simulato. */
@@ -37,27 +38,35 @@ class XfiveAdminSyncTest extends TestCase
         Sanctum::actingAs(User::factory()->create());
     }
 
-    private function roster(): string
-    {
-        return (string) file_get_contents(__DIR__.'/../Fixtures/xfive/admin-team.html');
-    }
-
-    /** XFive simulato: dopo l'accesso (login.php con le credenziali giuste) le pagine mostrano «Esci». */
-    private function fakeAdminXfive(bool $acceptLogin = true, ?string $rosterHtml = null): void
+    /**
+     * XFive simulato: dopo l'accesso (login.php con le credenziali giuste) le pagine mostrano «Esci». La pagina della rosa ha la
+     * tabella vuota e l'elenco arriva dalla richiesta a parte (team.php), come sul sito vero.
+     */
+    private function fakeAdminXfive(bool $acceptLogin = true, ?string $ajax = null): void
     {
         $loggedIn = false;
-        $rosterHtml ??= $this->roster();
+        $ajax ??= AdminRosterFixtures::ajaxJson();
 
-        Http::fake(function (Request $request) use (&$loggedIn, $acceptLogin, $rosterHtml) {
-            if (str_ends_with($request->url(), '/login.php')) {
+        Http::fake(function (Request $request) use (&$loggedIn, $acceptLogin, $ajax) {
+            $url = $request->url();
+
+            if (str_ends_with($url, '/login.php')) {
                 $loggedIn = $acceptLogin && ($request['mail'] ?? null) === 'capo@example.com' && ($request['password'] ?? null) === self::PASSWORD;
 
                 return Http::response('', 302, ['Location' => 'https://www.xfivesport.it/']);
             }
 
-            $page = str_contains($request->url(), 'sk=team') ? $rosterHtml : '<html><body>Amministrazione <a href="https://www.xfivesport.it/logout.php">Esci</a></body></html>';
+            if (! $loggedIn) {
+                return Http::response('<html><body><a onclick="suggestionFeedback(\'login\')">Accedi</a></body></html>');
+            }
 
-            return Http::response($loggedIn ? $page : '<html><body><a onclick="suggestionFeedback(\'login\')">Accedi</a></body></html>');
+            if (str_ends_with($url, '/manage_tournament/team.php')) {
+                return Http::response($ajax, 200, ['Content-Type' => 'application/json']);
+            }
+
+            return Http::response(str_contains($url, 'sk=team')
+                ? AdminRosterFixtures::shellPage()
+                : '<html><body>Amministrazione <a href="https://www.xfivesport.it/logout.php">Esci</a></body></html>');
         });
     }
 
@@ -123,8 +132,18 @@ class XfiveAdminSyncTest extends TestCase
 
         // la password parte una sola volta, verso il login di XFive, in HTTPS, e non compare in nessun altro indirizzo né nella risposta
         Http::assertSent(fn (Request $r) => $r->url() === 'https://www.xfivesport.it/login.php' && $r['password'] === self::PASSWORD && $r['mail'] === 'capo@example.com');
-        Http::assertSentCount(4); // accesso, ritorno alla pagina iniziale (reindirizzamento), pagina di controllo, pagina della rosa
-        Http::assertSent(fn (Request $r) => str_contains($r->url(), 'login.php') || ($r->method() === 'GET' && ! str_contains($r->url(), self::PASSWORD)));
+        Http::assertSentCount(5); // accesso, ritorno alla pagina iniziale (reindirizzamento), pagina di controllo, pagina della rosa, elenco
+        $leaks = [];
+        foreach (Http::recorded() as [$r]) {
+            if (! str_ends_with($r->url(), '/login.php') && str_contains($r->url().$r->body(), self::PASSWORD)) {
+                $leaks[] = $r->method().' '.$r->url();
+            }
+        }
+        $this->assertSame([], $leaks, 'la password deve stare solo nella richiesta di accesso');
+        // l'elenco si chiede come fa la pagina: stessa richiesta (op=1 e il club), segnalata come AJAX, con la pagina di partenza
+        Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/manage_tournament/team.php') && $r->method() === 'POST'
+            && (int) $r['op'] === 1 && (int) $r['tmid'] === 159 && (int) $r['length'] === -1
+            && $r->hasHeader('X-Requested-With', 'XMLHttpRequest') && str_contains($r->header('Referer')[0] ?? '', 'sk=team'));
         $this->assertStringNotContainsString(self::PASSWORD, $response->getContent());
         $this->assertStringNotContainsString(self::PASSWORD, (string) SyncRun::latest('id')->first()->toJson());
     }
@@ -186,9 +205,9 @@ class XfiveAdminSyncTest extends TestCase
         $this->assertSame($sent, count(Http::recorded()), 'durante la pausa non parte nessuna richiesta a XFive');
     }
 
-    public function test_a_page_without_players_changes_nothing_and_says_so(): void
+    public function test_an_empty_list_changes_nothing_and_says_so(): void
     {
-        $this->fakeAdminXfive(rosterHtml: '<html><body><a href="logout.php">Esci</a><p>Manutenzione in corso</p></body></html>');
+        $this->fakeAdminXfive(ajax: '{"draw":1,"recordsTotal":0,"recordsFiltered":0,"data":[]}');
         $rossi = $this->player('Mario', 'Rossi', ['in_squad_list' => true]);
 
         $this->runAdmin()->assertOk()
@@ -197,6 +216,18 @@ class XfiveAdminSyncTest extends TestCase
 
         $this->assertTrue($rossi->refresh()->in_squad_list);
         $this->assertNull($rossi->xfive_admin_id);
+    }
+
+    public function test_an_answer_that_is_not_the_list_changes_nothing_and_says_so(): void
+    {
+        $this->fakeAdminXfive(ajax: '<html><body>Sessione scaduta</body></html>');
+        $rossi = $this->player('Mario', 'Rossi', ['in_squad_list' => true]);
+
+        $this->runAdmin()->assertOk()
+            ->assertJsonPath('data.status', 'error')
+            ->assertJsonPath('data.error', fn ($e) => str_contains($e, 'formato atteso'));
+
+        $this->assertTrue($rossi->refresh()->in_squad_list);
     }
 
     public function test_the_credentials_are_never_sent_over_plain_http(): void

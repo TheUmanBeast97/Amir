@@ -4,13 +4,14 @@ namespace Tests\Feature;
 
 use App\Services\Xfive\Admin\AdminRosterParser;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\AdminRosterFixtures;
 
 /** La pagina «Rosa» dell'area amministrazione di XFive, letta da un esempio sintetico con la struttura vera. */
 class AdminRosterParserTest extends TestCase
 {
     private function page(): string
     {
-        return (string) file_get_contents(__DIR__.'/../Fixtures/xfive/admin-team.html');
+        return AdminRosterFixtures::html();
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -122,5 +123,34 @@ class AdminRosterParserTest extends TestCase
         $rows = array_column((new AdminRosterParser)->parse($html), null, 'admin_id');
 
         $this->assertSame('Niccolò Ferrè', $rows[9001]['name']);
+    }
+
+    public function test_the_ajax_answer_the_page_really_uses_gives_exactly_the_same_rows_as_the_table(): void
+    {
+        $parser = new AdminRosterParser;
+
+        $fromJson = $parser->parse(AdminRosterFixtures::ajaxJson());
+
+        $this->assertSame($parser->parse($this->page()), $fromJson);
+        $this->assertCount(5, $fromJson);
+        $this->assertSame('De Luca Paolo', $fromJson[2]['name']);
+        $this->assertTrue($fromJson[0]['membership']['is_squad_list']);
+    }
+
+    public function test_the_ajax_answer_tolerates_rows_as_plain_lists_and_empty_or_broken_data(): void
+    {
+        $parser = new AdminRosterParser;
+
+        $asList = json_encode(['data' => [[
+            0 => '', 1 => 'Rossi Mario<br /><div style="font-size: 11px;">14/01/1995</div>', 2 => 'Portiere', 3 => '', 4 => '', 5 => '', 'DT_RowId' => 'row_77',
+        ]]]);
+        $rows = $parser->parse((string) $asList);
+        $this->assertSame(77, $rows[0]['admin_id']);
+        $this->assertSame('1995-01-14', $rows[0]['birth_date']);
+
+        $this->assertSame([], $parser->parse('{"data":[]}'));
+        $this->assertSame([], $parser->parse('{"errors":"non autorizzato"}'));
+        $this->assertSame([], $parser->parse('{"data":[{"DT_RowId":"altro_1","1":"Rossi Mario"}]}'), 'senza identificativo valido non è una riga di giocatore');
+        $this->assertSame([], $parser->parse('{ rotto'));
     }
 }

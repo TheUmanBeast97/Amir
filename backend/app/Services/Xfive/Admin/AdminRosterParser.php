@@ -7,11 +7,14 @@ use DOMText;
 use Symfony\Component\DomCrawler\Crawler;
 
 /**
- * Legge la pagina «Rosa» dell'area amministrazione di XFive (manage_tournament.php?tmid={club}&sk=team).
+ * Legge la rosa dell'area amministrazione di XFive (manage_tournament.php?tmid={club}&sk=team).
  *
- * Una riga per giocatore: identificativo (`row_{id}`), «Cognome Nome» con la data di nascita sotto, ruolo, scadenza del
- * certificato medico, stato del tesseramento (con data, tipo, importo) e foto. La struttura è quella osservata sulla pagina vera;
- * quello che non si riconosce resta vuoto invece di essere inventato.
+ * La pagina mostra una tabella che il browser riempie con una richiesta a parte (team.php, op=1): la risposta è un JSON con una
+ * riga per giocatore, `DT_RowId` ("row_{id}") e sei frammenti HTML, uno per colonna. Questa classe legge quel JSON, e anche la tabella
+ * già scritta nella pagina (se un giorno XFive la servisse così).
+ *
+ * Colonne: foto, «Cognome Nome» con la data di nascita sotto, ruolo, scadenza del certificato medico, stato del tesseramento
+ * (con data, tipo, importo), azioni. Quello che non si riconosce resta vuoto invece di essere inventato.
  */
 final class AdminRosterParser
 {
@@ -24,52 +27,98 @@ final class AdminRosterParser
     }
 
     /**
+     * @param  string  $payload  il JSON di team.php, oppure l'HTML della pagina con la tabella già scritta
      * @return array<int, array{
      *   admin_id:int, name:string, birth_date:?string, role:?string, certificate_expires_on:?string, photo_url:?string, documents:int,
      *   membership: array{status:string, title:?string, season:?string, date:?string, type:?string, is_squad_list:bool, fee:?float}
      * }>
      */
-    public function parse(string $html): array
+    public function parse(string $payload): array
     {
-        $crawler = new Crawler($this->utf8($html));
+        $payload = $this->utf8($payload);
+
+        return str_starts_with(ltrim($payload), '{') ? $this->fromJson($payload) : $this->fromHtml($payload);
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function fromJson(string $json): array
+    {
+        $data = json_decode($json, true);
+        if (! is_array($data) || ! is_array($data['data'] ?? null)) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($data['data'] as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $cells = [];
+            for ($i = 0; $i < 6; $i++) {
+                $cells[] = (new Crawler('<table><tbody><tr><td>'.(string) ($item[$i] ?? '').'</td></tr></tbody></table>'))->filter('td');
+            }
+
+            if ($row = $this->row((string) ($item['DT_RowId'] ?? ''), $cells)) {
+                $rows[] = $row;
+            }
+        }
+
+        return $rows;
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function fromHtml(string $html): array
+    {
         $rows = [];
 
-        $crawler->filter('#dt-team tbody tr')->each(function (Crawler $row) use (&$rows) {
-            if (! preg_match('/^row_(\d+)$/', (string) $row->attr('id'), $m)) {
-                return; // la riga «nessun risultato» o simili
+        (new Crawler($html))->filter('#dt-team tbody tr')->each(function (Crawler $tr) use (&$rows) {
+            $tds = $tr->filter('td');
+            $cells = [];
+            for ($i = 0; $i < 6; $i++) {
+                $cells[] = $i < $tds->count() ? $tds->eq($i) : new Crawler;
             }
 
-            $cells = $row->filter('td');
-            if ($cells->count() < 5) {
-                return;
+            if ($row = $this->row((string) $tr->attr('id'), $cells)) {
+                $rows[] = $row;
             }
-
-            $name = $this->name($cells->eq(1));
-            if ($name === '') {
-                return;
-            }
-
-            $recap = $cells->eq(4)->filter('.action-recap');
-            $rows[] = [
-                'admin_id' => (int) $m[1],
-                'name' => $name,
-                'birth_date' => $this->date($this->firstDate($cells->eq(1)->text(''))),
-                'role' => $this->role($cells->eq(2)->text('')),
-                'certificate_expires_on' => $this->date($this->firstDate($cells->eq(3)->text(''))),
-                'photo_url' => $this->photo($cells->eq(0)),
-                'documents' => $this->documents($cells),
-                'membership' => $this->membership($cells->eq(4), $recap),
-            ];
         });
 
         return $rows;
+    }
+
+    /**
+     * @param  array<int, Crawler>  $cells  le sei colonne
+     * @return array<string, mixed>|null
+     */
+    private function row(string $rowId, array $cells): ?array
+    {
+        if (! preg_match('/^row_(\d+)$/', $rowId, $m)) {
+            return null; // la riga «nessun risultato» o simili
+        }
+
+        $name = $this->name($cells[1]);
+        if ($name === '') {
+            return null;
+        }
+
+        return [
+            'admin_id' => (int) $m[1],
+            'name' => $name,
+            'birth_date' => $this->date($this->firstDate($cells[1]->text(''))),
+            'role' => $this->role($cells[2]->text('')),
+            'certificate_expires_on' => $this->date($this->firstDate($cells[3]->text(''))),
+            'photo_url' => $this->photo($cells[0]),
+            'documents' => $this->documents($cells[5]),
+            'membership' => $this->membership($cells[4], $cells[4]->filter('.action-recap')),
+        ];
     }
 
     /** «Cognome Nome» è il testo diretto della cella, prima della data di nascita (che sta in un div). */
     private function name(Crawler $cell): string
     {
         $text = '';
-        foreach ($cell->getNode(0)?->childNodes ?? [] as $child) {
+        foreach ($cell->count() ? ($cell->getNode(0)?->childNodes ?? []) : [] as $child) {
             if ($child instanceof DOMText) {
                 $text .= $child->textContent;
             }
@@ -116,11 +165,11 @@ final class AdminRosterParser
     }
 
     /** Quanti documenti ha caricato (il numero nel pallino accanto alla graffetta). */
-    private function documents(Crawler $cells): int
+    private function documents(Crawler $cell): int
     {
-        $notify = $cells->count() > 5 ? $cells->eq(5)->filter('.notify') : null;
+        $notify = $cell->filter('.notify');
 
-        return $notify && $notify->count() ? (int) preg_replace('/\D/', '', $notify->text('')) : 0;
+        return $notify->count() ? (int) preg_replace('/\D/', '', $notify->text('')) : 0;
     }
 
     /** @return array{status:string, title:?string, season:?string, date:?string, type:?string, is_squad_list:bool, fee:?float} */
