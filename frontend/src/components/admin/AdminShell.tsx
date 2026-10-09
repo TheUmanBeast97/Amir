@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  RefreshCw,
   Settings,
   Swords,
   Users,
@@ -31,6 +32,7 @@ const more = [
   { to: "/admin/classifiche", label: "Classifiche squadra", icon: BarChart3 },
   { to: "/admin/grafiche", label: "Studio grafiche", icon: Image },
   { to: "/admin/documenti", label: "Documenti XFive", icon: FileText },
+  { to: "/admin/sincronizzazione", label: "Sincronizzazione", icon: RefreshCw },
   { to: "/admin/impostazioni", label: "Impostazioni", icon: Settings },
 ] as const;
 

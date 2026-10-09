@@ -22,8 +22,10 @@ import { Route as AdminGiocatoriRouteImport } from './routes/admin.giocatori'
 import { Route as AdminGraficheRouteImport } from './routes/admin.grafiche'
 import { Route as AdminImpostazioniRouteImport } from './routes/admin.impostazioni'
 import { Route as AdminPagamentiRouteImport } from './routes/admin.pagamenti'
+import { Route as AdminSincronizzazioneRouteImport } from './routes/admin.sincronizzazione'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as MixedZoneIndexRouteImport } from './routes/mixed-zone.index'
+import { Route as MixedZoneStatisticheRouteImport } from './routes/mixed-zone.statistiche'
 import { Route as PTokenRouteImport } from './routes/p.$token'
 import { Route as PartiteMatchIdRouteImport } from './routes/partite.$matchId'
 import { Route as RosaIndexRouteImport } from './routes/rosa.index'
@@ -32,6 +34,14 @@ import { Route as StoricoIndexRouteImport } from './routes/storico.index'
 import { Route as StoricoCompetitionIdRouteImport } from './routes/storico.$competitionId'
 import { Route as AdminPartiteIndexRouteImport } from './routes/admin.partite.index'
 import { Route as AdminPartiteMatchIdRouteImport } from './routes/admin.partite.$matchId'
+import { Route as MixedZoneGiocatoriIndexRouteImport } from './routes/mixed-zone.giocatori.index'
+import { Route as MixedZoneGiocatoriIdRouteImport } from './routes/mixed-zone.giocatori.$id'
+import { Route as MixedZonePartiteIndexRouteImport } from './routes/mixed-zone.partite.index'
+import { Route as MixedZonePartiteIdRouteImport } from './routes/mixed-zone.partite.$id'
+import { Route as MixedZoneSquadreIndexRouteImport } from './routes/mixed-zone.squadre.index'
+import { Route as MixedZoneSquadreIdRouteImport } from './routes/mixed-zone.squadre.$id'
+import { Route as MixedZoneTorneiIndexRouteImport } from './routes/mixed-zone.tornei.index'
+import { Route as MixedZoneTorneiIdRouteImport } from './routes/mixed-zone.tornei.$id'
 import { Route as StoricoStagioneSeasonRouteImport } from './routes/storico.stagione.$season'
 
 const IndexRoute = IndexRouteImport.update({
@@ -99,6 +109,11 @@ const AdminPagamentiRoute = AdminPagamentiRouteImport.update({
   path: '/pagamenti',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSincronizzazioneRoute = AdminSincronizzazioneRouteImport.update({
+  id: '/sincronizzazione',
+  path: '/sincronizzazione',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin_/login',
   path: '/admin/login',
@@ -107,6 +122,11 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
 const MixedZoneIndexRoute = MixedZoneIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => MixedZoneRoute,
+} as any)
+const MixedZoneStatisticheRoute = MixedZoneStatisticheRouteImport.update({
+  id: '/statistiche',
+  path: '/statistiche',
   getParentRoute: () => MixedZoneRoute,
 } as any)
 const PTokenRoute = PTokenRouteImport.update({
@@ -149,6 +169,46 @@ const AdminPartiteMatchIdRoute = AdminPartiteMatchIdRouteImport.update({
   path: '/partite/$matchId',
   getParentRoute: () => AdminRoute,
 } as any)
+const MixedZoneGiocatoriIndexRoute = MixedZoneGiocatoriIndexRouteImport.update({
+  id: '/giocatori/',
+  path: '/giocatori/',
+  getParentRoute: () => MixedZoneRoute,
+} as any)
+const MixedZoneGiocatoriIdRoute = MixedZoneGiocatoriIdRouteImport.update({
+  id: '/giocatori/$id',
+  path: '/giocatori/$id',
+  getParentRoute: () => MixedZoneRoute,
+} as any)
+const MixedZonePartiteIndexRoute = MixedZonePartiteIndexRouteImport.update({
+  id: '/partite/',
+  path: '/partite/',
+  getParentRoute: () => MixedZoneRoute,
+} as any)
+const MixedZonePartiteIdRoute = MixedZonePartiteIdRouteImport.update({
+  id: '/partite/$id',
+  path: '/partite/$id',
+  getParentRoute: () => MixedZoneRoute,
+} as any)
+const MixedZoneSquadreIndexRoute = MixedZoneSquadreIndexRouteImport.update({
+  id: '/squadre/',
+  path: '/squadre/',
+  getParentRoute: () => MixedZoneRoute,
+} as any)
+const MixedZoneSquadreIdRoute = MixedZoneSquadreIdRouteImport.update({
+  id: '/squadre/$id',
+  path: '/squadre/$id',
+  getParentRoute: () => MixedZoneRoute,
+} as any)
+const MixedZoneTorneiIndexRoute = MixedZoneTorneiIndexRouteImport.update({
+  id: '/tornei/',
+  path: '/tornei/',
+  getParentRoute: () => MixedZoneRoute,
+} as any)
+const MixedZoneTorneiIdRoute = MixedZoneTorneiIdRouteImport.update({
+  id: '/tornei/$id',
+  path: '/tornei/$id',
+  getParentRoute: () => MixedZoneRoute,
+} as any)
 const StoricoStagioneSeasonRoute = StoricoStagioneSeasonRouteImport.update({
   id: '/storico/stagione/$season',
   path: '/storico/stagione/$season',
@@ -168,7 +228,9 @@ export interface FileRoutesByFullPath {
   '/admin/grafiche': typeof AdminGraficheRoute
   '/admin/impostazioni': typeof AdminImpostazioniRoute
   '/admin/pagamenti': typeof AdminPagamentiRoute
+  '/admin/sincronizzazione': typeof AdminSincronizzazioneRoute
   '/admin/login': typeof AdminLoginRoute
+  '/mixed-zone/statistiche': typeof MixedZoneStatisticheRoute
   '/p/$token': typeof PTokenRoute
   '/partite/$matchId': typeof PartiteMatchIdRoute
   '/rosa/$playerId': typeof RosaPlayerIdRoute
@@ -178,8 +240,16 @@ export interface FileRoutesByFullPath {
   '/rosa/': typeof RosaIndexRoute
   '/storico/': typeof StoricoIndexRoute
   '/admin/partite/$matchId': typeof AdminPartiteMatchIdRoute
+  '/mixed-zone/giocatori/$id': typeof MixedZoneGiocatoriIdRoute
+  '/mixed-zone/partite/$id': typeof MixedZonePartiteIdRoute
+  '/mixed-zone/squadre/$id': typeof MixedZoneSquadreIdRoute
+  '/mixed-zone/tornei/$id': typeof MixedZoneTorneiIdRoute
   '/storico/stagione/$season': typeof StoricoStagioneSeasonRoute
   '/admin/partite/': typeof AdminPartiteIndexRoute
+  '/mixed-zone/giocatori/': typeof MixedZoneGiocatoriIndexRoute
+  '/mixed-zone/partite/': typeof MixedZonePartiteIndexRoute
+  '/mixed-zone/squadre/': typeof MixedZoneSquadreIndexRoute
+  '/mixed-zone/tornei/': typeof MixedZoneTorneiIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -192,7 +262,9 @@ export interface FileRoutesByTo {
   '/admin/grafiche': typeof AdminGraficheRoute
   '/admin/impostazioni': typeof AdminImpostazioniRoute
   '/admin/pagamenti': typeof AdminPagamentiRoute
+  '/admin/sincronizzazione': typeof AdminSincronizzazioneRoute
   '/admin/login': typeof AdminLoginRoute
+  '/mixed-zone/statistiche': typeof MixedZoneStatisticheRoute
   '/p/$token': typeof PTokenRoute
   '/partite/$matchId': typeof PartiteMatchIdRoute
   '/rosa/$playerId': typeof RosaPlayerIdRoute
@@ -202,8 +274,16 @@ export interface FileRoutesByTo {
   '/rosa': typeof RosaIndexRoute
   '/storico': typeof StoricoIndexRoute
   '/admin/partite/$matchId': typeof AdminPartiteMatchIdRoute
+  '/mixed-zone/giocatori/$id': typeof MixedZoneGiocatoriIdRoute
+  '/mixed-zone/partite/$id': typeof MixedZonePartiteIdRoute
+  '/mixed-zone/squadre/$id': typeof MixedZoneSquadreIdRoute
+  '/mixed-zone/tornei/$id': typeof MixedZoneTorneiIdRoute
   '/storico/stagione/$season': typeof StoricoStagioneSeasonRoute
   '/admin/partite': typeof AdminPartiteIndexRoute
+  '/mixed-zone/giocatori': typeof MixedZoneGiocatoriIndexRoute
+  '/mixed-zone/partite': typeof MixedZonePartiteIndexRoute
+  '/mixed-zone/squadre': typeof MixedZoneSquadreIndexRoute
+  '/mixed-zone/tornei': typeof MixedZoneTorneiIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -219,7 +299,9 @@ export interface FileRoutesById {
   '/admin/grafiche': typeof AdminGraficheRoute
   '/admin/impostazioni': typeof AdminImpostazioniRoute
   '/admin/pagamenti': typeof AdminPagamentiRoute
+  '/admin/sincronizzazione': typeof AdminSincronizzazioneRoute
   '/admin_/login': typeof AdminLoginRoute
+  '/mixed-zone/statistiche': typeof MixedZoneStatisticheRoute
   '/p/$token': typeof PTokenRoute
   '/partite/$matchId': typeof PartiteMatchIdRoute
   '/rosa/$playerId': typeof RosaPlayerIdRoute
@@ -229,8 +311,16 @@ export interface FileRoutesById {
   '/rosa/': typeof RosaIndexRoute
   '/storico/': typeof StoricoIndexRoute
   '/admin/partite/$matchId': typeof AdminPartiteMatchIdRoute
+  '/mixed-zone/giocatori/$id': typeof MixedZoneGiocatoriIdRoute
+  '/mixed-zone/partite/$id': typeof MixedZonePartiteIdRoute
+  '/mixed-zone/squadre/$id': typeof MixedZoneSquadreIdRoute
+  '/mixed-zone/tornei/$id': typeof MixedZoneTorneiIdRoute
   '/storico/stagione/$season': typeof StoricoStagioneSeasonRoute
   '/admin/partite/': typeof AdminPartiteIndexRoute
+  '/mixed-zone/giocatori/': typeof MixedZoneGiocatoriIndexRoute
+  '/mixed-zone/partite/': typeof MixedZonePartiteIndexRoute
+  '/mixed-zone/squadre/': typeof MixedZoneSquadreIndexRoute
+  '/mixed-zone/tornei/': typeof MixedZoneTorneiIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -247,7 +337,9 @@ export interface FileRouteTypes {
     | '/admin/grafiche'
     | '/admin/impostazioni'
     | '/admin/pagamenti'
+    | '/admin/sincronizzazione'
     | '/admin/login'
+    | '/mixed-zone/statistiche'
     | '/p/$token'
     | '/partite/$matchId'
     | '/rosa/$playerId'
@@ -257,8 +349,16 @@ export interface FileRouteTypes {
     | '/rosa/'
     | '/storico/'
     | '/admin/partite/$matchId'
+    | '/mixed-zone/giocatori/$id'
+    | '/mixed-zone/partite/$id'
+    | '/mixed-zone/squadre/$id'
+    | '/mixed-zone/tornei/$id'
     | '/storico/stagione/$season'
     | '/admin/partite/'
+    | '/mixed-zone/giocatori/'
+    | '/mixed-zone/partite/'
+    | '/mixed-zone/squadre/'
+    | '/mixed-zone/tornei/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -271,7 +371,9 @@ export interface FileRouteTypes {
     | '/admin/grafiche'
     | '/admin/impostazioni'
     | '/admin/pagamenti'
+    | '/admin/sincronizzazione'
     | '/admin/login'
+    | '/mixed-zone/statistiche'
     | '/p/$token'
     | '/partite/$matchId'
     | '/rosa/$playerId'
@@ -281,8 +383,16 @@ export interface FileRouteTypes {
     | '/rosa'
     | '/storico'
     | '/admin/partite/$matchId'
+    | '/mixed-zone/giocatori/$id'
+    | '/mixed-zone/partite/$id'
+    | '/mixed-zone/squadre/$id'
+    | '/mixed-zone/tornei/$id'
     | '/storico/stagione/$season'
     | '/admin/partite'
+    | '/mixed-zone/giocatori'
+    | '/mixed-zone/partite'
+    | '/mixed-zone/squadre'
+    | '/mixed-zone/tornei'
   id:
     | '__root__'
     | '/'
@@ -297,7 +407,9 @@ export interface FileRouteTypes {
     | '/admin/grafiche'
     | '/admin/impostazioni'
     | '/admin/pagamenti'
+    | '/admin/sincronizzazione'
     | '/admin_/login'
+    | '/mixed-zone/statistiche'
     | '/p/$token'
     | '/partite/$matchId'
     | '/rosa/$playerId'
@@ -307,8 +419,16 @@ export interface FileRouteTypes {
     | '/rosa/'
     | '/storico/'
     | '/admin/partite/$matchId'
+    | '/mixed-zone/giocatori/$id'
+    | '/mixed-zone/partite/$id'
+    | '/mixed-zone/squadre/$id'
+    | '/mixed-zone/tornei/$id'
     | '/storico/stagione/$season'
     | '/admin/partite/'
+    | '/mixed-zone/giocatori/'
+    | '/mixed-zone/partite/'
+    | '/mixed-zone/squadre/'
+    | '/mixed-zone/tornei/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -420,6 +540,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPagamentiRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/sincronizzazione': {
+      id: '/admin/sincronizzazione'
+      path: '/sincronizzazione'
+      fullPath: '/admin/sincronizzazione'
+      preLoaderRoute: typeof AdminSincronizzazioneRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin_/login': {
       id: '/admin_/login'
       path: '/admin/login'
@@ -432,6 +559,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/mixed-zone/'
       preLoaderRoute: typeof MixedZoneIndexRouteImport
+      parentRoute: typeof MixedZoneRoute
+    }
+    '/mixed-zone/statistiche': {
+      id: '/mixed-zone/statistiche'
+      path: '/statistiche'
+      fullPath: '/mixed-zone/statistiche'
+      preLoaderRoute: typeof MixedZoneStatisticheRouteImport
       parentRoute: typeof MixedZoneRoute
     }
     '/p/$token': {
@@ -490,6 +624,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPartiteMatchIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/mixed-zone/giocatori/': {
+      id: '/mixed-zone/giocatori/'
+      path: '/giocatori'
+      fullPath: '/mixed-zone/giocatori/'
+      preLoaderRoute: typeof MixedZoneGiocatoriIndexRouteImport
+      parentRoute: typeof MixedZoneRoute
+    }
+    '/mixed-zone/giocatori/$id': {
+      id: '/mixed-zone/giocatori/$id'
+      path: '/giocatori/$id'
+      fullPath: '/mixed-zone/giocatori/$id'
+      preLoaderRoute: typeof MixedZoneGiocatoriIdRouteImport
+      parentRoute: typeof MixedZoneRoute
+    }
+    '/mixed-zone/partite/': {
+      id: '/mixed-zone/partite/'
+      path: '/partite'
+      fullPath: '/mixed-zone/partite/'
+      preLoaderRoute: typeof MixedZonePartiteIndexRouteImport
+      parentRoute: typeof MixedZoneRoute
+    }
+    '/mixed-zone/partite/$id': {
+      id: '/mixed-zone/partite/$id'
+      path: '/partite/$id'
+      fullPath: '/mixed-zone/partite/$id'
+      preLoaderRoute: typeof MixedZonePartiteIdRouteImport
+      parentRoute: typeof MixedZoneRoute
+    }
+    '/mixed-zone/squadre/': {
+      id: '/mixed-zone/squadre/'
+      path: '/squadre'
+      fullPath: '/mixed-zone/squadre/'
+      preLoaderRoute: typeof MixedZoneSquadreIndexRouteImport
+      parentRoute: typeof MixedZoneRoute
+    }
+    '/mixed-zone/squadre/$id': {
+      id: '/mixed-zone/squadre/$id'
+      path: '/squadre/$id'
+      fullPath: '/mixed-zone/squadre/$id'
+      preLoaderRoute: typeof MixedZoneSquadreIdRouteImport
+      parentRoute: typeof MixedZoneRoute
+    }
+    '/mixed-zone/tornei/': {
+      id: '/mixed-zone/tornei/'
+      path: '/tornei'
+      fullPath: '/mixed-zone/tornei/'
+      preLoaderRoute: typeof MixedZoneTorneiIndexRouteImport
+      parentRoute: typeof MixedZoneRoute
+    }
+    '/mixed-zone/tornei/$id': {
+      id: '/mixed-zone/tornei/$id'
+      path: '/tornei/$id'
+      fullPath: '/mixed-zone/tornei/$id'
+      preLoaderRoute: typeof MixedZoneTorneiIdRouteImport
+      parentRoute: typeof MixedZoneRoute
+    }
     '/storico/stagione/$season': {
       id: '/storico/stagione/$season'
       path: '/storico/stagione/$season'
@@ -508,6 +698,7 @@ interface AdminRouteChildren {
   AdminGraficheRoute: typeof AdminGraficheRoute
   AdminImpostazioniRoute: typeof AdminImpostazioniRoute
   AdminPagamentiRoute: typeof AdminPagamentiRoute
+  AdminSincronizzazioneRoute: typeof AdminSincronizzazioneRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminPartiteMatchIdRoute: typeof AdminPartiteMatchIdRoute
   AdminPartiteIndexRoute: typeof AdminPartiteIndexRoute
@@ -521,6 +712,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminGraficheRoute: AdminGraficheRoute,
   AdminImpostazioniRoute: AdminImpostazioniRoute,
   AdminPagamentiRoute: AdminPagamentiRoute,
+  AdminSincronizzazioneRoute: AdminSincronizzazioneRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminPartiteMatchIdRoute: AdminPartiteMatchIdRoute,
   AdminPartiteIndexRoute: AdminPartiteIndexRoute,
@@ -529,11 +721,29 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface MixedZoneRouteChildren {
+  MixedZoneStatisticheRoute: typeof MixedZoneStatisticheRoute
   MixedZoneIndexRoute: typeof MixedZoneIndexRoute
+  MixedZoneGiocatoriIdRoute: typeof MixedZoneGiocatoriIdRoute
+  MixedZonePartiteIdRoute: typeof MixedZonePartiteIdRoute
+  MixedZoneSquadreIdRoute: typeof MixedZoneSquadreIdRoute
+  MixedZoneTorneiIdRoute: typeof MixedZoneTorneiIdRoute
+  MixedZoneGiocatoriIndexRoute: typeof MixedZoneGiocatoriIndexRoute
+  MixedZonePartiteIndexRoute: typeof MixedZonePartiteIndexRoute
+  MixedZoneSquadreIndexRoute: typeof MixedZoneSquadreIndexRoute
+  MixedZoneTorneiIndexRoute: typeof MixedZoneTorneiIndexRoute
 }
 
 const MixedZoneRouteChildren: MixedZoneRouteChildren = {
+  MixedZoneStatisticheRoute: MixedZoneStatisticheRoute,
   MixedZoneIndexRoute: MixedZoneIndexRoute,
+  MixedZoneGiocatoriIdRoute: MixedZoneGiocatoriIdRoute,
+  MixedZonePartiteIdRoute: MixedZonePartiteIdRoute,
+  MixedZoneSquadreIdRoute: MixedZoneSquadreIdRoute,
+  MixedZoneTorneiIdRoute: MixedZoneTorneiIdRoute,
+  MixedZoneGiocatoriIndexRoute: MixedZoneGiocatoriIndexRoute,
+  MixedZonePartiteIndexRoute: MixedZonePartiteIndexRoute,
+  MixedZoneSquadreIndexRoute: MixedZoneSquadreIndexRoute,
+  MixedZoneTorneiIndexRoute: MixedZoneTorneiIndexRoute,
 }
 
 const MixedZoneRouteWithChildren = MixedZoneRoute._addFileChildren(
