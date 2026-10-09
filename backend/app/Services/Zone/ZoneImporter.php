@@ -60,6 +60,7 @@ final class ZoneImporter
         return XfTournament::updateOrCreate(['id' => (int) $header['id']], [
             'season_id' => (int) $header['season_id'],
             'name' => (string) ($header['name'] ?? ''),
+            'search' => self::normalize((string) ($header['name'] ?? '')),
             'slug' => (string) ($header['slug'] ?? ''),
             'sport' => $sport,
             'format' => $format,
@@ -90,7 +91,8 @@ final class ZoneImporter
             foreach (['home', 'away'] as $side) {
                 $cid = (int) ($r[$side]['club_id'] ?? 0);
                 if ($cid > 0 && ! isset($clubs[$cid])) {
-                    $clubs[$cid] = ['id' => $cid, 'name' => (string) ($r[$side]['name'] ?? ''), 'slug' => null, 'badge_url' => $r[$side]['badge_url'] ?? null, 'created_at' => $now, 'updated_at' => $now];
+                    $name = (string) ($r[$side]['name'] ?? '');
+                    $clubs[$cid] = ['id' => $cid, 'name' => $name, 'search' => self::normalize($name), 'slug' => null, 'badge_url' => $r[$side]['badge_url'] ?? null, 'created_at' => $now, 'updated_at' => $now];
                 }
             }
             $home = $r['home_score'] ?? null;
@@ -299,11 +301,12 @@ final class ZoneImporter
         XfClub::upsert([[
             'id' => $clubId,
             'name' => (string) ($club['name'] ?? ''),
+            'search' => self::normalize((string) ($club['name'] ?? '')),
             'slug' => $club['slug'] ?? null,
             'badge_url' => $club['badge_url'] ?? null,
             'created_at' => $now,
             'updated_at' => $now,
-        ]], ['id'], ['name', 'slug', 'badge_url', 'updated_at']);
+        ]], ['id'], ['name', 'search', 'slug', 'badge_url', 'updated_at']);
 
         $linked = 0;
         $teamIds = XfTeam::where('club_id', $clubId)->pluck('id')->all();
@@ -342,6 +345,7 @@ final class ZoneImporter
 
         XfPlayer::updateOrCreate(['id' => $pid], [
             'name' => $name,
+            'search' => self::normalize($name),
             'slug' => $profile['slug'] ?? null,
             'photo_url' => $profile['photo_url'] ?? null,
             'age' => $age !== null && $age >= 0 && $age < 120 ? $age : null,
