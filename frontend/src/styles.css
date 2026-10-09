@@ -93,7 +93,8 @@
   --sidebar-accent-foreground: oklch(0.97 0 0);
   --sidebar-border: oklch(1 0 0 / 9%);
   --sidebar-ring: oklch(0.575 0.215 27);
-  --gradient-hero: radial-gradient(120% 90% at 100% 0%, oklch(0.575 0.215 27 / 45%), transparent 60%),
+  --gradient-hero:
+    radial-gradient(120% 90% at 100% 0%, oklch(0.575 0.215 27 / 45%), transparent 60%),
     linear-gradient(160deg, oklch(0.22 0.01 285), oklch(0.15 0.004 285));
 }
 
@@ -120,8 +121,54 @@
   --sidebar-accent: oklch(0.94 0.004 285);
   --sidebar-accent-foreground: oklch(0.17 0.005 285);
   --sidebar-border: oklch(0 0 0 / 10%);
-  --gradient-hero: radial-gradient(120% 90% at 100% 0%, oklch(0.575 0.215 27 / 30%), transparent 60%),
+  --gradient-hero:
+    radial-gradient(120% 90% at 100% 0%, oklch(0.575 0.215 27 / 30%), transparent 60%),
     linear-gradient(160deg, oklch(1 0 0), oklch(0.95 0.004 285));
+}
+
+/* Mixed Zone: ciano su grafite, niente rosso; Staff Area: ambra. I valori di base restano quelli di Amir Hub.
+   L'area la scrive lo script di avvio e il root in `data-area` su <html> (vedi lib/area.ts). */
+:root[data-area="mixed"] {
+  --primary: oklch(0.82 0.14 200);
+  --primary-foreground: oklch(0.15 0.02 220);
+  --ring: oklch(0.82 0.14 200);
+  --highlight: oklch(0.82 0.14 200 / 14%);
+  --chart-1: oklch(0.82 0.14 200);
+  --sidebar-accent: oklch(0.26 0.03 220);
+  --sidebar-primary: oklch(0.82 0.14 200);
+  --sidebar-primary-foreground: oklch(0.15 0.02 220);
+  --sidebar-ring: oklch(0.82 0.14 200);
+  --gradient-hero:
+    radial-gradient(120% 90% at 100% 0%, oklch(0.82 0.14 200 / 32%), transparent 60%),
+    linear-gradient(160deg, oklch(0.22 0.012 230), oklch(0.15 0.006 230));
+}
+:root[data-area="mixed"].light {
+  --primary: oklch(0.6 0.13 200);
+  --primary-foreground: oklch(0.98 0 0);
+  --ring: oklch(0.6 0.13 200);
+  --highlight: oklch(0.6 0.13 200 / 10%);
+  --chart-1: oklch(0.6 0.13 200);
+  --sidebar-accent: oklch(0.93 0.015 210);
+  --sidebar-primary: oklch(0.6 0.13 200);
+  --gradient-hero:
+    radial-gradient(120% 90% at 100% 0%, oklch(0.6 0.13 200 / 24%), transparent 60%),
+    linear-gradient(160deg, oklch(1 0 0), oklch(0.95 0.006 220));
+}
+:root[data-area="staff"] {
+  --primary: oklch(0.78 0.16 70);
+  --primary-foreground: oklch(0.2 0.03 70);
+  --ring: oklch(0.78 0.16 70);
+  --highlight: oklch(0.78 0.16 70 / 14%);
+  --sidebar-primary: oklch(0.78 0.16 70);
+  --sidebar-primary-foreground: oklch(0.2 0.03 70);
+  --sidebar-ring: oklch(0.78 0.16 70);
+}
+:root[data-area="staff"].light {
+  --primary: oklch(0.62 0.15 70);
+  --primary-foreground: oklch(0.98 0 0);
+  --ring: oklch(0.62 0.15 70);
+  --highlight: oklch(0.62 0.15 70 / 10%);
+  --sidebar-primary: oklch(0.62 0.15 70);
 }
 
 @layer base {
@@ -134,7 +181,10 @@
     font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
   }
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-display);
     text-transform: uppercase;
     font-weight: 800;
@@ -158,12 +208,22 @@
   background: var(--gradient-hero);
 }
 @utility stripe {
-  background-image: repeating-linear-gradient(135deg, var(--color-primary) 0 6px, transparent 6px 12px);
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--color-primary) 0 6px,
+    transparent 6px 12px
+  );
 }
 
 @keyframes rise {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 @utility animate-rise {
   animation: rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -173,7 +233,9 @@
 
 /* Scheletro di caricamento: una luce che scorre, al posto del lampeggio. */
 @keyframes shimmer {
-  to { transform: translateX(100%); }
+  to {
+    transform: translateX(100%);
+  }
 }
 @utility shimmer {
   position: relative;
@@ -183,7 +245,12 @@
     position: absolute;
     inset: 0;
     transform: translateX(-100%);
-    background: linear-gradient(100deg, transparent 15%, color-mix(in oklab, var(--foreground) 10%, transparent) 50%, transparent 85%);
+    background: linear-gradient(
+      100deg,
+      transparent 15%,
+      color-mix(in oklab, var(--foreground) 10%, transparent) 50%,
+      transparent 85%
+    );
     animation: shimmer 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
 }
@@ -216,17 +283,32 @@
 
 /* Il fondo stadio dell'home respira lentamente; sopra, una luce di riflettore lo attraversa ogni tanto. */
 @keyframes kenburns {
-  from { transform: scale(1.03) translate3d(0, 0, 0); }
-  to { transform: scale(1.13) translate3d(-1.8%, -1.2%, 0); }
+  from {
+    transform: scale(1.03) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.13) translate3d(-1.8%, -1.2%, 0);
+  }
 }
 @utility animate-kenburns {
   animation: kenburns 26s ease-in-out infinite alternate;
 }
 @keyframes floodlight {
-  0% { transform: translateX(-40%) skewX(-16deg); opacity: 0; }
-  12% { opacity: 1; }
-  45% { transform: translateX(380%) skewX(-16deg); opacity: 0; }
-  100% { transform: translateX(380%) skewX(-16deg); opacity: 0; }
+  0% {
+    transform: translateX(-40%) skewX(-16deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  45% {
+    transform: translateX(380%) skewX(-16deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(380%) skewX(-16deg);
+    opacity: 0;
+  }
 }
 @utility animate-floodlight {
   animation: floodlight 9s cubic-bezier(0.4, 0, 0.2, 1) 1.2s infinite;
@@ -246,7 +328,9 @@ textarea {
   caret-color: var(--primary);
 }
 @media (prefers-reduced-motion: no-preference) {
-  html { scroll-behavior: smooth; }
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 /* Chi chiede meno movimento tiene stati e dissolvenze, ma niente scorrimenti continui. */

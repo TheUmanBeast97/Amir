@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CalendarioRouteImport } from './routes/calendario'
 import { Route as ClassificaRouteImport } from './routes/classifica'
+import { Route as MixedZoneRouteImport } from './routes/mixed-zone'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAmichevoliRouteImport } from './routes/admin.amichevoli'
 import { Route as AdminClassificheRouteImport } from './routes/admin.classifiche'
@@ -22,6 +23,7 @@ import { Route as AdminGraficheRouteImport } from './routes/admin.grafiche'
 import { Route as AdminImpostazioniRouteImport } from './routes/admin.impostazioni'
 import { Route as AdminPagamentiRouteImport } from './routes/admin.pagamenti'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
+import { Route as MixedZoneIndexRouteImport } from './routes/mixed-zone.index'
 import { Route as PTokenRouteImport } from './routes/p.$token'
 import { Route as PartiteMatchIdRouteImport } from './routes/partite.$matchId'
 import { Route as RosaIndexRouteImport } from './routes/rosa.index'
@@ -50,6 +52,11 @@ const CalendarioRoute = CalendarioRouteImport.update({
 const ClassificaRoute = ClassificaRouteImport.update({
   id: '/classifica',
   path: '/classifica',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MixedZoneRoute = MixedZoneRouteImport.update({
+  id: '/mixed-zone',
+  path: '/mixed-zone',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -96,6 +103,11 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin_/login',
   path: '/admin/login',
   getParentRoute: () => rootRouteImport,
+} as any)
+const MixedZoneIndexRoute = MixedZoneIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MixedZoneRoute,
 } as any)
 const PTokenRoute = PTokenRouteImport.update({
   id: '/p/$token',
@@ -148,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/calendario': typeof CalendarioRoute
   '/classifica': typeof ClassificaRoute
+  '/mixed-zone': typeof MixedZoneRouteWithChildren
   '/admin/amichevoli': typeof AdminAmichevoliRoute
   '/admin/classifiche': typeof AdminClassificheRoute
   '/admin/documenti': typeof AdminDocumentiRoute
@@ -161,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/rosa/$playerId': typeof RosaPlayerIdRoute
   '/storico/$competitionId': typeof StoricoCompetitionIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/mixed-zone/': typeof MixedZoneIndexRoute
   '/rosa/': typeof RosaIndexRoute
   '/storico/': typeof StoricoIndexRoute
   '/admin/partite/$matchId': typeof AdminPartiteMatchIdRoute
@@ -184,6 +198,7 @@ export interface FileRoutesByTo {
   '/rosa/$playerId': typeof RosaPlayerIdRoute
   '/storico/$competitionId': typeof StoricoCompetitionIdRoute
   '/admin': typeof AdminIndexRoute
+  '/mixed-zone': typeof MixedZoneIndexRoute
   '/rosa': typeof RosaIndexRoute
   '/storico': typeof StoricoIndexRoute
   '/admin/partite/$matchId': typeof AdminPartiteMatchIdRoute
@@ -196,6 +211,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/calendario': typeof CalendarioRoute
   '/classifica': typeof ClassificaRoute
+  '/mixed-zone': typeof MixedZoneRouteWithChildren
   '/admin/amichevoli': typeof AdminAmichevoliRoute
   '/admin/classifiche': typeof AdminClassificheRoute
   '/admin/documenti': typeof AdminDocumentiRoute
@@ -209,6 +225,7 @@ export interface FileRoutesById {
   '/rosa/$playerId': typeof RosaPlayerIdRoute
   '/storico/$competitionId': typeof StoricoCompetitionIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/mixed-zone/': typeof MixedZoneIndexRoute
   '/rosa/': typeof RosaIndexRoute
   '/storico/': typeof StoricoIndexRoute
   '/admin/partite/$matchId': typeof AdminPartiteMatchIdRoute
@@ -222,6 +239,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/calendario'
     | '/classifica'
+    | '/mixed-zone'
     | '/admin/amichevoli'
     | '/admin/classifiche'
     | '/admin/documenti'
@@ -235,6 +253,7 @@ export interface FileRouteTypes {
     | '/rosa/$playerId'
     | '/storico/$competitionId'
     | '/admin/'
+    | '/mixed-zone/'
     | '/rosa/'
     | '/storico/'
     | '/admin/partite/$matchId'
@@ -258,6 +277,7 @@ export interface FileRouteTypes {
     | '/rosa/$playerId'
     | '/storico/$competitionId'
     | '/admin'
+    | '/mixed-zone'
     | '/rosa'
     | '/storico'
     | '/admin/partite/$matchId'
@@ -269,6 +289,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/calendario'
     | '/classifica'
+    | '/mixed-zone'
     | '/admin/amichevoli'
     | '/admin/classifiche'
     | '/admin/documenti'
@@ -282,6 +303,7 @@ export interface FileRouteTypes {
     | '/rosa/$playerId'
     | '/storico/$competitionId'
     | '/admin/'
+    | '/mixed-zone/'
     | '/rosa/'
     | '/storico/'
     | '/admin/partite/$matchId'
@@ -294,6 +316,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   CalendarioRoute: typeof CalendarioRoute
   ClassificaRoute: typeof ClassificaRoute
+  MixedZoneRoute: typeof MixedZoneRouteWithChildren
   AdminLoginRoute: typeof AdminLoginRoute
   PTokenRoute: typeof PTokenRoute
   PartiteMatchIdRoute: typeof PartiteMatchIdRoute
@@ -332,6 +355,13 @@ declare module '@tanstack/react-router' {
       path: '/classifica'
       fullPath: '/classifica'
       preLoaderRoute: typeof ClassificaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mixed-zone': {
+      id: '/mixed-zone'
+      path: '/mixed-zone'
+      fullPath: '/mixed-zone'
+      preLoaderRoute: typeof MixedZoneRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -396,6 +426,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/mixed-zone/': {
+      id: '/mixed-zone/'
+      path: '/'
+      fullPath: '/mixed-zone/'
+      preLoaderRoute: typeof MixedZoneIndexRouteImport
+      parentRoute: typeof MixedZoneRoute
     }
     '/p/$token': {
       id: '/p/$token'
@@ -491,11 +528,24 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface MixedZoneRouteChildren {
+  MixedZoneIndexRoute: typeof MixedZoneIndexRoute
+}
+
+const MixedZoneRouteChildren: MixedZoneRouteChildren = {
+  MixedZoneIndexRoute: MixedZoneIndexRoute,
+}
+
+const MixedZoneRouteWithChildren = MixedZoneRoute._addFileChildren(
+  MixedZoneRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   CalendarioRoute: CalendarioRoute,
   ClassificaRoute: ClassificaRoute,
+  MixedZoneRoute: MixedZoneRouteWithChildren,
   AdminLoginRoute: AdminLoginRoute,
   PTokenRoute: PTokenRoute,
   PartiteMatchIdRoute: PartiteMatchIdRoute,

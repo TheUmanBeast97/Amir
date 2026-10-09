@@ -9,11 +9,12 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import { AppShell } from "../components/AppShell";
 import { MotionRoot } from "../components/motion";
 import { Toaster } from "../components/ui/sonner";
+import { areaOf } from "../lib/area";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -120,9 +121,10 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="it" suppressHydrationWarning>
       <head>
         <HeadContent />
+        {/* prima del primo disegno: il tema chiaro salvato e l'area dall'indirizzo (così la Mixed Zone non lampeggia di rosso) */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{if(localStorage.getItem("amir_theme")==="light")document.documentElement.classList.add("light")}catch(e){}`,
+            __html: `try{var d=document.documentElement,p=location.pathname;d.dataset.area=(p==="/admin"||p.indexOf("/admin/")===0)?"staff":(p==="/mixed-zone"||p.indexOf("/mixed-zone/")===0)?"mixed":"hub";if(localStorage.getItem("amir_theme")==="light")d.classList.add("light")}catch(e){}`,
           }}
         />
       </head>
@@ -136,7 +138,14 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const isAdmin = useRouterState({ select: (s) => s.location.pathname.startsWith("/admin") });
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const area = areaOf(pathname);
+  const isAdmin = area === "staff";
+
+  // a ogni cambio di indirizzo l'area finisce su <html>: da lì il tema prende i colori
+  useEffect(() => {
+    document.documentElement.dataset["area"] = area;
+  }, [area]);
 
   return (
     <QueryClientProvider client={queryClient}>
