@@ -6,13 +6,15 @@ use RuntimeException;
 
 /**
  * Dall'archivio locale di XFive (la cartella json/) ai pezzi gzip da caricare online: un JSON {"section", "items"} per
- * file, numerati nell'ordine in cui vanno importati (tornei, club, squadre, profili, calendari, tabelle, referti) e
+ * file, numerati nell'ordine in cui vanno importati (tornei, squadre, club, profili, calendari, tabelle, referti) e
  * spezzati quando il JSON supera il limite prima della compressione (Vercel accetta richieste sotto i 4,5 MB).
+ * Le squadre vanno prima dei club: è la pagina del club che abbina i giocatori delle rose (stesso club, stesso slug)
+ * al profilo globale, e senza rose già scritte non abbinerebbe nessuno.
  * Solo calcio: i tornei di altri sport e tutto ciò che dipende da loro restano nell'archivio.
  */
 final class ZoneExporter
 {
-    public const SECTIONS = ['tournaments', 'clubs', 'teams', 'players', 'calendar', 'tables', 'reports'];
+    public const SECTIONS = ['tournaments', 'teams', 'clubs', 'players', 'calendar', 'tables', 'reports'];
 
     /** @var array<int, string> */
     private array $files = [];
@@ -68,7 +70,7 @@ final class ZoneExporter
             }
         })());
 
-        // 2. club citati nei calendari o nelle rose dei tornei di calcio
+        // 2. squadre e rose dei tornei di calcio (e i club che citano, insieme a quelli dei calendari)
         $clubIds = [];
         foreach ($headers as $id => $h) {
             foreach ($this->readJson("{$jsonDir}/tournaments/{$id}/calendar.json") ?? [] as $row) {
@@ -89,22 +91,22 @@ final class ZoneExporter
                 }
             }
         }
+        $this->section('teams', (function () use ($teamFiles) {
+            foreach ($teamFiles as $file) {
+                $team = $this->readJson($file);
+                if ($team) {
+                    yield $team;
+                }
+            }
+        })());
+
+        // 3. club: le pagine abbinano i giocatori delle rose appena scritte ai profili globali
         ksort($clubIds);
         $this->section('clubs', (function () use ($jsonDir, $clubIds) {
             foreach (array_keys($clubIds) as $cid) {
                 $club = $this->readJson("{$jsonDir}/clubs/{$cid}.json");
                 if ($club) {
                     yield $club;
-                }
-            }
-        })());
-
-        // 3. squadre e rose
-        $this->section('teams', (function () use ($teamFiles) {
-            foreach ($teamFiles as $file) {
-                $team = $this->readJson($file);
-                if ($team) {
-                    yield $team;
                 }
             }
         })());

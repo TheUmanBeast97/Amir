@@ -21,7 +21,11 @@ use InvalidArgumentException;
 
 /**
  * Porta i dati pubblici di XFive (i JSON dell'archivio locale, o gli stessi dati letti dal vivo) nelle tabelle xf_*.
- * Ogni metodo è idempotente (upsert sulle chiavi uniche: rilanciare non duplica) e restituisce dei conteggi.
+ * Ogni metodo è idempotente (upsert sulle chiavi uniche: rilanciare non duplica) e restituisce dei conteggi
+ * (chiavi distinte per non confondersi quando si sommano: tournaments, clubs, linked, teams, roster, players, matches,
+ * standings, groups, stats, documents, reports, lineup, skipped).
+ * Ordine giusto su un database vuoto: tornei, squadre, club, profili, calendari, tabelle, referti (quello di ZoneExporter):
+ * le squadre prima dei club, perché è la pagina del club ad abbinare le rose ai profili globali.
  * Solo calcio: i tornei di altri sport non si scrivono.
  */
 final class ZoneImporter
@@ -220,7 +224,7 @@ final class ZoneImporter
         $teamId = (int) ($team['id'] ?? 0);
         $tid = (int) ($team['tournament_id'] ?? 0);
         if ($teamId <= 0 || $tid <= 0) {
-            return ['teams' => 0, 'players' => 0];
+            return ['teams' => 0, 'roster' => 0];
         }
         $clubId = ((int) ($team['club_id'] ?? 0)) ?: null;
         $now = now();
@@ -276,7 +280,7 @@ final class ZoneImporter
             XfTeamPlayer::upsert($chunk, ['team_id', 'tpid'], ['player_id', 'name', 'slug', 'role', 'number', 'photo_url', 'country']);
         }
 
-        return ['teams' => 1, 'players' => count($rows)];
+        return ['teams' => 1, 'roster' => count($rows)];
     }
 
     /**
@@ -362,7 +366,7 @@ final class ZoneImporter
         $mid = (int) ($match['id'] ?? 0);
         $m = $mid > 0 ? XfMatch::find($mid) : null;
         if (! $m) {
-            return ['reports' => 0, 'players' => 0, 'skipped' => 1];
+            return ['reports' => 0, 'lineup' => 0, 'skipped' => 1];
         }
 
         $rows = [];
@@ -412,7 +416,7 @@ final class ZoneImporter
             'has_report' => true,
         ])->save();
 
-        return ['reports' => 1, 'players' => count($rows)];
+        return ['reports' => 1, 'lineup' => count($rows)];
     }
 
     // ------------------------------------------------------------------ pezzi dell'export (ZoneExporter)

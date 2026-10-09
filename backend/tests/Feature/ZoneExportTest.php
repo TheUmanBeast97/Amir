@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\Zone\XfMatch;
+use App\Models\Zone\XfMatchPlayer;
 use App\Models\Zone\XfSyncState;
+use App\Models\Zone\XfTeamPlayer;
 use App\Models\Zone\XfTournament;
 use App\Services\Zone\ZoneExporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -98,6 +100,10 @@ class ZoneExportTest extends TestCase
         $this->assertSame(1, $reports['counts']['items'], 'con il limite piccolo ogni pezzo dei referti ha un referto solo');
         $this->assertNotNull(XfTournament::find(901)->calendar_synced_at);
         $this->assertTrue(XfMatch::find(90001)->has_report);
+        // l'ordine dei pezzi (squadre prima dei club) fa sì che rose e referti arrivino già abbinati ai profili
+        $this->assertSame(7001, XfTeamPlayer::where('tpid', 61001)->first()->player_id);
+        $this->assertSame(7001, XfMatchPlayer::where('match_id', 90001)->where('tpid', 61001)->first()->player_id);
+        $this->assertSame(7002, XfMatchPlayer::where('match_id', 90002)->where('tpid', 61002)->first()->player_id);
 
         // ricaricare lo stesso pezzo non duplica nulla
         $this->post('/api/v1/zone/import', ['file' => new UploadedFile($files[0], basename($files[0]), 'application/gzip', null, true)], ['Accept' => 'application/json'])->assertOk();
