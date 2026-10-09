@@ -1,6 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowLeft, Award, Flame, Medal, Shield, Star, Target, Trophy, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  Award,
+  Flame,
+  Globe,
+  Medal,
+  Shield,
+  Star,
+  Target,
+  Trophy,
+  Users,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -230,11 +241,25 @@ function PlayerView({ page }: { page: PlayerPage }) {
             )}
           </div>
         )}
-        {hasStats && !staff && (
-          <Reveal now delay={1} className="relative mt-4 flex justify-center md:justify-start">
-            <PlayerCardButton page={page} />
+        {(hasStats && !staff) || p.xfive_person_id ? (
+          <Reveal
+            now
+            delay={1}
+            className="relative mt-4 flex flex-wrap items-center justify-center gap-2 md:justify-start"
+          >
+            {hasStats && !staff && <PlayerCardButton page={page} />}
+            {p.xfive_person_id && (
+              // la sua carriera con tutte le squadre, nella Mixed Zone
+              <Link
+                to="/mixed-zone/giocatori/$id"
+                params={{ id: String(p.xfive_person_id) }}
+                className="press inline-flex min-h-11 items-center gap-2 rounded-lg border border-primary/40 px-4 text-sm font-semibold text-primary hover:bg-primary/10"
+              >
+                <Globe className="h-4 w-4" /> Carriera XFive
+              </Link>
+            )}
           </Reveal>
-        )}
+        ) : null}
       </section>
 
       {!hasStats ? (

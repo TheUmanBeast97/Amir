@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowRight, Globe } from "lucide-react";
 import { useHome, useStandings } from "@/api/hooks";
 import { EmptyState, ErrorState, PageTitle, Skeleton } from "@/components/ui-kit";
 import { StandingsTable } from "@/components/match";
@@ -45,6 +46,19 @@ function StandingsPage() {
         P giocate · V vinte · N pareggiate · Pe perse · GF gol fatti · GS gol subiti · DR differenza
         reti · Pt punti
       </Reveal>
+      {home.data?.competition?.xfive_tournament_id && (
+        <Reveal className="mt-6">
+          <Link
+            to="/mixed-zone/tornei/$id"
+            params={{ id: String(home.data.competition.xfive_tournament_id) }}
+            className="press group flex min-h-12 items-center justify-center gap-2 rounded-xl border border-primary/40 font-semibold text-primary hover:bg-primary/10"
+          >
+            <Globe className="h-5 w-5" /> Il torneo nella Mixed Zone: calendario completo, squadre e
+            statistiche
+            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+          </Link>
+        </Reveal>
+      )}
     </div>
   );
 }

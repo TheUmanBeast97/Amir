@@ -48,6 +48,7 @@ final class Present
             'total_rounds' => $c->total_rounds,
             'scheduled_rounds' => $c->scheduledRounds(),
             'xfive_url' => $c->xfive_url,
+            'xfive_tournament_id' => $c->xfive_tournament_id,
         ];
     }
 

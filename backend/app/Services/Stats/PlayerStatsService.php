@@ -161,6 +161,7 @@ final class PlayerStatsService
             'first_season' => $seasons->first(),
             'last_season' => $seasons->last(),
             'seasons_count' => $seasons->count(),
+            'xfive_person_id' => $player->xfive_person_id,
         ];
     }
 
