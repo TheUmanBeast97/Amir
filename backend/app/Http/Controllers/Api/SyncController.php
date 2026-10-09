@@ -71,6 +71,8 @@ class SyncController extends Controller
             'started_at' => $run->started_at?->toIso8601String(),
             'finished_at' => $run->finished_at?->toIso8601String(),
             'stats' => (object) ($run->stats ?? []),
+            // l'ultimo passo fatto ({section, message, done, total}); null per gli aggiornamenti che non lo raccontano
+            'progress' => $run->progress,
             'error' => $run->error,
         ];
     }

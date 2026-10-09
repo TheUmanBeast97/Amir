@@ -14,6 +14,7 @@ class SyncRun extends Model
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
             'stats' => 'array',
+            'progress' => 'array', // {section, message, done, total}: l'ultimo passo fatto, per la sala di controllo
         ];
     }
 }

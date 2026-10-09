@@ -15,6 +15,7 @@
     { "path": "/api/v1/cron/details", "schedule": "20 4 * * *" },
     { "path": "/api/v1/cron/media", "schedule": "40 4 * * *" },
     { "path": "/api/v1/cron/stats", "schedule": "0 5 * * *" },
-    { "path": "/api/v1/cron/history", "schedule": "0 3 * * 1" }
+    { "path": "/api/v1/cron/history", "schedule": "0 3 * * 1" },
+    { "path": "/api/v1/cron/zone", "schedule": "30 3 * * *" }
   ]
 }
