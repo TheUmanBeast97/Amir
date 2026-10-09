@@ -347,7 +347,10 @@ final class ZoneQueries
         $teams = XfTeam::query()->where('club_id', $id)->get()->keyBy('tournament_id');
         $tids = $teams->keys()->merge($this->involving($id)->distinct()->pluck('tournament_id'))->map(fn ($v) => (int) $v)->unique()->all();
         $tournaments = $tids ? XfTournament::query()->findMany($tids)->keyBy('id') : collect();
-        $positions = $tids ? XfStanding::query()->whereIn('tournament_id', $tids)->where('club_id', $id)->pluck('position', 'tournament_id')->all() : [];
+        // una classifica a zero partite giocate è solo l'ordine alfabetico: la posizione non si mostra
+        $positions = $tids ? XfStanding::query()->whereIn('tournament_id', $tids)->where('club_id', $id)->get(['tournament_id', 'position', 'values'])
+            ->filter(fn (XfStanding $s) => (int) (((array) $s->values)['G'] ?? 0) > 0)
+            ->pluck('position', 'tournament_id')->all() : [];
         $labels = $this->seasonLabels();
         $rank = ['ongoing' => 0, 'incoming' => 1, 'previous' => 2];
 
