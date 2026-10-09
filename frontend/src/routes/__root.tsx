@@ -12,6 +12,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import { AppShell } from "../components/AppShell";
+import { AreaPortalHost } from "../components/area/AreaPortal";
 import { MotionRoot } from "../components/motion";
 import { Toaster } from "../components/ui/sonner";
 import { areaOf } from "../lib/area";
@@ -159,6 +160,8 @@ function RootComponent() {
           </AppShell>
         )}
         <Toaster position="top-center" richColors />
+        {/* il portale «Cambia area» sta qui, fuori dalle scocche: così dura i suoi tre secondi anche quando la scocca cambia */}
+        <AreaPortalHost />
       </MotionRoot>
     </QueryClientProvider>
   );

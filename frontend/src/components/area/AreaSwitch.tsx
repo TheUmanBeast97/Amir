@@ -12,7 +12,7 @@ import {
 } from "motion/react";
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { TOKEN_KEY } from "@/api/client";
-import { AreaPortal } from "@/components/area/AreaPortal";
+import { openAreaPortal, PORTAL_MS } from "@/components/area/AreaPortal";
 import { Dialog, DialogDescription, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { AREA_ORDER, AREAS, areaOf, type Area, type AreaId } from "@/lib/area";
 import { ease, spring, stagger, tiltSpring } from "@/lib/motion";
@@ -188,9 +188,7 @@ export function AreaSwitch({ compact = false }: { compact?: boolean }) {
   const current = areaOf(pathname);
   const [open, setOpen] = useState(false);
   const [chosen, setChosen] = useState<AreaId | null>(null);
-  const [portal, setPortal] = useState<AreaId | null>(null);
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
-  const target = useRef<Target>("/");
 
   const choose = (id: AreaId) => {
     if (chosen) return;
@@ -198,12 +196,18 @@ export function AreaSwitch({ compact = false }: { compact?: boolean }) {
       setOpen(false);
       return;
     }
-    target.current = targetOf(id);
+    const to = targetOf(id);
     // la pagina nuova si carica mentre il portale è aperto: alla fine è già pronta
-    void router.preloadRoute({ to: target.current }).catch(() => undefined);
+    void router.preloadRoute({ to }).catch(() => undefined);
     setChosen(id);
-    setPortal(id);
-    window.setTimeout(() => setOpen(false), 380);
+    // il portale vive nella radice (AreaPortalHost): resta anche se questa scocca si smonta con la pagina
+    openAreaPortal({
+      area: id,
+      onNavigate: () => void router.navigate({ to }),
+      onDone: () => setChosen(null),
+    });
+    // il selettore si chiude appena il portale copre lo schermo (la carta scelta ha finito di volare)
+    window.setTimeout(() => setOpen(false), Math.round(PORTAL_MS * 0.13));
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -301,16 +305,6 @@ export function AreaSwitch({ compact = false }: { compact?: boolean }) {
           </DialogPrimitive.Content>
         </DialogPortal>
       </Dialog>
-      {portal && (
-        <AreaPortal
-          area={portal}
-          onNavigate={() => void router.navigate({ to: target.current })}
-          onDone={() => {
-            setPortal(null);
-            setChosen(null);
-          }}
-        />
-      )}
     </>
   );
 }
