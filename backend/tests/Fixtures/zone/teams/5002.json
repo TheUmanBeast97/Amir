@@ -1,0 +1,23 @@
+{
+    "id": 5002,
+    "tournament_id": 901,
+    "slug": "rossi",
+    "name": "ROSSI",
+    "badge_url": "https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/s/302rossi.png",
+    "club_id": 302,
+    "club_slug": "rossi",
+    "staff": {
+        "Presidente": "Carlo Rossi"
+    },
+    "players": [
+        {
+            "id": 61003,
+            "slug": "mario-rossi",
+            "name": "Rossi Mario",
+            "role": "Portiere",
+            "number": "1",
+            "photo_url": null,
+            "country": "Italia"
+        }
+    ]
+}

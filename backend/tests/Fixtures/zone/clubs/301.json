@@ -1,0 +1,18 @@
+{
+    "id": 301,
+    "slug": "caffe-km0",
+    "name": "CAFFÈ KM0",
+    "badge_url": "https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/q/301caffe.png",
+    "players": [
+        {
+            "id": 7001,
+            "slug": "luca-verdi",
+            "name": "Verdi Luca"
+        },
+        {
+            "id": 7002,
+            "slug": "marco-neri",
+            "name": "Neri Marco"
+        }
+    ]
+}

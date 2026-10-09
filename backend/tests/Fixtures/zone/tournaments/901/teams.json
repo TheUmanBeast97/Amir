@@ -1,0 +1,20 @@
+[
+    {
+        "id": 5001,
+        "slug": "caffe-km0",
+        "name": "CAFFÈ KM0",
+        "badge_url": "https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/q/301caffe.png"
+    },
+    {
+        "id": 5002,
+        "slug": "rossi",
+        "name": "ROSSI",
+        "badge_url": "https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/q/302rossi.png"
+    },
+    {
+        "id": 5003,
+        "slug": "bianchi",
+        "name": "BIANCHI",
+        "badge_url": "https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/q/303bianchi.png"
+    }
+]

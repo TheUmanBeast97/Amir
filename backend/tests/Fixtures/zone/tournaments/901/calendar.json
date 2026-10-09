@@ -1,0 +1,68 @@
+[
+    {
+        "xfive_match_id": 90001,
+        "round_id": 9901,
+        "round": 1,
+        "round_label": "1ª giornata",
+        "tournament_id": 901,
+        "played": true,
+        "home": {
+            "club_id": 301,
+            "name": "CAFFÈ KM0",
+            "badge_url": "https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/s/301caffe.png"
+        },
+        "away": {
+            "club_id": 302,
+            "name": "ROSSI",
+            "badge_url": "https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/s/302rossi.png"
+        },
+        "kickoff_raw": "lun 12/10 21:00",
+        "venue": "CAMPO DI PROVA 1",
+        "home_score": 3,
+        "away_score": 1
+    },
+    {
+        "xfive_match_id": 90002,
+        "round_id": 9902,
+        "round": 2,
+        "round_label": "2ª giornata",
+        "tournament_id": 901,
+        "played": true,
+        "home": {
+            "club_id": 303,
+            "name": "BIANCHI",
+            "badge_url": "https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/s/303bianchi.png"
+        },
+        "away": {
+            "club_id": 301,
+            "name": "CAFFÈ KM0",
+            "badge_url": "https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/s/301caffe.png"
+        },
+        "kickoff_raw": "mar 13/10 21:00",
+        "venue": "CAMPO DI PROVA 2",
+        "home_score": 2,
+        "away_score": 2
+    },
+    {
+        "xfive_match_id": 90003,
+        "round_id": 9902,
+        "round": 2,
+        "round_label": "2ª giornata",
+        "tournament_id": 901,
+        "played": false,
+        "home": {
+            "club_id": 302,
+            "name": "ROSSI",
+            "badge_url": "https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/s/302rossi.png"
+        },
+        "away": {
+            "club_id": 303,
+            "name": "BIANCHI",
+            "badge_url": "https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/s/303bianchi.png"
+        },
+        "kickoff_raw": "lun 19/10 21:00",
+        "venue": "CAMPO DI PROVA 1",
+        "home_score": null,
+        "away_score": null
+    }
+]

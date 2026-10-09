@@ -1,0 +1,14 @@
+{
+    "id": 901,
+    "exists": true,
+    "slug": "torneo-di-prova",
+    "name": "Torneo di prova",
+    "category": null,
+    "season_id": 8,
+    "season": "2026/2027",
+    "sport": "Calcio a 7 - Maschile",
+    "flyer_url": "https://cdn.enjore.com/wl/xfivesport_it/img/tournament/b/901prova.jpg",
+    "teams": 3,
+    "dates": "Dal 12 ottobre",
+    "status": "ongoing"
+}

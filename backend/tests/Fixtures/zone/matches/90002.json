@@ -1,0 +1,53 @@
+{
+    "id": 90002,
+    "tournament_id": 901,
+    "round_label": "2ª giornata",
+    "kickoff_raw": "mar 13/10 21:00",
+    "referee": null,
+    "venue": "CAMPO DI PROVA 2",
+    "home_score": 2,
+    "away_score": 2,
+    "home": {
+        "lineup": [
+            {
+                "ref": 61004,
+                "name": "Gialli Pino",
+                "slug": "pino-gialli",
+                "goals": 2,
+                "yellow": 0,
+                "red": 1,
+                "mvp": false,
+                "photo": null,
+                "other": []
+            }
+        ],
+        "scorers": []
+    },
+    "away": {
+        "lineup": [
+            {
+                "ref": 61001,
+                "name": "Verdi Luca",
+                "slug": "luca-verdi",
+                "goals": 0,
+                "yellow": 0,
+                "red": 0,
+                "mvp": false,
+                "photo": "https://cdn.enjore.com/wl/xfivesport_it/img/player/q/7001-verdi.png",
+                "other": []
+            },
+            {
+                "ref": 61002,
+                "name": "Neri Marco",
+                "slug": "marco-neri",
+                "goals": 2,
+                "yellow": 0,
+                "red": 0,
+                "mvp": true,
+                "photo": null,
+                "other": []
+            }
+        ],
+        "scorers": []
+    }
+}

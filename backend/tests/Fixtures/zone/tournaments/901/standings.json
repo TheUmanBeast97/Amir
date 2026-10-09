@@ -1,0 +1,52 @@
+[
+    {
+        "group": "Girone A",
+        "columns": [
+            {"key": "Pt", "label": "Punti Classifica"},
+            {"key": "G", "label": "Partite Disputate"},
+            {"key": "V", "label": "Vittorie"},
+            {"key": "N", "label": "Pareggi"},
+            {"key": "P", "label": "Sconfitte"},
+            {"key": "F", "label": "Gol Fatti"},
+            {"key": "S", "label": "Gol Subiti"},
+            {"key": "+/-", "label": "Differenza Reti"},
+            {"key": "FP", "label": "Fairplay"}
+        ],
+        "rows": [
+            {
+                "position": 1,
+                "name": "CAFFÈ KM0",
+                "badge_url": "https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/q/301caffe.png",
+                "values": {"Pt": 4, "G": 2, "V": 1, "N": 1, "P": 0, "F": 5, "S": 3, "+/-": 2, "FP": 0}
+            },
+            {
+                "position": 2,
+                "name": "ROSSI",
+                "badge_url": "https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/q/302rossi.png",
+                "values": {"Pt": 0, "G": 1, "V": 0, "N": 0, "P": 1, "F": 1, "S": 3, "+/-": -2, "FP": 0}
+            }
+        ]
+    },
+    {
+        "group": "Girone B",
+        "columns": [
+            {"key": "Pt", "label": "Punti Classifica"},
+            {"key": "G", "label": "Partite Disputate"},
+            {"key": "V", "label": "Vittorie"},
+            {"key": "N", "label": "Pareggi"},
+            {"key": "P", "label": "Sconfitte"},
+            {"key": "F", "label": "Gol Fatti"},
+            {"key": "S", "label": "Gol Subiti"},
+            {"key": "+/-", "label": "Differenza Reti"},
+            {"key": "FP", "label": "Fairplay"}
+        ],
+        "rows": [
+            {
+                "position": 1,
+                "name": "BIANCHI",
+                "badge_url": "https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/q/303bianchi.png",
+                "values": {"Pt": 1, "G": 1, "V": 0, "N": 1, "P": 0, "F": 2, "S": 2, "+/-": 0, "FP": 0}
+            }
+        ]
+    }
+]

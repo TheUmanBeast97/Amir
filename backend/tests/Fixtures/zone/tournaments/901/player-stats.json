@@ -1,0 +1,22 @@
+{
+    "score": {
+        "columns": ["Goal"],
+        "rows": [
+            {
+                "position": 1,
+                "name": "Verdi L.",
+                "team": "CAFFÈ KM0",
+                "photo": "https://cdn.enjore.com/wl/xfivesport_it/img/player/q/7001-verdi.png",
+                "values": [2]
+            }
+        ]
+    },
+    "top-player": {
+        "columns": ["Punti"],
+        "rows": []
+    },
+    "discipline": {
+        "columns": ["Ammonizioni", "Espulsioni"],
+        "rows": []
+    }
+}

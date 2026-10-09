@@ -1,0 +1,23 @@
+{
+    "id": 7001,
+    "name": "Verdi Luca 9",
+    "slug": "luca-verdi",
+    "photo_url": "https://cdn.enjore.com/wl/xfivesport_it/img/player/q/7001-verdi.png",
+    "age": 30,
+    "nationality": "Italia",
+    "clubs": [
+        {
+            "club_id": 301,
+            "name": "Caffè Km0",
+            "role": null,
+            "tournaments": [
+                {
+                    "id": 901,
+                    "name": "Torneo Di Prova",
+                    "season": "2026/2027",
+                    "format": 7
+                }
+            ]
+        }
+    ]
+}

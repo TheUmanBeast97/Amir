@@ -1,0 +1,53 @@
+{
+    "id": 90001,
+    "tournament_id": 901,
+    "round_label": "1ª giornata",
+    "kickoff_raw": "lun 12/10 21:00",
+    "referee": "Arbitro Di Prova",
+    "venue": "CAMPO DI PROVA 1",
+    "home_score": 3,
+    "away_score": 1,
+    "home": {
+        "lineup": [
+            {
+                "ref": 61001,
+                "name": "Verdi Luca",
+                "slug": "luca-verdi",
+                "goals": 2,
+                "yellow": 0,
+                "red": 0,
+                "mvp": true,
+                "photo": "https://cdn.enjore.com/wl/xfivesport_it/img/player/q/7001-verdi.png",
+                "other": []
+            },
+            {
+                "ref": 61002,
+                "name": "Neri Marco",
+                "slug": "marco-neri",
+                "goals": 1,
+                "yellow": 1,
+                "red": 0,
+                "mvp": false,
+                "photo": null,
+                "other": []
+            }
+        ],
+        "scorers": []
+    },
+    "away": {
+        "lineup": [
+            {
+                "ref": 61999,
+                "name": "Sconosciuto Ugo",
+                "slug": "ugo-sconosciuto",
+                "goals": 1,
+                "yellow": 0,
+                "red": 0,
+                "mvp": false,
+                "photo": null,
+                "other": []
+            }
+        ],
+        "scorers": []
+    }
+}

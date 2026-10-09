@@ -1,0 +1,33 @@
+{
+    "id": 5001,
+    "tournament_id": 901,
+    "slug": "caffe-km0",
+    "name": "CAFFÈ KM0",
+    "badge_url": "https://cdn.enjore.com/wl/xfivesport_it/img/team/badge/s/301caffe.png",
+    "club_id": 301,
+    "club_slug": "caffe-km0",
+    "staff": {
+        "Presidente": "Anna Verdi",
+        "Allenatore": "Paolo Neri"
+    },
+    "players": [
+        {
+            "id": 61001,
+            "slug": "luca-verdi",
+            "name": "Verdi Luca",
+            "role": "Attaccante",
+            "number": "9",
+            "photo_url": "https://cdn.enjore.com/wl/xfivesport_it/img/player/q/7001-verdi.png",
+            "country": "Italia"
+        },
+        {
+            "id": 61002,
+            "slug": "marco-neri",
+            "name": "Neri Marco",
+            "role": null,
+            "number": null,
+            "photo_url": null,
+            "country": "Italia"
+        }
+    ]
+}
