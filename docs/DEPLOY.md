@@ -154,6 +154,24 @@ interrogazione costa un viaggio oltre l'oceano e va molto peggio.
 Una richiesta su Vercel dura al massimo un minuto. Gli aggiornamenti lunghi (partite, immagini, statistiche) lavorano a pezzi da circa
 40 secondi e dicono quanto manca: il sito li richiama da solo, mentre quelli notturni finiscono nei giorni successivi.
 
+## Mixed Zone: caricare l'archivio XFive e tenerlo aggiornato
+
+La Mixed Zone (`/mixed-zone`) mostra tutti i tornei di calcio di XFive. Online parte vuota: i dati si caricano una volta
+dall'archivio locale e poi si aggiornano da soli.
+
+1. Sul computer, nella cartella `backend`: `php artisan xfive:archive all` (se l'archivio non è aggiornato) e poi
+   `php artisan xfive:zone-export`. In `Desktop\AMIR\xfive-archive\export` compaiono i pezzi `zone-001-tournaments.json.gz`,
+   `zone-002-teams.json.gz`, ... (una dozzina, 3,5 MB in tutto, ognuno sotto il limite di 4,5 MB a richiesta di Vercel).
+2. Sul sito online: **Staff Area, Sincronizzazione, «Carica archivio»**, seleziona tutti i pezzi: il sito li manda in
+   ordine, uno alla volta, e mostra l'avanzamento. Ricaricarli non fa danni (ogni riga si aggiorna, non si duplica).
+3. Da lì in poi il cron `/api/v1/cron/zone` (ogni notte alle 3:30, in `backend/vercel.json`) rilegge elenchi, calendari,
+   classifiche, statistiche e referti dei tornei in corso, e il lunedì anche rose e profili; a pezzi da 40 secondi, con un
+   cursore: se una notte non basta, riprende la notte dopo. Dal centro di sincronizzazione «Sincronizza tutto» (o una sola
+   sezione) fa subito lo stesso lavoro richiamando il server finché finisce.
+
+Spazio: i dati di 148 tornei (5.000 partite, 4.000 referti) occupano circa 30 MB nel database; le immagini non si
+caricano (arrivano dal CDN di XFive). Il piano gratuito di Neon ne dà 500. Padel e pallavolo restano fuori.
+
 ## Rosa e tesseramenti da XFive (facoltativo, spento di serie)
 
 Il backend può leggere dall'area amministrazione di XFive, con il tuo account, la **rosa**: Squad List, scadenze dei certificati medici e

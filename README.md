@@ -193,6 +193,33 @@ Passo passo, variabili da inserire e come portare i dati già inseriti con il ba
 Com'è fatto il sito di XFive (indirizzi, chiamate interne, lettori) e come si scarica tutto in locale con
 `php artisan xfive:archive`, a tappe e per sezione: [docs/XFIVE_SITE.md](docs/XFIVE_SITE.md).
 
+## Mixed Zone (tutto il calcio XFive sul sito)
+
+Il sito ha tre aree, con una sola scocca e un colore ciascuna: **Amir Hub** (rosso, la squadra: home, calendario,
+classifica, rosa, storico), **Mixed Zone** (ciano, `/mixed-zone`: tutti i tornei di calcio di XFive Alessandria con
+squadre, giocatori, partite e statistiche) e **Staff Area** (ambra, `/admin`). Si passa dall'una all'altra con
+«Cambia area» (tre carte in 3D e un portale di benvenuto; `src/components/area/`, `src/lib/area.ts`, tema per
+area con `data-area` in `styles.css`).
+
+I dati stanno nelle tabelle `xf_*` (`backend/app/Models/Zone`), separate da quelle di AMIR; le immagini restano sul
+CDN di XFive e passano dall'ottimizzatore di Vercel. Solo calcio: padel e pallavolo non si importano.
+
+- **Caricamento iniziale** dall'archivio locale: `php artisan xfive:zone-export` crea in `<archivio>/export` una
+  dozzina di pezzi `zone-NNN-sezione.json.gz` (3,5 MB in tutto); in locale `php artisan xfive:zone-import <cartella>`,
+  online **Staff Area, Sincronizzazione, «Carica archivio»** (i pezzi vanno in ordine, `POST /zone/import`).
+  Il lettore è `ZoneImporter` (idempotente: rilanciare non duplica).
+- **Aggiornamenti dal vivo** da XFive per sezione (`ZoneSync`, scope `zone-tournaments`, `zone-calendar`,
+  `zone-standings`, `zone-stats`, `zone-teams`, `zone-reports`, `zone-players`, oppure `zone` per le notturne in
+  fila): a pezzi da 40 secondi con un cursore in `xf_sync_state`, dal centro di sincronizzazione, da
+  `php artisan xfive:zone-sync <sezione>` o dal cron `/api/v1/cron/zone` (ogni notte alle 3:30; il lunedì anche rose e profili).
+- **API pubblica** `/api/v1/public/zone/*` (home, ricerca, tornei, squadre, giocatori, partite, statistiche di
+  sempre), contratto in `frontend/src/api/zone-types.ts`, letture in `ZoneQueries` e `ZoneStats`.
+- **Centro di sincronizzazione** (`/admin/sincronizzazione`): una carta per sezione, «Sincronizza tutto» e, durante il
+  lavoro, la sala di controllo con il messaggio vero di quello che il server sta leggendo.
+
+Progetto e piano: [docs/superpowers/specs/2026-10-09-mixed-zone-design.md](docs/superpowers/specs/2026-10-09-mixed-zone-design.md),
+[docs/superpowers/plans/2026-10-09-mixed-zone.md](docs/superpowers/plans/2026-10-09-mixed-zone.md).
+
 ## Sicurezza e privacy
 
 - Il sito pubblico mostra solo nomi, ruoli, numeri e foto della rosa. Date di nascita, telefono, email,

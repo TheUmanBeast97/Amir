@@ -106,6 +106,14 @@ Prima passata completa (8/10/2026, stagioni 6-8): 83 tornei, 3.160 partite (2.66
 1.546 squadre, 517 club, 4.810 referti, 6.522 immagini, 157 pagine Markdown, 702 MB. Il 9/10 notte XFive ha servito
 per qualche ora un certificato autofirmato (`cURL error 60`): in quel caso il comando si ferma da solo e si rilancia dopo.
 
+### Dal sito online (Mixed Zone)
+
+Le stesse letture, per sezione e a pezzi da 40 secondi con cursore, le fa `App\Services\Zone\ZoneSync` sul server
+(scope `zone-tournaments`, `zone-calendar`, `zone-standings`, `zone-stats`, `zone-teams`, `zone-reports`, `zone-players`;
+`zone` = le notturne in fila), con gli stessi lettori di questa pagina. Si lanciano dal centro di sincronizzazione, da
+`php artisan xfive:zone-sync <sezione>` o dal cron `/api/v1/cron/zone`. L'archivio locale resta la fonte per il primo
+caricamento (`xfive:zone-export` → «Carica archivio») e per la modulistica, che dal vivo non si rilegge.
+
 ### Come fare un aggiornamento mirato
 
 - Solo risultati e calendari: `php artisan xfive:archive details --only=calendar --refresh` (1 richiesta per torneo).
