@@ -75,6 +75,15 @@ class ZoneImportTest extends TestCase
         $this->assertSame(1, XfDocument::count());
     }
 
+    public function test_profile_names_lose_the_shirt_number_and_the_role_xfive_appends(): void
+    {
+        $this->assertSame('Verdi Luca', ZoneImporter::cleanPlayerName('Verdi Luca 9'));
+        $this->assertSame('Zunino Mattia', ZoneImporter::cleanPlayerName('Zunino Mattia Centrocampista 7'));
+        $this->assertSame('Rossi Mario', ZoneImporter::cleanPlayerName('Rossi Mario Portiere'));
+        $this->assertSame('Punta Paolo', ZoneImporter::cleanPlayerName('Punta Paolo'), 'un cognome che è anche un ruolo non si tocca se non è in coda');
+        $this->assertSame('Ala', ZoneImporter::cleanPlayerName('Ala'));
+    }
+
     public function test_teams_clubs_and_profiles_link_tournament_players_to_global_profiles(): void
     {
         $imp = app(ZoneImporter::class);

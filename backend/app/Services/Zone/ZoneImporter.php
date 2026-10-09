@@ -42,6 +42,24 @@ final class ZoneImporter
         return trim((string) preg_replace('/\s+/', ' ', mb_strtolower(Str::ascii($s))));
     }
 
+    /** Ruoli che XFive attacca in coda al nome nel profilo («Zunino Mattia Centrocampista 7»). */
+    private const NAME_TAILS = ['portiere', 'difensore', 'centrocampista', 'attaccante', 'universale', 'pivot', 'laterale', 'esterno', 'terzino', 'mediano', 'trequartista', 'punta', 'ala', 'allenatore', 'dirigente', 'giocatore'];
+
+    /** Il nome del profilo senza numero di maglia né ruolo in coda: «Verdi Luca 9» e «Zunino Mattia Centrocampista 7» diventano «Verdi Luca» e «Zunino Mattia». */
+    public static function cleanPlayerName(string $raw): string
+    {
+        $words = preg_split('/\s+/', trim($raw), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        while (count($words) > 1) {
+            $last = mb_strtolower(Str::ascii((string) end($words)));
+            if (! preg_match('/^\d+$/', $last) && ! in_array($last, self::NAME_TAILS, true)) {
+                break;
+            }
+            array_pop($words);
+        }
+
+        return implode(' ', $words);
+    }
+
     /** L'intestazione di un torneo: null (e nessuna scrittura) se non è calcio o non esiste. */
     public function tournament(array $header): ?XfTournament
     {
@@ -340,7 +358,7 @@ final class ZoneImporter
         if ($pid <= 0) {
             return ['players' => 0];
         }
-        $name = trim((string) preg_replace('/\s+\d+$/', '', trim((string) ($profile['name'] ?? ''))));
+        $name = self::cleanPlayerName((string) ($profile['name'] ?? ''));
         $age = isset($profile['age']) && is_numeric($profile['age']) ? (int) $profile['age'] : null;
 
         XfPlayer::updateOrCreate(['id' => $pid], [
