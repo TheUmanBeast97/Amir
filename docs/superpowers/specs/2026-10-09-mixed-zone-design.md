@@ -31,17 +31,25 @@ pulsante **«Cambia area»** (prende il posto di «Area staff»; nella barra mob
    - Amir Hub: «La casa di AMIR COSTRUZIONI»; calendario, rosa, storico.
    - Staff Area: «Gestione della squadra»; convocazioni, quote, grafiche.
    La carta dell'area in cui si è porta l'etichetta «Sei qui». Tastiera: frecce per spostarsi, Invio per scegliere, Esc per chiudere.
-3. Scelta: la carta vola verso l'osservatore e si apre come un portale; dietro, un tunnel di sei piani prospettici nel colore
-   dell'area che scorrono verso l'osservatore, più un canvas 2D con particelle leggere (al massimo 120, nessuna libreria).
-   Al centro «Benvenuto in» e il nome dell'area che si compone lettera per lettera (`stagger` 40 ms).
-   Durata totale 1,2 s. La nuova pagina si carica durante l'animazione (`router.preloadRoute` + navigazione a 0,6 s), così
-   la dissolvenza finale scopre la pagina già pronta.
+3. Scelta: la carta vola verso l'osservatore e parte il portale, **diverso per ogni area e lungo 3,0 secondi fissi**
+   (`PORTAL_MS`): la nuova pagina si carica sotto e si naviga a 1,5 s, la dissolvenza finale (0,4 s) la scopre a 3,0 s.
+   - **Amir Hub (rosso)**: lo stemma AMIR arriva da lontano ruotando in 3D e si ferma al centro con due battiti; strisce
+     diagonali rosse e bianche attraversano lo schermo; al battito partono coriandoli rossi e bianchi dallo stemma; le
+     lettere di «Amir Hub» cadono dall'alto e rimbalzano.
+   - **Mixed Zone (ciano)**: tunnel di cornici prospettiche con griglia ciano che scorre su pavimento e soffitto, stelle che
+     accelerano, etichette di «dati» (nomi di tornei, punteggi, minuti) che sfrecciano con blur di movimento; la scritta si
+     digita con il cursore lampeggiante e un lampo finale.
+   - **Staff Area (ambra)**: portellone che si apre dal centro, ghiera da cassaforte che ruota e si allinea con uno scatto,
+     linee di scansione, timbro «ACCESSO CONSENTITO» che si stampa, scritta che appare per parole con bagliore ambra.
+   Tutto con `motion/react`, CSS 3D e un canvas 2D (al massimo 150 particelle, nessuna libreria nuova).
 4. Staff Area: se c'è il token si va alla dashboard, altrimenti al login.
-5. Con `prefers-reduced-motion` resta solo una dissolvenza di 0,3 s con la scritta «Benvenuto in ...».
+5. Con `prefers-reduced-motion` la durata resta 3,0 s ma senza movimento: colore pieno dell'area e scritta statica.
 6. La transizione si vede solo al cambio di area, mai tra pagine della stessa area.
 
-Componenti nuovi: `components/area/AreaSwitch.tsx` (pulsante + selettore), `components/area/AreaPortal.tsx` (transizione),
-`lib/area.ts` (`areaOf(pathname)`, tema per area, `AREAS` con nomi, sottotitoli, colori e indirizzo d'ingresso).
+Componenti: `components/area/AreaSwitch.tsx` (pulsante + selettore), `components/area/AreaPortal.tsx` (orchestratore,
+montato nella radice da `AreaPortalHost` così sopravvive al cambio di scocca), `HubScene.tsx`, `MixedScene.tsx`,
+`StaffScene.tsx`, `portal-shared.tsx` (tempi, canvas, scritta), `lib/area.ts` (`areaOf(pathname)`, tema per area,
+`AREAS` con nomi, sottotitoli, colori e indirizzo d'ingresso).
 
 ## 3. Dati: modello e provenienza
 
