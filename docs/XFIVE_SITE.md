@@ -101,8 +101,10 @@ Opzioni: `--limit=N` budget di richieste (si riprende la volta dopo), `--refresh
 pausa, `--hours=23-6` finestra oraria. `map` e `probe` servono a studiare pagine e chiamate nuove.
 
 Prima passata completa (8/10/2026, stagioni 6-8): 83 tornei, 3.160 partite (2.668 giocate), 857 squadre, 340 club,
-880 profili, 2.666 referti, 3.952 immagini, 468 MB, circa 8.600 richieste in 5 giri. La scansione degli id 1-97 ha
-trovato altri 74 tornei (stagioni fino alla 2023/24).
+880 profili, 2.666 referti, 3.952 immagini, 468 MB, circa 8.600 richieste in 5 giri. La scansione degli id 1-97
+(finita il 9/10/2026, giri 6-8) ha trovato altri 74 tornei (stagioni fino alla 2023/24): in tutto 157 tornei,
+1.546 squadre, 517 club, 4.810 referti, 6.522 immagini, 157 pagine Markdown, 702 MB. Il 9/10 notte XFive ha servito
+per qualche ora un certificato autofirmato (`cURL error 60`): in quel caso il comando si ferma da solo e si rilancia dopo.
 
 ### Come fare un aggiornamento mirato
 
