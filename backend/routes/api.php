@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\PublicController;
 use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\Api\XfiveAdminController;
+use App\Http\Controllers\Api\ZoneController;
 use App\Http\Controllers\Api\ZoneImportController;
 use App\Http\Middleware\PublicCache;
 use App\Services\Xfive\XfiveRoutine;
@@ -45,6 +46,25 @@ Route::prefix('v1')->group(function () {
         Route::get('/players/{player}/cutout', [PublicController::class, 'cutout']);
         Route::get('/stats/career', [PublicController::class, 'careerStats']);
         Route::get('/matches/{game}', [PublicController::class, 'match']);
+
+        // Mixed Zone: i dati pubblici di XFive (contratto in frontend/src/api/zone-types.ts)
+        Route::prefix('zone')->whereNumber(['id', 'other'])->group(function () {
+            Route::get('/home', [ZoneController::class, 'home']);
+            Route::get('/search', [ZoneController::class, 'search']);
+            Route::get('/tournaments', [ZoneController::class, 'tournaments']);
+            Route::get('/tournaments/{id}', [ZoneController::class, 'tournament']);
+            Route::get('/tournaments/{id}/matches', [ZoneController::class, 'tournamentMatches']);
+            Route::get('/tournaments/{id}/stats', [ZoneController::class, 'tournamentStats']);
+            Route::get('/clubs', [ZoneController::class, 'clubs']);
+            Route::get('/clubs/{id}', [ZoneController::class, 'club']);
+            Route::get('/clubs/{id}/matches', [ZoneController::class, 'clubMatches']);
+            Route::get('/clubs/{id}/head-to-head/{other}', [ZoneController::class, 'headToHead']);
+            Route::get('/players', [ZoneController::class, 'players']);
+            Route::get('/players/{id}', [ZoneController::class, 'player']);
+            Route::get('/matches', [ZoneController::class, 'matches']);
+            Route::get('/matches/{id}', [ZoneController::class, 'match']);
+            Route::get('/stats', [ZoneController::class, 'stats']);
+        });
     });
 
     // ---- Aggiornamenti automatici da XFive: li chiama la pianificazione di Vercel (serve CRON_SECRET) ----
