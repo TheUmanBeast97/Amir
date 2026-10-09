@@ -11,6 +11,7 @@ import {
   type MotionStyle,
 } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { areaOf } from "@/lib/area";
 import { dist, dur, ease, spring, stagger } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -280,8 +281,10 @@ export function PageTransition({ children, wipe = true }: { children: ReactNode;
   useEffect(() => {
     // conta solo un vero cambio di indirizzo: al primo caricamento (e alla doppia esecuzione di StrictMode) non succede nulla
     if (lastPath.current === pathname) return;
+    // la striscia accompagna i passaggi dentro la stessa area; da un'area all'altra c'è già il portale (AreaSwitch)
+    const sameArea = areaOf(lastPath.current) === areaOf(pathname);
     lastPath.current = pathname;
-    if (wipe && !reduce) setSlashKey(pathname);
+    if (wipe && !reduce && sameArea) setSlashKey(pathname);
   }, [pathname, wipe, reduce]);
 
   return (

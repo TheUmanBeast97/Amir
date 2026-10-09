@@ -16,6 +16,7 @@ import {
 import { useState, type ReactNode } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { api, TOKEN_KEY } from "@/api/client";
+import { AreaSwitch } from "@/components/area/AreaSwitch";
 import { ActivePill, PageTransition } from "@/components/motion";
 import { spring } from "@/lib/motion";
 
@@ -87,17 +88,21 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 className={`${linkCls} group relative ${active ? "text-foreground!" : ""}`}
               >
                 {/* un solo segno rosso scivola da una voce all'altra */}
-                {active && <ActivePill id="nav-admin" className="rounded-lg border-l-4 border-primary bg-sidebar-accent" />}
+                {active && (
+                  <ActivePill
+                    id="nav-admin"
+                    className="rounded-lg border-l-4 border-primary bg-sidebar-accent"
+                  />
+                )}
                 <Icon className="relative h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
                 <span className="relative">{label}</span>
               </Link>
             );
           })}
         </nav>
-        <div className="mt-auto space-y-1">
-          <Link to="/" className={linkCls}>
-            Sito pubblico
-          </Link>
+        <div className="mt-auto space-y-2">
+          {/* «Cambia area»: lo stesso pulsante che chiude il menu di ogni area */}
+          <AreaSwitch />
           <button onClick={logout} className={`${linkCls} w-full`}>
             <LogOut className="h-5 w-5" /> Esci
           </button>
@@ -121,8 +126,17 @@ export function AdminShell({ children }: { children: ReactNode }) {
               activeOptions={{ exact: to === "/admin" }}
               className={`press relative flex min-h-14 flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${active ? "text-primary" : "text-muted-foreground"}`}
             >
-              {active && <ActivePill id="nav-admin-mobile" className="inset-x-3 bottom-auto top-0 h-[3px] rounded-b-full bg-primary" />}
-              <motion.span animate={{ y: active ? -2 : 0, scale: active ? 1.12 : 1 }} transition={spring.snappy} className="grid place-items-center">
+              {active && (
+                <ActivePill
+                  id="nav-admin-mobile"
+                  className="inset-x-3 bottom-auto top-0 h-[3px] rounded-b-full bg-primary"
+                />
+              )}
+              <motion.span
+                animate={{ y: active ? -2 : 0, scale: active ? 1.12 : 1 }}
+                transition={spring.snappy}
+                className="grid place-items-center"
+              >
                 <Icon className="h-5 w-5" />
               </motion.span>
               {label}
@@ -153,9 +167,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 <Icon className="h-5 w-5" /> {label}
               </Link>
             ))}
-            <Link to="/" onClick={() => setOpen(false)} className={linkCls}>
-              Sito pubblico
-            </Link>
+            <AreaSwitch />
             <button onClick={logout} className={`${linkCls} w-full`}>
               <LogOut className="h-5 w-5" /> Esci
             </button>

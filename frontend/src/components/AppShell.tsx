@@ -1,18 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import {
-  CalendarDays,
-  History,
-  Home,
-  LogIn,
-  Moon,
-  ShieldCheck,
-  Sun,
-  Trophy,
-  Users,
-} from "lucide-react";
+import { CalendarDays, History, Home, Moon, Sun, Trophy, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState, type ComponentProps, type ReactNode } from "react";
-import { TOKEN_KEY } from "@/api/client";
+import { AreaSwitch } from "@/components/area/AreaSwitch";
 import { ActivePill, PageTransition } from "@/components/motion";
 import { AREAS, ZONE_NAV, areaOf, type AreaId } from "@/lib/area";
 import { dur, ease, spring } from "@/lib/motion";
@@ -62,35 +52,6 @@ function ThemeToggle() {
         </motion.span>
       </AnimatePresence>
     </button>
-  );
-}
-
-/** Chi ha già fatto l'accesso su questo browser? (si legge dopo il primo disegno: sul server non esiste localStorage) */
-function useStaffSession() {
-  const [signedIn, setSignedIn] = useState(false);
-  useEffect(() => {
-    const read = () => setSignedIn(!!localStorage.getItem(TOKEN_KEY));
-    read();
-    window.addEventListener("storage", read);
-    return () => window.removeEventListener("storage", read);
-  }, []);
-  return signedIn;
-}
-
-/** Il tasto per entrare nell'area staff; a chi è già dentro porta direttamente alla dashboard. */
-function StaffAccess({ compact = false }: { compact?: boolean }) {
-  const signedIn = useStaffSession();
-  const Icon = signedIn ? ShieldCheck : LogIn;
-  const label = signedIn ? "Area staff" : "Accedi";
-  return (
-    <Link
-      to={signedIn ? "/admin" : "/admin/login"}
-      aria-label={signedIn ? "Vai all'area staff" : "Accedi all'area staff"}
-      className={`press inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-primary/50 px-3 text-sm font-bold text-primary transition-colors hover:bg-primary/10 ${compact ? "" : "w-full"}`}
-    >
-      <Icon className="h-4 w-4" />
-      {label}
-    </Link>
   );
 }
 
@@ -152,7 +113,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
         </nav>
         <div className="mt-auto space-y-3">
-          <StaffAccess />
+          <AreaSwitch />
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">Stagione 2026/27</span>
             <ThemeToggle />
@@ -163,7 +124,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-20 flex items-center justify-between border-b bg-background/85 px-4 py-2 backdrop-blur md:hidden">
           <Logo area={area} />
           <div className="flex items-center gap-1">
-            <StaffAccess compact />
+            <AreaSwitch compact />
             <ThemeToggle />
           </div>
         </header>
