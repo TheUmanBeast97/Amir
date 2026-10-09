@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { CalendarDays, History, Home, Moon, Sun, Trophy, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState, type ComponentProps, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { AreaSwitch } from "@/components/area/AreaSwitch";
 import { ActivePill, PageTransition } from "@/components/motion";
 import { AREAS, ZONE_NAV, areaOf, type AreaId } from "@/lib/area";
@@ -20,8 +20,6 @@ const HUB_NAV = [
 ] as const;
 
 type NavItem = (typeof HUB_NAV)[number] | (typeof ZONE_NAV)[number];
-/** Le pagine interne della Mixed Zone arrivano dopo: finché non ci sono, l'indirizzo del menu è un collegamento normale. */
-type LinkTo = NonNullable<ComponentProps<typeof Link>["to"]>;
 
 function ThemeToggle() {
   const [light, setLight] = useState(false);
@@ -95,7 +93,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             return (
               <Link
                 key={to}
-                to={to as LinkTo}
+                to={to}
                 activeOptions={{ exact: to === home }}
                 className={`press group relative flex min-h-11 items-center gap-3 rounded-lg px-3 font-semibold transition-colors hover:bg-sidebar-accent/70 ${active ? "text-foreground" : "text-muted-foreground"}`}
               >
@@ -140,7 +138,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           return (
             <Link
               key={to}
-              to={to as LinkTo}
+              to={to}
               activeOptions={{ exact: to === home }}
               className={`press relative flex min-h-14 flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${active ? "text-primary" : "text-muted-foreground"}`}
             >
