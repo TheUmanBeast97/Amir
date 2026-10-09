@@ -45,7 +45,9 @@ import type {
   XfiveAdminCheck,
   XfiveAdminStatus,
   User,
+  ZoneChunkResult,
 } from "./types";
+import type { ZoneStatus } from "./zone-types";
 
 export const TOKEN_KEY = "amir_token";
 
@@ -180,6 +182,10 @@ export interface ApiClient {
   getSyncRuns(): Promise<SyncRun[]>;
   getXfiveAdminStatus(): Promise<XfiveAdminStatus>;
   checkXfiveAdmin(): Promise<XfiveAdminCheck>;
+  /** Carica nella Mixed Zone un pezzo dell'archivio XFive (zone-NNN-sezione.json.gz): uno alla volta, in ordine di nome. */
+  uploadZoneChunk(file: File): Promise<ZoneChunkResult>;
+  /** Quanto c'è nelle tabelle della Mixed Zone e l'ultimo caricamento o aggiornamento di ogni sezione. */
+  getZoneStatus(): Promise<ZoneStatus>;
   // player link
   getMe(token: string): Promise<MeResponse>;
   setMyRsvp(
@@ -373,6 +379,8 @@ export const api: ApiClient = {
   getSyncRuns: () => request("/sync/runs"),
   getXfiveAdminStatus: () => request("/xfive-admin"),
   checkXfiveAdmin: () => request("/xfive-admin/check", post({})),
+  uploadZoneChunk: (file) => postFile("/zone/import", { file }, "Pezzo non caricato."),
+  getZoneStatus: () => request("/zone/status"),
   getMe: (token) => request(`/me/${token}`),
   setMyRsvp: (token, eid, v) => request(`/me/${token}/events/${eid}/rsvp`, post(v)),
 };

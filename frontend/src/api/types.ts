@@ -42,6 +42,7 @@ export interface Competition {
   total_rounds: number | null;
   scheduled_rounds: number; // rounds with an official date/time
   xfive_url: string | null;
+  xfive_tournament_id: number | null; // il torneo nella Mixed Zone
 }
 
 // ---------- Matches ----------
@@ -340,6 +341,7 @@ export interface PlayerPage {
     first_season: string | null;
     last_season: string | null;
     seasons_count: number;
+    xfive_person_id: number | null; // il profilo nella Mixed Zone
   };
   totals: PlayerTotals;
   card: CardScore;
@@ -691,9 +693,37 @@ export interface MeResponse {
   upcoming_events: TeamEvent[]; // each with my_rsvp
   balance: PlayerBalance;
 }
-/** current = calendario e risultati, history = storico, details = referti delle partite, media = stemmi e foto, stats = statistiche dei giocatori, admin = rosa e tesseramenti dall'area amministrazione di XFive, players = come admin ma crea anche i giocatori che da noi mancano */
+/**
+ * AMIR: current = calendario e risultati, history = storico, details = referti delle partite, media = stemmi e foto,
+ * stats = statistiche dei giocatori, roster = profili e foto della rosa, admin = rosa e tesseramenti dall'area
+ * amministrazione di XFive, players = come admin ma crea anche i giocatori che da noi mancano.
+ * Mixed Zone (tabelle xf_*): zone-tournaments, zone-calendar, zone-standings, zone-stats, zone-teams, zone-reports,
+ * zone-players, e zone = le sezioni di ogni notte in fila.
+ */
 export type SyncScope =
-  "current" | "history" | "details" | "media" | "stats" | "roster" | "admin" | "players";
+  | "current"
+  | "history"
+  | "details"
+  | "media"
+  | "stats"
+  | "roster"
+  | "admin"
+  | "players"
+  | "zone-tournaments"
+  | "zone-calendar"
+  | "zone-standings"
+  | "zone-stats"
+  | "zone-teams"
+  | "zone-reports"
+  | "zone-players"
+  | "zone";
+/** L'ultimo passo di un aggiornamento in corso: la sala di controllo lo mostra dal vivo. */
+export interface SyncProgress {
+  section: string; // lo scope che sta lavorando (es. "zone-calendar")
+  message: string; // es. "Leggo il calendario di CITTADELLA [Alessandria] 2026/27 (8 di 12)"
+  done: number;
+  total: number;
+}
 /** Esito della rilettura da XFive di un solo giocatore (POST /players/{id}/sync). */
 export interface PlayerSyncResult {
   player: Player;
@@ -707,7 +737,10 @@ export interface SyncRun {
   status: "running" | "ok" | "error";
   started_at: ISODateTime;
   finished_at: ISODateTime | null;
+  /** requests, errors e remaining ci sono sempre; il resto dipende dallo scope (vedi XfiveRoutine e ZoneSync). */
   stats: Record<string, number>;
+  /** L'ultimo passo fatto; null per gli aggiornamenti che non lo raccontano (current, history). */
+  progress: SyncProgress | null;
   error: string | null;
 }
 /** L'accesso all'area amministrazione di XFive con l'account dello staff (spento finché non lo si accende sul server). */
@@ -748,6 +781,12 @@ export interface LocalImportResult {
   payments_created: number;
   payments_already_there: number;
   finance_skipped: number;
+}
+/** Un pezzo dell'archivio XFive (zone-NNN-sezione.json.gz) caricato nella Mixed Zone. */
+export interface ZoneChunkResult {
+  section: "tournaments" | "teams" | "clubs" | "players" | "calendar" | "tables" | "reports";
+  items: number;
+  counts: Record<string, number>;
 }
 export interface ReminderMessage {
   text: string; // WhatsApp-ready text to paste
@@ -911,6 +950,8 @@ export interface ImportResult {
 //  POST /backup/import-local (file)                        -> LocalImportResult (unisce info giocatori e pagamenti di un database.sqlite o di un backup, senza sostituire nulla)
 //  GET  /xfive-admin                                       -> XfiveAdminStatus (nessuna richiesta a XFive)
 //  POST /xfive-admin/check                                 -> XfiveAdminCheck (fa un accesso vero a XFive)
+//  POST /zone/import (file: un pezzo zone-NNN-sezione.json.gz) -> ZoneChunkResult (60 al minuto; 422 se non è un pezzo)
+//  GET  /zone/status                                       -> ZoneStatus (zone-types.ts: conteggi delle tabelle xf_* e sezioni)
 // PLAYER (personal link, no login)
 //  GET  /me/{token}                                        -> MeResponse
 //  POST /me/{token}/events/{eventId}/rsvp {rsvp,note?}     -> TeamEvent
