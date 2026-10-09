@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\PublicController;
 use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\Api\XfiveAdminController;
+use App\Http\Controllers\Api\ZoneImportController;
 use App\Http\Middleware\PublicCache;
 use App\Services\Xfive\XfiveRoutine;
 use Illuminate\Support\Facades\Route;
@@ -119,5 +120,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/backup/restore', [BackupController::class, 'restore'])->middleware('throttle:restore');
         // Info dei giocatori e pagamenti dal gestionale sul computer, uniti a quello che c'è già online
         Route::post('/backup/import-local', [BackupController::class, 'importLocal'])->middleware('throttle:restore');
+        // Mixed Zone: caricamento dell'archivio XFive a pezzi (xfive:zone-export) e stato delle tabelle xf_*
+        Route::post('/zone/import', [ZoneImportController::class, 'chunk'])->middleware('throttle:zone-import');
+        Route::get('/zone/status', [ZoneImportController::class, 'status']);
     });
 });

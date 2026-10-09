@@ -35,6 +35,8 @@ class AppServiceProvider extends ServiceProvider
         // Copie di sicurezza: ognuna ha il suo contatore (con i limiti "throttle:5,1" tutte le rotte di un utente ne dividono uno solo).
         RateLimiter::for('backup', fn (Request $request) => Limit::perMinute(10)->by('backup:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
         RateLimiter::for('restore', fn (Request $request) => Limit::perMinute(5)->by('restore:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
+        // Mixed Zone: l'archivio arriva in una ventina di pezzi di fila, uno ogni pochi secondi
+        RateLimiter::for('zone-import', fn (Request $request) => Limit::perMinute(60)->by('zone-import:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
 
         RateLimiter::for('login', function (Request $request) {
             $account = Str::lower((string) $request->input('email'));

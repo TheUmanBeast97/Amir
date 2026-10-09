@@ -219,7 +219,13 @@ class XfiveArchive extends Command
 
     private function dir(): string
     {
-        $dir = (string) ($this->option('dir') ?: env('XFIVE_ARCHIVE_DIR') ?: '');
+        return self::defaultDir((string) $this->option('dir'));
+    }
+
+    /** La cartella dell'archivio: quella passata, altrimenti XFIVE_ARCHIVE_DIR, altrimenti Desktop\AMIR\xfive-archive (anche per xfive:zone-export). */
+    public static function defaultDir(string $option = ''): string
+    {
+        $dir = $option !== '' ? $option : (string) (env('XFIVE_ARCHIVE_DIR') ?: '');
         if ($dir === '') {
             $home = getenv('USERPROFILE') ?: getenv('HOME') ?: sys_get_temp_dir();
             $dir = $home.DIRECTORY_SEPARATOR.'Desktop'.DIRECTORY_SEPARATOR.'AMIR'.DIRECTORY_SEPARATOR.'xfive-archive';

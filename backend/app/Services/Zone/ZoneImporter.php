@@ -10,11 +10,14 @@ use App\Models\Zone\XfPlayer;
 use App\Models\Zone\XfPlayerStat;
 use App\Models\Zone\XfSeason;
 use App\Models\Zone\XfStanding;
+use App\Models\Zone\XfSyncState;
 use App\Models\Zone\XfTeam;
 use App\Models\Zone\XfTeamPlayer;
 use App\Models\Zone\XfTournament;
 use App\Support\Kickoff;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 /**
  * Porta i dati pubblici di XFive (i JSON dell'archivio locale, o gli stessi dati letti dal vivo) nelle tabelle xf_*.
@@ -410,6 +413,100 @@ final class ZoneImporter
         ])->save();
 
         return ['reports' => 1, 'players' => count($rows)];
+    }
+
+    // ------------------------------------------------------------------ pezzi dell'export (ZoneExporter)
+
+    /**
+     * Un pezzo dell'export (un file .json.gz: {"section", "items"}): lo decomprime, importa la sezione in una sola
+     * transazione e aggiorna xf_sync_state della sezione (synced_at e i conteggi di questo pezzo).
+     *
+     * @return array{section: string, items: int, counts: array<string,int>}
+     *
+     * @throws InvalidArgumentException se il contenuto non è un pezzo dell'export
+     */
+    public function chunk(string $gzip): array
+    {
+        $json = @gzdecode($gzip);
+        $data = $json !== false ? json_decode($json, true) : null;
+        $section = is_array($data) ? (string) ($data['section'] ?? '') : '';
+        if (! in_array($section, ZoneExporter::SECTIONS, true) || ! is_array($data['items'] ?? null)) {
+            throw new InvalidArgumentException('Il file non è un pezzo dell\'export della Mixed Zone (zone-NNN-sezione.json.gz).');
+        }
+        $items = array_values($data['items']);
+
+        $counts = DB::transaction(fn () => $this->section($section, $items));
+        XfSyncState::updateOrCreate(['section' => $section], ['synced_at' => now(), 'counts' => ['items' => count($items)] + $counts]);
+
+        return ['section' => $section, 'items' => count($items), 'counts' => $counts];
+    }
+
+    /**
+     * Gli elementi di una sezione dell'export, ognuno al metodo giusto; i conteggi si sommano.
+     * Calendari e tabelle di tornei non importati (non di calcio) si saltano; le date *_synced_at del torneo si segnano.
+     *
+     * @param  array<int, array<mixed>>  $items
+     * @return array<string,int>
+     */
+    public function section(string $section, array $items): array
+    {
+        $totals = [];
+        $add = function (array $counts) use (&$totals): void {
+            foreach ($counts as $k => $v) {
+                $totals[$k] = ($totals[$k] ?? 0) + (int) $v;
+            }
+        };
+        $now = now();
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            switch ($section) {
+                case 'tournaments':
+                    $add($this->tournament($item) ? ['tournaments' => 1] : ['skipped' => 1]);
+                    break;
+                case 'clubs':
+                    $add($this->club($item));
+                    break;
+                case 'teams':
+                    $add($this->team($item));
+                    if (! empty($item['tournament_id'])) {
+                        XfTournament::whereKey((int) $item['tournament_id'])->update(['teams_synced_at' => $now]);
+                    }
+                    break;
+                case 'players':
+                    $add($this->player($item));
+                    break;
+                case 'calendar':
+                    $tid = (int) ($item['tournament_id'] ?? 0);
+                    if (! XfTournament::whereKey($tid)->exists()) {
+                        $add(['skipped' => 1]);
+                        break;
+                    }
+                    $add($this->calendar($tid, (array) ($item['rows'] ?? []), (string) ($item['season'] ?? '')));
+                    XfTournament::whereKey($tid)->update(['calendar_synced_at' => $now]);
+                    break;
+                case 'tables':
+                    $tid = (int) ($item['tournament_id'] ?? 0);
+                    if (! XfTournament::whereKey($tid)->exists()) {
+                        $add(['skipped' => 1]);
+                        break;
+                    }
+                    $add($this->standings($tid, (array) ($item['standings'] ?? [])));
+                    $add($this->playerStats($tid, (array) ($item['player_stats'] ?? [])));
+                    $add($this->documents($tid, (array) ($item['docs'] ?? [])));
+                    XfTournament::whereKey($tid)->update(['standings_synced_at' => $now, 'stats_synced_at' => $now]);
+                    break;
+                case 'reports':
+                    $add($this->report($item));
+                    break;
+                default:
+                    throw new InvalidArgumentException("Sezione sconosciuta: {$section}.");
+            }
+        }
+
+        return $totals;
     }
 
     /** @return array<string,int> nome normalizzato => id del club */
