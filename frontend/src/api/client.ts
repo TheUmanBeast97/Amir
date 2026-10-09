@@ -194,7 +194,8 @@ const BASE =
   (import.meta.env["VITE_API_BASE_URL"] as string | undefined) ?? "http://127.0.0.1:8000/api/v1";
 const getToken = () => (typeof window === "undefined" ? null : localStorage.getItem(TOKEN_KEY));
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+/** Una chiamata JSON al backend che risponde `{ data }`; usata anche dal client della Mixed Zone (zone.ts). */
+export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
     Accept: "application/json",
     "Content-Type": "application/json",
@@ -230,7 +231,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const body = (await res.json()) as { data: T };
   return body.data;
 }
-const qs = (o: Record<string, string | number | boolean | undefined>) => {
+/** Parametri di ricerca: i valori `undefined` spariscono dall'indirizzo. */
+export const qs = (o: Record<string, string | number | boolean | undefined>) => {
   const s = new URLSearchParams();
   Object.entries(o).forEach(([k, v]) => v !== undefined && s.set(k, String(v)));
   const str = s.toString();
