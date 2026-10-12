@@ -60,6 +60,115 @@ final class ZoneImporter
         return implode(' ', $words);
     }
 
+    /** Id delle persone ricavate dai referti: partono da qui, ben sopra i pid di XFive (oggi sotto i 10.000). */
+    public const DERIVED_BASE = 1_000_000;
+
+    /** Gli slug che non sono persone: «00-00» e simili, il segnaposto che XFive mette nelle distinte lasciate vuote. */
+    public static function isPlaceholderSlug(?string $slug): bool
+    {
+        return $slug === null || trim($slug) === '' || ! preg_match('/\p{L}/u', $slug);
+    }
+
+    /**
+     * Collega ogni riga di distinta e di rosa alla persona giusta, partendo dal nome: lo slug di XFive è un'identità
+     * affidabile (su 74.000 righe di distinta c'è un solo caso di omonimi nella stessa partita). Prima si crea, per chi non
+     * ha ancora una persona, quella ricavata dai referti (XFive dà il profilo solo a chi è nella rosa attuale di un club);
+     * poi ogni riga con lo slug di una sola persona la prende, in qualunque squadra e torneo giochi: è così che un giocatore
+     * ha tutte le sue partite e non solo quelle della squadra in cui XFive lo elenca.
+     * Idempotente. Senza argomenti guarda tutto; con $matchIds / $teamIds (anche vuoti) solo le righe di quelle partite e squadre.
+     *
+     * @param  array<int,int>|null  $matchIds
+     * @param  array<int,int>|null  $teamIds
+     * @return array{created:int, match_rows:int, roster_rows:int}
+     */
+    public function linkPlayers(?array $matchIds = null, ?array $teamIds = null): array
+    {
+        $created = $this->createDerived($matchIds, $teamIds);
+
+        return [
+            'created' => $created,
+            'match_rows' => $this->linkRows('xf_match_players', 'match_id', $matchIds),
+            'roster_rows' => $this->linkRows('xf_team_players', 'team_id', $teamIds),
+        ];
+    }
+
+    /** Crea le persone ricavate dai referti per gli slug senza persona (segnaposto esclusi). Restituisce quante. */
+    private function createDerived(?array $matchIds, ?array $teamIds): int
+    {
+        $found = []; // slug => [nome, foto]
+        foreach ([['xf_match_players', 'match_id', $matchIds], ['xf_team_players', 'team_id', $teamIds]] as [$table, $column, $ids]) {
+            if ($ids !== null && $ids === []) {
+                continue;
+            }
+            $rows = DB::table($table)->whereNull('player_id')->whereNotNull('slug')->where('slug', '!=', '')
+                ->when($ids !== null, fn ($q) => $q->whereIn($column, $ids))
+                ->groupBy('slug')->select('slug', DB::raw('MAX(name) as name'), DB::raw('MAX(photo_url) as photo_url'))->get();
+            foreach ($rows as $r) {
+                if (! self::isPlaceholderSlug($r->slug)) {
+                    $known = $found[$r->slug] ?? [null, null];
+                    $found[$r->slug] = [$known[0] ?? $r->name, $known[1] ?? $r->photo_url];
+                }
+            }
+        }
+        if (! $found) {
+            return 0;
+        }
+
+        $existing = [];
+        foreach (array_chunk(array_keys($found), 500) as $chunk) {
+            foreach (XfPlayer::query()->whereIn('slug', $chunk)->pluck('slug') as $slug) {
+                $existing[$slug] = true;
+            }
+        }
+
+        $next = max(self::DERIVED_BASE, (int) XfPlayer::query()->max('id')) + 1;
+        $now = now();
+        $new = [];
+        foreach ($found as $slug => [$name, $photo]) {
+            if (isset($existing[$slug])) {
+                continue;
+            }
+            $clean = self::cleanPlayerName((string) $name);
+            $new[] = ['id' => $next++, 'name' => $clean, 'search' => self::normalize($clean), 'slug' => (string) $slug, 'photo_url' => $photo, 'derived' => true, 'created_at' => $now, 'updated_at' => $now];
+        }
+        foreach (array_chunk($new, 200) as $chunk) {
+            XfPlayer::insert($chunk);
+        }
+
+        return count($new);
+    }
+
+    /**
+     * Dà a ogni riga ancora senza persona quella con il suo slug, se è una sola (in una sola istruzione).
+     *
+     * @param  array<int,int>|null  $ids  solo le righe di queste partite/squadre (null = tutte, [] = nessuna)
+     */
+    private function linkRows(string $table, string $scopeColumn, ?array $ids): int
+    {
+        if ($ids !== null && $ids === []) {
+            return 0;
+        }
+        $scope = $ids === null ? '' : " AND {$scopeColumn} IN (".implode(',', array_map('intval', $ids)).')';
+
+        return DB::update(
+            "UPDATE {$table} SET player_id = (SELECT p.id FROM xf_players p WHERE p.slug = {$table}.slug) "
+            ."WHERE player_id IS NULL AND slug IS NOT NULL AND slug <> '' "
+            ."AND (SELECT COUNT(*) FROM xf_players p WHERE p.slug = {$table}.slug) = 1{$scope}"
+        );
+    }
+
+    /** Arriva il profilo vero di XFive di uno slug che aveva già una persona ricavata dai referti: la assorbe e la toglie. */
+    private function adoptDerived(int $pid, string $slug): void
+    {
+        $derived = XfPlayer::query()->where('slug', $slug)->where('derived', true)->where('id', '!=', $pid)->pluck('id')->all();
+        if (! $derived) {
+            return;
+        }
+        DB::table('xf_match_players')->whereIn('player_id', $derived)->update(['player_id' => $pid]);
+        DB::table('xf_team_players')->whereIn('player_id', $derived)->update(['player_id' => $pid]);
+        XfPlayer::query()->whereIn('id', $derived)->delete();
+    }
+
     /** L'intestazione di un torneo: null (e nessuna scrittura) se non è calcio o non esiste. */
     public function tournament(array $header): ?XfTournament
     {
@@ -101,11 +210,34 @@ final class ZoneImporter
         $now = now();
         $matches = [];
         $clubs = [];
+        // le coppe a tabellone non hanno gli id dei club nel calendario: il club si ricava dal nome della squadra nel torneo
+        $byName = null;
+        $clubOf = function (array $side) use (&$byName, $tid): int {
+            $cid = (int) ($side['club_id'] ?? 0);
+            if ($cid > 0) {
+                return $cid;
+            }
+            $name = self::normalize((string) ($side['name'] ?? ''));
+            if ($name === '') {
+                return 0;
+            }
+            if ($byName === null) {
+                $byName = [];
+                foreach (XfTeam::query()->where('tournament_id', $tid)->whereNotNull('club_id')->get(['name', 'club_id']) as $t) {
+                    $byName[self::normalize($t->name)] = (int) $t->club_id;
+                }
+                $byName += $this->clubsByName();
+            }
+
+            return $byName[$name] ?? 0;
+        };
         foreach ($rows as $r) {
             $mid = (int) ($r['xfive_match_id'] ?? 0);
             if ($mid <= 0) {
                 continue;
             }
+            $homeClub = $clubOf((array) ($r['home'] ?? []));
+            $awayClub = $clubOf((array) ($r['away'] ?? []));
             foreach (['home', 'away'] as $side) {
                 $cid = (int) ($r[$side]['club_id'] ?? 0);
                 if ($cid > 0 && ! isset($clubs[$cid])) {
@@ -121,8 +253,8 @@ final class ZoneImporter
                 'round' => isset($r['round']) ? (int) $r['round'] : null,
                 'round_label' => $r['round_label'] ?? null,
                 'round_id' => isset($r['round_id']) ? (int) $r['round_id'] : null,
-                'home_club_id' => ((int) ($r['home']['club_id'] ?? 0)) ?: null,
-                'away_club_id' => ((int) ($r['away']['club_id'] ?? 0)) ?: null,
+                'home_club_id' => $homeClub ?: null,
+                'away_club_id' => $awayClub ?: null,
                 'home_name' => (string) ($r['home']['name'] ?? ''),
                 'away_name' => (string) ($r['away']['name'] ?? ''),
                 'kickoff_at' => Kickoff::parse($r['kickoff_raw'] ?? null, $seasonLabel),
@@ -361,16 +493,21 @@ final class ZoneImporter
         $name = self::cleanPlayerName((string) ($profile['name'] ?? ''));
         $age = isset($profile['age']) && is_numeric($profile['age']) ? (int) $profile['age'] : null;
 
+        $slug = (string) ($profile['slug'] ?? '');
         XfPlayer::updateOrCreate(['id' => $pid], [
             'name' => $name,
             'search' => self::normalize($name),
-            'slug' => $profile['slug'] ?? null,
+            'slug' => $slug !== '' ? $slug : null,
             'photo_url' => $profile['photo_url'] ?? null,
             'age' => $age !== null && $age >= 0 && $age < 120 ? $age : null,
             'nationality' => $profile['nationality'] ?? null,
             'profile' => $profile['clubs'] ?? null,
+            'derived' => false,
             'synced_at' => now(),
         ]);
+        if ($slug !== '') {
+            $this->adoptDerived($pid, $slug);
+        }
 
         return ['players' => 1];
     }
@@ -383,7 +520,7 @@ final class ZoneImporter
      *
      * @return array<string,int>
      */
-    public function report(array $match): array
+    public function report(array $match, bool $link = true): array
     {
         $mid = (int) ($match['id'] ?? 0);
         $m = $mid > 0 ? XfMatch::find($mid) : null;
@@ -438,6 +575,10 @@ final class ZoneImporter
             'has_report' => true,
         ])->save();
 
+        if ($link) {
+            $this->linkPlayers([$mid], []); // chi non è in rosa si abbina per nome, o diventa una persona ricavata dal referto
+        }
+
         return ['reports' => 1, 'lineup' => count($rows)];
     }
 
@@ -483,6 +624,8 @@ final class ZoneImporter
             }
         };
         $now = now();
+        $matchIds = [];
+        $teamIds = [];
 
         foreach ($items as $item) {
             if (! is_array($item)) {
@@ -497,6 +640,7 @@ final class ZoneImporter
                     break;
                 case 'teams':
                     $add($this->team($item));
+                    $teamIds[] = (int) ($item['id'] ?? 0);
                     if (! empty($item['tournament_id'])) {
                         XfTournament::whereKey((int) $item['tournament_id'])->update(['teams_synced_at' => $now]);
                     }
@@ -525,11 +669,17 @@ final class ZoneImporter
                     XfTournament::whereKey($tid)->update(['standings_synced_at' => $now, 'stats_synced_at' => $now]);
                     break;
                 case 'reports':
-                    $add($this->report($item));
+                    $add($this->report($item, false));
+                    $matchIds[] = (int) ($item['id'] ?? 0);
                     break;
                 default:
                     throw new InvalidArgumentException("Sezione sconosciuta: {$section}.");
             }
+        }
+
+        // rose e distinte si collegano alle persone una volta per pezzo (profilo vero o persona ricavata dai referti)
+        if ($matchIds || $teamIds) {
+            $add(['persons' => $this->linkPlayers($matchIds, $teamIds)['created']]);
         }
 
         return $totals;

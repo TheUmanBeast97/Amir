@@ -93,7 +93,7 @@ class ZoneExportTest extends TestCase
         }
 
         $status = $this->getJson('/api/v1/zone/status')->assertOk()->json('data');
-        $this->assertSame(['tournaments' => 1, 'clubs' => 3, 'teams' => 2, 'players' => 1, 'matches' => 3, 'reports' => 2], collect($status)->except('sections')->all());
+        $this->assertSame(['tournaments' => 1, 'clubs' => 3, 'teams' => 2, 'players' => 5, 'matches' => 3, 'reports' => 2], collect($status)->except('sections')->all(), '1 profilo XFive + 4 persone ricavate dai referti e dalle rose');
         $this->assertEqualsCanonicalizing(ZoneExporter::SECTIONS, collect($status['sections'])->pluck('section')->all(), 'ogni sezione ha il suo stato');
         $reports = collect($status['sections'])->firstWhere('section', 'reports');
         $this->assertNotNull($reports['synced_at']);

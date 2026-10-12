@@ -442,6 +442,7 @@ class ZoneSyncTest extends TestCase
 
     public function test_a_zone_update_without_time_left_says_how_much_is_left_without_asking_xfive(): void
     {
+        Carbon::setTestNow(Carbon::parse('2026-10-14 03:30', 'Europe/Rome')); // un mercoledì: il lunedì il giro include anche rose e profili
         Sanctum::actingAs(User::factory()->create());
         $this->tournament(901, 'TORNEO DI PROVA');
         config(['amir.sync.budget' => 0]);
@@ -454,5 +455,6 @@ class ZoneSyncTest extends TestCase
             ->assertJsonPath('data.stats.remaining', 6); // 3 elenchi + calendario, classifica e statistiche del torneo
         $this->assertSame(6, $this->postJson('/api/v1/sync/xfive', ['scope' => 'zone'])->json('data.stats.remaining'));
         Http::assertNothingSent();
+        Carbon::setTestNow();
     }
 }

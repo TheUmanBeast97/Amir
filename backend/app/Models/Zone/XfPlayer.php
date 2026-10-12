@@ -5,7 +5,10 @@ namespace App\Models\Zone;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/** Il profilo globale di un giocatore XFive (id = pid di /it/player-info/{pid}/). */
+/**
+ * Un giocatore. Con `derived` falso è il profilo globale di XFive (id = pid di /it/player-info/{pid}/); con `derived`
+ * vero è una persona ricavata dai referti (id da ZoneImporter::DERIVED_BASE), per chi XFive non dà un profilo.
+ */
 class XfPlayer extends Model
 {
     protected $table = 'xf_players';
@@ -16,7 +19,7 @@ class XfPlayer extends Model
 
     protected function casts(): array
     {
-        return ['profile' => 'array', 'synced_at' => 'datetime'];
+        return ['profile' => 'array', 'synced_at' => 'datetime', 'derived' => 'boolean'];
     }
 
     public function teamPlayers(): HasMany

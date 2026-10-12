@@ -2,6 +2,7 @@
 
 namespace App\Services\Xfive\Archive;
 
+use App\Services\Xfive\CalendarListParser;
 use App\Services\Xfive\MatchPageParser;
 use App\Services\Xfive\PlayerInfoParser;
 use App\Services\Xfive\PrintableCalendarParser;
@@ -169,6 +170,11 @@ final class XfiveArchiver
                 // niente indirizzo con «?»: il client passa i parametri a parte, altrimenti la libreria HTTP li cancella e torna la home
                 $calendar = $this->cachedPrintable($id);
                 $fixtures = $calendar !== null ? $this->calendar->parse($calendar) : [];
+                if ($fixtures === []) {
+                    // le coppe a tabellone hanno un calendario stampabile senza id di partita: l'elenco della pagina «Calendario» (op=22) sì
+                    $list = $this->cachedPost("league-op22-{$id}", 'league.php', ['op' => 22, 'tid' => $id], tolerant: true);
+                    $fixtures = $list !== null ? (new CalendarListParser)->parse($list, $id) : [];
+                }
                 $this->archive->putJson("tournaments/{$id}/calendar", $fixtures);
                 $stats['fixtures'] += count($fixtures);
             }

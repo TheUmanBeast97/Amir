@@ -12,6 +12,7 @@ use App\Services\Xfive\Archive\Limiter;
 use App\Services\Xfive\Archive\PageParsers;
 use App\Services\Xfive\MatchPageParser;
 use App\Services\Xfive\PlayerInfoParser;
+use App\Services\Xfive\CalendarListParser;
 use App\Services\Xfive\PrintableCalendarParser;
 use App\Services\Xfive\StatsTableParser;
 use App\Services\Xfive\XfiveClient;
@@ -222,8 +223,17 @@ final class ZoneSync
     {
         return $this->tournamentRound('zone-calendar', 'calendar_synced_at', $deadline, $progress, 'Leggo il calendario di', function (XfTournament $t): ?array {
             $html = $this->fetch(fn () => $this->client->printableCalendar($t->id));
+            if ($html === null) {
+                return null;
+            }
+            $rows = $this->calendarParser->parse($html);
+            if ($rows === []) {
+                // le coppe a tabellone: il calendario stampabile non ha gli id delle partite, l'elenco della pagina «Calendario» sì
+                $list = $this->league(['op' => 22, 'tid' => $t->id]);
+                $rows = $list === null ? [] : (new CalendarListParser)->parse($list, (int) $t->id);
+            }
 
-            return $html === null ? null : $this->importer->calendar($t->id, $this->calendarParser->parse($html), $this->seasonLabel($t->season_id));
+            return $this->importer->calendar($t->id, $rows, $this->seasonLabel($t->season_id));
         });
     }
 
@@ -479,6 +489,7 @@ final class ZoneSync
             ->whereNotIn('player_id', XfPlayer::query()->select('id'))
             ->distinct()->orderBy('player_id')->pluck('player_id')->map(fn ($id) => (int) $id)->all();
         $stale = XfPlayer::query()
+            ->where('derived', false) // le persone ricavate dai referti non hanno un profilo su XFive da leggere
             ->where(fn ($q) => $q->whereNull('synced_at')->orWhere('synced_at', '<', now()->subDays(30)))
             ->orderByRaw('case when synced_at is null then 0 else 1 end')->orderBy('synced_at')->orderBy('id')
             ->pluck('id')->map(fn ($id) => (int) $id)->all();

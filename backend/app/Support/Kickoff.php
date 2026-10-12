@@ -5,15 +5,25 @@ namespace App\Support;
 use Illuminate\Support\Carbon;
 
 /**
- * La data di una partita XFive da «kickoff_raw» («lun 12/10 21:00», senza anno) e dalla stagione («2026/2027»):
- * i mesi da luglio a dicembre stanno nel primo anno, da gennaio a giugno nel secondo. Fuso orario Europe/Rome.
+ * La data di una partita XFive da «kickoff_raw» («lun 12/10 21:00» nei campionati, «Gio 09 APR 20:00» nelle coppe: senza
+ * anno) e dalla stagione («2026/2027»): i mesi da luglio a dicembre stanno nel primo anno, da gennaio a giugno nel secondo.
+ * Fuso orario Europe/Rome.
  */
 final class Kickoff
 {
+    private const MONTHS = ['gen' => 1, 'feb' => 2, 'mar' => 3, 'apr' => 4, 'mag' => 5, 'giu' => 6, 'lug' => 7, 'ago' => 8, 'set' => 9, 'ott' => 10, 'nov' => 11, 'dic' => 12];
+
     public static function parse(?string $raw, string $seasonLabel): ?Carbon
     {
-        if ($raw === null || ! preg_match('~(\d{1,2})/(\d{1,2})(?:\s+(\d{1,2}):(\d{2}))?~', $raw, $m)) {
+        if ($raw === null) {
             return null;
+        }
+        if (! preg_match('~(\d{1,2})/(\d{1,2})(?:\s+(\d{1,2}):(\d{2}))?~', $raw, $m)) {
+            // «Gio 09 APR 20:00»: il mese è scritto a lettere
+            if (! preg_match('~(\d{1,2})\s+([a-z]{3})[a-z]*\.?(?:\s+(\d{1,2}):(\d{2}))?~i', $raw, $m) || ! isset(self::MONTHS[strtolower($m[2])])) {
+                return null;
+            }
+            $m[2] = self::MONTHS[strtolower($m[2])];
         }
         if (! preg_match('~(\d{4})/(\d{4})~', $seasonLabel, $s)) {
             return null;

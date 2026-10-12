@@ -58,6 +58,12 @@ class ZoneApiTest extends TestCase
         return $this->getJson(self::BASE.$path)->assertOk()->json('data');
     }
 
+    /** L'id della persona ricavata dai referti per questo nome: chi non è nelle rose delle fixture non ha un profilo XFive. */
+    private function personId(string $slug): int
+    {
+        return (int) XfPlayer::query()->where('slug', $slug)->where('derived', true)->value('id');
+    }
+
     public function test_the_search_column_is_filled_by_the_importer(): void
     {
         $this->assertSame('caffe km0', XfClub::find(301)->search);
@@ -73,7 +79,7 @@ class ZoneApiTest extends TestCase
 
         $this->assertSame([['id' => 8, 'label' => '2026/2027', 'tournaments' => 1]], $home['seasons']);
         $this->assertSame('2026/2027', $home['season']);
-        $this->assertSame(['tournaments' => 1, 'clubs' => 3, 'players' => 2, 'matches' => 3, 'reports' => 2], $home['totals']);
+        $this->assertSame(['tournaments' => 1, 'clubs' => 3, 'players' => 4, 'matches' => 3, 'reports' => 2], $home['totals'], '2 profili XFive + 2 giocatori senza profilo, ricavati dai referti');
 
         $this->assertSame([90002, 90001], array_column($home['latest'], 'id'), 'dal risultato più recente');
         $this->assertSame([90003], array_column($home['upcoming'], 'id'));
@@ -159,10 +165,11 @@ class ZoneApiTest extends TestCase
 
         $from = $stats['from_reports'];
         $this->assertNotNull($from);
-        $this->assertSame([[7002, 3], [7001, 2]], array_map(fn ($r) => [$r['player_id'], $r['values'][0]], $from['scorers']), 'Neri 1+2 gol, Verdi 2+0; il giocatore fuori rosa non c\'è');
-        $this->assertSame(['CAFFÈ KM0', 'CAFFÈ KM0'], array_column($from['scorers'], 'team'));
+        $pino = $this->personId('pino-gialli');
+        $ugo = $this->personId('ugo-sconosciuto');
+        $this->assertSame([[7002, 3], [$pino, 2], [7001, 2], [$ugo, 1]], array_map(fn ($r) => [$r['player_id'], $r['values'][0]], $from['scorers']), 'Neri 1+2 gol, Gialli e Verdi 2; anche chi non ha un profilo è nella classifica');
         $this->assertSame([7002, 7001], array_column($from['mvp'], 'player_id'), 'un premio a testa: a parità conta il nome');
-        $this->assertSame([['player_id' => 7002, 'values' => [1, 0]]], array_map(fn ($r) => collect($r)->only('player_id', 'values')->all(), $from['cards']));
+        $this->assertSame([['player_id' => $pino, 'values' => [0, 1]], ['player_id' => 7002, 'values' => [1, 0]]], array_map(fn ($r) => collect($r)->only('player_id', 'values')->all(), $from['cards']), 'Gialli (senza profilo) ha un\'espulsione, Neri un\'ammonizione: prima le più gravi');
     }
 
     public function test_clubs_can_be_listed_and_searched(): void
@@ -215,7 +222,7 @@ class ZoneApiTest extends TestCase
 
     public function test_players_can_be_searched_by_name_and_club(): void
     {
-        $this->assertSame([7002, 7001], array_column($this->data('/players'), 'id'));
+        $this->assertSame([$this->personId('pino-gialli'), 7002, $this->personId('ugo-sconosciuto'), 7001], array_column($this->data('/players'), 'id'), 'per nome: anche chi non ha un profilo XFive è tra i giocatori');
         $this->assertSame([['id' => 7001, 'name' => 'Verdi Luca', 'photo_url' => 'https://cdn.enjore.com/wl/xfivesport_it/img/player/q/7001-verdi.png', 'nationality' => 'Italia']], $this->data('/players?q=verdi'));
         $this->assertSame([7002, 7001], array_column($this->data('/players?club=301'), 'id'));
         $this->assertSame([], $this->data('/players?club=302'), 'la rosa di ROSSI non è abbinata a nessun profilo');
@@ -259,7 +266,7 @@ class ZoneApiTest extends TestCase
         $this->assertSame('Arbitro Di Prova', $match['referee']);
         $this->assertCount(2, $match['home']['lineup']);
         $this->assertSame(['tpid' => 61001, 'player_id' => 7001, 'name' => 'Verdi Luca', 'goals' => 2, 'yellow' => 0, 'red' => 0, 'mvp' => true, 'photo_url' => 'https://cdn.enjore.com/wl/xfivesport_it/img/player/q/7001-verdi.png'], $match['home']['lineup'][0]);
-        $this->assertSame([['tpid' => 61999, 'player_id' => null, 'name' => 'Sconosciuto Ugo', 'goals' => 1, 'yellow' => 0, 'red' => 0, 'mvp' => false, 'photo_url' => null]], $match['away']['lineup'], 'il giocatore fuori rosa compare senza link');
+        $this->assertSame([['tpid' => 61999, 'player_id' => $this->personId('ugo-sconosciuto'), 'name' => 'Sconosciuto Ugo', 'goals' => 1, 'yellow' => 0, 'red' => 0, 'mvp' => false, 'photo_url' => null]], $match['away']['lineup'], 'il giocatore fuori rosa compare con la sua persona ricavata dal referto');
 
         $this->assertSame(['lineup' => []], $this->data('/matches/90003')['home'], 'senza referto le distinte sono vuote');
         $this->getJson(self::BASE.'/matches/1')->assertNotFound();
@@ -271,15 +278,17 @@ class ZoneApiTest extends TestCase
         $this->assertSame(['seasons', 'sports', 'scorers', 'appearances', 'cards', 'mvp', 'best_teams', 'best_defenses'], array_keys($board));
         $this->assertSame(['Calcio a 7 - Maschile'], $board['sports']);
         $this->assertSame(1, $board['seasons'][0]['tournaments']);
-        $this->assertSame([7002, 7001], array_column($board['scorers'], 'player_id'));
+        $pino = $this->personId('pino-gialli');
+        $ugo = $this->personId('ugo-sconosciuto');
+        $this->assertSame([7002, $pino, 7001, $ugo], array_column($board['scorers'], 'player_id'));
         $this->assertSame(['position' => 1, 'name' => 'Neri Marco', 'team' => 'CAFFÈ KM0', 'photo_url' => null, 'player_id' => 7002, 'values' => [3]], $board['scorers'][0]);
-        $this->assertSame([[7002, 2], [7001, 2]], array_map(fn ($r) => [$r['player_id'], $r['values'][0]], $board['appearances']), 'a parità di presenze, prima chi ha segnato di più');
-        $this->assertSame([[7002, [1, 0]]], array_map(fn ($r) => [$r['player_id'], $r['values']], $board['cards']));
+        $this->assertSame([[7002, 2], [7001, 2], [$pino, 1], [$ugo, 1]], array_map(fn ($r) => [$r['player_id'], $r['values'][0]], $board['appearances']), 'a parità di presenze, prima chi ha segnato di più');
+        $this->assertSame([[$pino, [0, 1]], [7002, [1, 0]]], array_map(fn ($r) => [$r['player_id'], $r['values']], $board['cards']));
         $this->assertSame([7002, 7001], array_column($board['mvp'], 'player_id'));
         $this->assertSame([], $board['best_teams'], 'sotto le dieci partite nessun club entra');
         $this->assertSame([], $board['best_defenses']);
 
-        $this->assertSame([7002, 7001], array_column($this->data('/stats?season=2026/2027&sport=Calcio+a+7+-+Maschile')['scorers'], 'player_id'));
+        $this->assertSame([7002, $pino, 7001, $ugo], array_column($this->data('/stats?season=2026/2027&sport=Calcio+a+7+-+Maschile')['scorers'], 'player_id'));
         $this->assertSame([], $this->data('/stats?season=2025/2026')['scorers']);
     }
 }

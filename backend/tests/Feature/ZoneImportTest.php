@@ -123,7 +123,9 @@ class ZoneImportTest extends TestCase
         $rows = XfMatchPlayer::where('match_id', 90001)->get();
         $this->assertCount(3, $rows);
         $this->assertSame(7001, $rows->firstWhere('tpid', 61001)->player_id);
-        $this->assertNull($rows->firstWhere('tpid', 61999)->player_id, 'il giocatore fuori rosa resta nel referto');
+        $ugo = (int) $rows->firstWhere('tpid', 61999)->player_id;
+        $this->assertGreaterThanOrEqual(ZoneImporter::DERIVED_BASE, $ugo, 'il giocatore fuori rosa diventa una persona ricavata dal referto');
+        $this->assertSame(['Sconosciuto Ugo', true], [XfPlayer::find($ugo)->name, XfPlayer::find($ugo)->derived]);
         $this->assertSame('away', $rows->firstWhere('tpid', 61999)->side);
         $this->assertTrue($rows->firstWhere('tpid', 61001)->mvp);
         $this->assertSame(2, $rows->firstWhere('tpid', 61001)->goals);
@@ -131,5 +133,142 @@ class ZoneImportTest extends TestCase
         // un referto di una partita che non è in calendario non si scrive
         $this->assertSame(1, $imp->report(['id' => 99999, 'tournament_id' => 901, 'home' => ['lineup' => []], 'away' => ['lineup' => []]])['skipped']);
         $this->assertSame(0, XfMatchPlayer::where('match_id', 99999)->count());
+    }
+
+    /** Un referto con un solo giocatore, per provare il collegamento con le persone. */
+    private function lineup(int $matchId, string $side, int $tpid, string $slug, string $name, int $goals = 0): array
+    {
+        $other = $side === 'home' ? 'away' : 'home';
+
+        return ['id' => $matchId, 'home_score' => 1, 'away_score' => 1, $side => ['lineup' => [['ref' => $tpid, 'slug' => $slug, 'name' => $name, 'goals' => $goals]]], $other => ['lineup' => []]];
+    }
+
+    private function base(): ZoneImporter
+    {
+        $imp = app(ZoneImporter::class);
+        $imp->tournament($this->zoneFixture('tournaments/901/tournament.json'));
+        $imp->calendar(901, $this->zoneFixture('tournaments/901/calendar.json'), '2026/2027');
+        $imp->team($this->zoneFixture('teams/5001.json'));
+        $imp->team($this->zoneFixture('teams/5002.json'));
+        $imp->club($this->zoneFixture('clubs/301.json'));
+        $imp->player($this->zoneFixture('players/7001.json'));
+
+        return $imp;
+    }
+
+    public function test_a_player_has_all_his_matches_whatever_the_team_he_played_for(): void
+    {
+        $imp = $this->base();
+
+        // Luca Verdi ha il profilo XFive (club 301) ma gioca anche per ROSSI con un altro tpid, che nessuna rosa elenca
+        $imp->report($this->lineup(90001, 'home', 61001, 'luca-verdi', 'Verdi Luca', 2));
+        $imp->report($this->lineup(90003, 'home', 99001, 'luca-verdi', 'Verdi Luca', 1));
+
+        $rows = XfMatchPlayer::where('slug', 'luca-verdi')->get();
+        $this->assertCount(2, $rows);
+        $this->assertSame([7001, 7001], $rows->pluck('player_id')->all(), 'le partite con l\'altra squadra vanno allo stesso profilo');
+        $this->assertSame(1, XfPlayer::where('slug', 'luca-verdi')->count(), 'nessun doppione: non nasce una persona nuova');
+    }
+
+    public function test_someone_without_a_profile_becomes_one_person_across_clubs(): void
+    {
+        $imp = $this->base();
+
+        $imp->report($this->lineup(90001, 'away', 61500, 'julian-barberis', 'Barberis Julian', 3));
+        $imp->report($this->lineup(90002, 'home', 70500, 'julian-barberis', 'Barberis Julian', 1));
+
+        $ids = XfMatchPlayer::where('slug', 'julian-barberis')->pluck('player_id')->unique()->all();
+        $this->assertCount(1, $ids, 'un solo giocatore, anche se i due tpid sono di club diversi');
+        $person = XfPlayer::find($ids[0]);
+        $this->assertTrue($person->derived);
+        $this->assertGreaterThanOrEqual(ZoneImporter::DERIVED_BASE, $person->id);
+        $this->assertSame(['Barberis Julian', 'barberis julian'], [$person->name, $person->search]);
+        $this->assertNull($person->age, 'l\'età e la nazionalità vengono solo dal profilo XFive');
+
+        $imp->linkPlayers(); // sistema anche le rose delle fixture, collegate solo ora
+        $before = XfPlayer::count();
+        $this->assertSame(0, $imp->linkPlayers()['created'], 'rilanciare non crea doppioni');
+        $this->assertSame($before, XfPlayer::count());
+    }
+
+    public function test_the_empty_lineup_placeholder_is_not_a_person(): void
+    {
+        $imp = $this->base();
+
+        $imp->report($this->lineup(90001, 'away', 61600, '00-00', '00 00'));
+
+        $this->assertNull(XfMatchPlayer::where('tpid', 61600)->first()->player_id);
+        $this->assertSame(0, XfPlayer::where('slug', '00-00')->count());
+        $this->assertTrue(ZoneImporter::isPlaceholderSlug('00-00'));
+        $this->assertFalse(ZoneImporter::isPlaceholderSlug('bisio-00'));
+    }
+
+    public function test_a_rostered_player_who_never_played_is_still_a_person(): void
+    {
+        $imp = $this->base();
+
+        $imp->team(['id' => 5004, 'tournament_id' => 901, 'name' => 'BIANCHI', 'club_id' => 303, 'players' => [['id' => 62001, 'slug' => 'panchina-paolo', 'name' => 'Panchina Paolo']]]);
+        $imp->linkPlayers([], [5004]);
+
+        $pid = XfTeamPlayer::where('tpid', 62001)->first()->player_id;
+        $this->assertNotNull($pid);
+        $this->assertSame('Panchina Paolo', XfPlayer::find($pid)->name);
+        $this->assertSame(0, XfMatchPlayer::where('player_id', $pid)->count(), 'in rosa ma mai in distinta: la persona c\'è, senza partite');
+    }
+
+    public function test_a_real_profile_arriving_later_takes_over_the_person_made_from_the_reports(): void
+    {
+        $imp = $this->base();
+        $imp->report($this->lineup(90001, 'away', 61700, 'sara-bianchi', 'Bianchi Sara', 2));
+        $imp->report($this->lineup(90002, 'home', 70700, 'sara-bianchi', 'Bianchi Sara', 1));
+        $derived = (int) XfMatchPlayer::where('slug', 'sara-bianchi')->value('player_id');
+        $this->assertGreaterThanOrEqual(ZoneImporter::DERIVED_BASE, $derived);
+
+        $imp->player(['id' => 8001, 'name' => 'Bianchi Sara Attaccante 9', 'slug' => 'sara-bianchi', 'age' => 27, 'nationality' => 'Italia', 'clubs' => []]);
+
+        $this->assertSame([8001, 8001], XfMatchPlayer::where('slug', 'sara-bianchi')->pluck('player_id')->all());
+        $this->assertNull(XfPlayer::find($derived), 'la persona ricavata dai referti sparisce: ora c\'è il profilo vero');
+        $this->assertSame(['Bianchi Sara', false], [XfPlayer::find(8001)->name, XfPlayer::find(8001)->derived]);
+    }
+
+    public function test_every_section_chunk_links_its_own_rows(): void
+    {
+        $imp = $this->base();
+
+        // un pezzo di referti: le righe si collegano una volta sola alla fine del pezzo
+        $imp->section('reports', [
+            $this->lineup(90001, 'home', 61001, 'luca-verdi', 'Verdi Luca', 1),
+            $this->lineup(90002, 'home', 71000, 'nuovo-nome', 'Nome Nuovo', 1),
+        ]);
+        $this->assertSame([7001], XfMatchPlayer::where('slug', 'luca-verdi')->pluck('player_id')->all());
+        $this->assertGreaterThanOrEqual(ZoneImporter::DERIVED_BASE, (int) XfMatchPlayer::where('slug', 'nuovo-nome')->value('player_id'));
+
+        // un pezzo di squadre: le rose si collegano alle persone
+        $imp->section('teams', [['id' => 5005, 'tournament_id' => 901, 'name' => 'ROSSI', 'club_id' => 302, 'players' => [['id' => 62500, 'slug' => 'nuovo-nome', 'name' => 'Nome Nuovo']]]]);
+        $this->assertSame(
+            (int) XfMatchPlayer::where('slug', 'nuovo-nome')->value('player_id'),
+            (int) XfTeamPlayer::where('tpid', 62500)->value('player_id'),
+            'la rosa e il referto dello stesso nome vanno alla stessa persona',
+        );
+    }
+
+    public function test_cup_matches_without_club_ids_get_their_clubs_from_the_team_names(): void
+    {
+        $imp = $this->base();
+
+        // le coppe a tabellone (CalendarListParser) non hanno gli id dei club: li dà il nome della squadra nel torneo
+        $r = $imp->calendar(901, [[
+            'xfive_match_id' => 91001, 'round_id' => null, 'round' => null, 'round_label' => 'Ottavo 1', 'tournament_id' => 901, 'played' => true,
+            'home' => ['club_id' => null, 'name' => 'CAFFÈ KM0', 'badge_url' => null],
+            'away' => ['club_id' => null, 'name' => 'Rossi', 'badge_url' => null],
+            'kickoff_raw' => 'Gio 09 APR 20:00', 'venue' => '100GRIGIO - CAMPO 4', 'home_score' => 4, 'away_score' => 2,
+        ]], '2026/2027');
+
+        $this->assertSame(1, $r['matches']);
+        $m = XfMatch::find(91001);
+        $this->assertSame([301, 302], [$m->home_club_id, $m->away_club_id]);
+        $this->assertTrue($m->played);
+        $this->assertSame('2027-04-09 20:00', $m->kickoff_at->setTimezone('Europe/Rome')->format('Y-m-d H:i'));
+        $this->assertSame('Ottavo 1', $m->round_label);
     }
 }
