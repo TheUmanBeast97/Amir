@@ -235,12 +235,24 @@ final class ZoneStats
     {
         $profile = collect($p->profile ?? [])->filter(fn ($c) => is_array($c) && ! empty($c['club_id']));
         if ($profile->isEmpty()) {
-            $profile = XfTeamPlayer::query()->join('xf_teams', 'xf_teams.id', '=', 'xf_team_players.team_id')
+            // senza profilo XFive (le persone ricavate dai referti): le squadre delle rose e quelle delle distinte in cui ha giocato
+            $rows = XfTeamPlayer::query()->join('xf_teams', 'xf_teams.id', '=', 'xf_team_players.team_id')
                 ->where('xf_team_players.player_id', $p->id)->whereNotNull('xf_teams.club_id')
                 ->get(['xf_teams.club_id', 'xf_teams.name', 'xf_teams.tournament_id'])
-                ->groupBy('club_id')
-                ->map(fn (Collection $g, $clubId) => ['club_id' => (int) $clubId, 'name' => (string) $g->first()->name, 'tournaments' => $g->map(fn ($t) => ['id' => (int) $t->tournament_id])->all()])
-                ->values();
+                ->map(fn ($t) => ['club_id' => (int) $t->club_id, 'name' => (string) $t->name, 'tournament_id' => (int) $t->tournament_id]);
+            $played = DB::table('xf_match_players as mp')->join('xf_matches as m', 'm.id', '=', 'mp.match_id')
+                ->where('mp.player_id', $p->id)->distinct()
+                ->selectRaw("case when mp.side = 'home' then m.home_club_id else m.away_club_id end as club_id, m.tournament_id")
+                ->get()->filter(fn ($r) => $r->club_id !== null)
+                ->map(fn ($r) => ['club_id' => (int) $r->club_id, 'name' => '', 'tournament_id' => (int) $r->tournament_id]);
+
+            $profile = $rows->concat($played)->groupBy('club_id')
+                ->map(fn (Collection $g, $clubId) => [
+                    'club_id' => (int) $clubId,
+                    'name' => (string) ($g->pluck('name')->filter()->first() ?? ''),
+                    'tournaments' => $g->pluck('tournament_id')->unique()->map(fn ($id) => ['id' => (int) $id])->values()->all(),
+                ])
+                ->sortByDesc(fn (array $c) => count($c['tournaments']))->values();
         }
 
         $clubs = XfClub::query()->findMany($profile->pluck('club_id')->map(fn ($v) => (int) $v)->all())->keyBy('id');

@@ -228,6 +228,18 @@ class ZoneApiTest extends TestCase
         $this->assertSame([], $this->data('/players?club=302'), 'la rosa di ROSSI non è abbinata a nessun profilo');
     }
 
+    public function test_someone_without_a_profile_has_a_page_with_his_matches_and_the_clubs_he_played_for(): void
+    {
+        $ugo = $this->personId('ugo-sconosciuto');
+        $page = $this->data("/players/{$ugo}");
+
+        $this->assertSame(['id' => $ugo, 'name' => 'Sconosciuto Ugo', 'nationality' => null, 'age' => null], collect($page['player'])->only('id', 'name', 'nationality', 'age')->all(), 'età e nazionalità vengono solo dal profilo XFive');
+        $this->assertSame(['matches' => 1, 'goals' => 1], collect($page['totals'])->only('matches', 'goals')->all());
+        $this->assertSame([302], array_column(array_column($page['player']['clubs'], 'club'), 'id'), 'il club si ricava dalla distinta: in nessuna rosa non c\'è');
+        $this->assertSame([901], array_column($page['player']['clubs'][0]['tournaments'], 'id'));
+        $this->assertSame(['2026/2027'], array_column($page['by_season'], 'season'));
+    }
+
     public function test_the_player_page_has_totals_seasons_partners_victims_and_recent_matches(): void
     {
         $page = $this->data('/players/7001');

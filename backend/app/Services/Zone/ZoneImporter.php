@@ -100,9 +100,10 @@ final class ZoneImporter
             if ($ids !== null && $ids === []) {
                 continue;
             }
+            // la foto vera, non il segnaposto grigio di XFive (ph_player...): i file veri iniziano con una cifra, i segnaposto con «ph»
             $rows = DB::table($table)->whereNull('player_id')->whereNotNull('slug')->where('slug', '!=', '')
                 ->when($ids !== null, fn ($q) => $q->whereIn($column, $ids))
-                ->groupBy('slug')->select('slug', DB::raw('MAX(name) as name'), DB::raw('MAX(photo_url) as photo_url'))->get();
+                ->groupBy('slug')->select('slug', DB::raw('MAX(name) as name'), DB::raw("MAX(CASE WHEN photo_url LIKE '%/ph%' THEN NULL ELSE photo_url END) as photo_url"))->get();
             foreach ($rows as $r) {
                 if (! self::isPlaceholderSlug($r->slug)) {
                     $known = $found[$r->slug] ?? [null, null];
@@ -116,8 +117,12 @@ final class ZoneImporter
 
         $existing = [];
         foreach (array_chunk(array_keys($found), 500) as $chunk) {
-            foreach (XfPlayer::query()->whereIn('slug', $chunk)->pluck('slug') as $slug) {
-                $existing[$slug] = true;
+            foreach (XfPlayer::query()->whereIn('slug', $chunk)->get(['slug', 'derived', 'photo_url']) as $p) {
+                $existing[$p->slug] = true;
+                // una persona ricavata senza foto prende quella vera, se compare in un referto arrivato dopo
+                if ($p->derived && $p->photo_url === null && ($found[$p->slug][1] ?? null) !== null) {
+                    XfPlayer::query()->where('slug', $p->slug)->where('derived', true)->whereNull('photo_url')->update(['photo_url' => $found[$p->slug][1]]);
+                }
             }
         }
 

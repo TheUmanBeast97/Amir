@@ -214,6 +214,10 @@ CDN di XFive e passano dall'ottimizzatore di Vercel. Solo calcio: padel e pallav
   `php artisan xfive:zone-sync <sezione>` o dal cron `/api/v1/cron/zone` (ogni notte alle 3:30; il lunedì anche rose e profili).
 - **API pubblica** `/api/v1/public/zone/*` (home, ricerca, tornei, squadre, giocatori, partite, statistiche di
   sempre), contratto in `frontend/src/api/zone-types.ts`, letture in `ZoneQueries` e `ZoneStats`.
+- **Giocatori**: ogni riga di distinta e di rosa si collega alla persona **per nome** (lo slug di XFive), in qualunque
+  squadra e torneo giochi (`ZoneImporter::linkPlayers`); chi XFive non dà un profilo (oltre 4.000 giocatori) è una persona
+  ricavata dai referti (`xf_players.derived`). `php artisan xfive:zone-link` rifà il collegamento (parte da solo con la
+  migrazione e a ogni pezzo caricato). Le coppe a tabellone si leggono da `league.php op=22` (`CalendarListParser`).
 - **Centro di sincronizzazione** (`/admin/sincronizzazione`): una carta per sezione, «Sincronizza tutto» e, durante il
   lavoro, la sala di controllo con il messaggio vero di quello che il server sta leggendo.
 

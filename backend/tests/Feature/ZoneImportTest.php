@@ -191,6 +191,23 @@ class ZoneImportTest extends TestCase
         $this->assertSame($before, XfPlayer::count());
     }
 
+    public function test_the_person_gets_the_real_photo_not_the_grey_placeholder(): void
+    {
+        $imp = $this->base();
+        $real = 'https://cdn.enjore.com/wl/xfivesport_it/img/player/q/2754-0U0UG80sDrs2NeaU2bOT.jpg';
+        $grey = 'https://cdn.enjore.com/wl/xfivesport_it/img/player/q/ph_player2.png';
+
+        foreach ([[90001, 'away', 61800, $grey], [90002, 'home', 70800, $real]] as [$mid, $side, $tpid, $photo]) {
+            $report = $this->lineup($mid, $side, $tpid, 'foto-fabio', 'Foto Fabio');
+            $report[$side]['lineup'][0]['photo'] = $photo;
+            $imp->report($report);
+        }
+        $imp->report(array_replace_recursive($this->lineup(90003, 'home', 61900, 'solo-grigio', 'Solo Grigio'), ['home' => ['lineup' => [['photo' => $grey]]]]));
+
+        $this->assertSame($real, XfPlayer::where('slug', 'foto-fabio')->value('photo_url'), 'tra le due foto vale quella vera');
+        $this->assertNull(XfPlayer::where('slug', 'solo-grigio')->value('photo_url'), 'solo il segnaposto: meglio le iniziali');
+    }
+
     public function test_the_empty_lineup_placeholder_is_not_a_person(): void
     {
         $imp = $this->base();

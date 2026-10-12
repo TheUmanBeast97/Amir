@@ -51,6 +51,7 @@ Tutte su `https://www.xfivesport.it/system/include/ajax/public/`, con `lid=1` (l
 | `league.php` `op=21&tid={tid}` | squadre iscritte: link `/it/team/{teamId}/`, nome, stemma | `PageParsers::teamList` |
 | `team.php` `op=1&tmid={clubId}&sid={sid}` | tornei di un club in una stagione (frammento HTML) | `ClubHistoryParser` |
 | `finder.php` `term={testo}` | ricerca globale (tornei, squadre, giocatori): JSON con `url`, `labelt`, `avatar` | `XfiveClient::finder` |
+| `league.php` `op=22&tid={tid}` | elenco partite della pagina «Calendario»: per le **coppe a tabellone** è l'unico posto con gli id delle partite (`<div class="match-element">` con il link `/it/match/{id}/`, fase, campo, data senza anno «Gio 09 APR 20:00», squadre, punteggi); senza club id | `CalendarListParser` |
 | `league.php` `op=8&tid&poid` | foto di un torneo (album) | non usato |
 
 `op=23` risponde «Non ci sono ancora dati» per le stagioni fino alla 5 (2023/24): per quelle si trovano i tornei
@@ -61,7 +62,7 @@ provando gli id da 1 a 97 (sotto il primo id della stagione 6) e leggendo l'inte
 | Indirizzo | Cosa dà | Lettore |
 |---|---|---|
 | `/it/tournament/{tid}/x/stream/` | intestazione del torneo: `.tournament-title`, `.category-title`, `.season-title a` (sid), `.tournament-sport`, `.tournament-flyer img`; menu con `t-calendar`, `t-teamtable`, `t-player-stats`, `t-team-list`, `docs` | `PageParsers::tournamentHeader` |
-| `/t-printable.php?t={tid}&sk=calendar` | calendario completo con risultati (id partita, giornata, squadre con club id e stemma, data/ora, campo) | `PrintableCalendarParser` |
+| `/t-printable.php?t={tid}&sk=calendar` | calendario completo con risultati (id partita, giornata, squadre con club id e stemma, data/ora, campo). **Solo per i campionati**: le coppe a tabellone (`#knockout`) sono un disegno senza id di partita, e il lettore le dava vuote (fino al 12/10/2026); per quelle si usa `league.php op=22` | `PrintableCalendarParser` |
 | `/it/t-calendar/`, `/it/t-teamtable/`, `/it/t-player-stats/`, `/it/t-team-list/{tid}/x/` | solo contenitori: i dati arrivano dalle chiamate interne sopra | (niente) |
 | `/it/docs/{tid}/x/` | modulistica: link a PDF/immagini su `cdn.enjore.com/.../doc/tournament_doc/` | `PageParsers::docs` |
 | `/it/team/{teamId}/x/` | squadra nel torneo (pagina già completa): nome, stemma, `Presidente:`/`Allenatore:` in `.team-staff-container .info`, link club `a#linkToHistory`, rosa in `.player-container` (nome, `.player-role`, `.player-number`, foto `img.round-img`, nazione `img.player-country-img@title`), ultime partite | `PageParsers::teamPage` |
@@ -105,6 +106,12 @@ Prima passata completa (8/10/2026, stagioni 6-8): 83 tornei, 3.160 partite (2.66
 (finita il 9/10/2026, giri 6-8) ha trovato altri 74 tornei (stagioni fino alla 2023/24): in tutto 157 tornei,
 1.546 squadre, 517 club, 4.810 referti, 6.522 immagini, 157 pagine Markdown, 702 MB. Il 9/10 notte XFive ha servito
 per qualche ora un certificato autofirmato (`cURL error 60`): in quel caso il comando si ferma da solo e si rilancia dopo.
+
+### Cosa XFive non dà
+
+- **Profilo globale solo a chi è nella rosa attuale di un club** (`/it/team-h/{club}/`: 880 persone), mentre nei referti compaiono quasi 4.000 giocatori: gli altri hanno solo nome, slug e foto (e il `tpid` di ogni torneo, che cambia a ogni iscrizione). La Mixed Zone li identifica per **slug** (su 74.000 righe di distinta c'è un solo omonimo vero, nella stessa partita) e crea per chi non ha un profilo una persona «ricavata dai referti» (`xf_players.derived`, id da 1.000.000); il segnaposto «00 00» (slug `00-00`) non è una persona.
+- **Coppe più vecchie senza elenco partite**: 24 tornei di calcio del 2019/20, 2022/23 e 2023/24 (Coppa di Lega, Coppa di Categoria, Finali...) rispondono «Non ci sono ancora dati» a `op=22` e hanno solo il disegno del tabellone: niente pagine partita né distinte, quindi niente dati per giocatore. Le partite di coppa dal 2024/25 in poi ci sono.
+- Il numero di partite di un giocatore sul sito di XFive può quindi essere più alto di quello che si ricava dai referti.
 
 ### Dal sito online (Mixed Zone)
 
