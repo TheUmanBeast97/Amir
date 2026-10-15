@@ -1,7 +1,13 @@
-import { KeyRound, LogOut, ShieldCheck } from "lucide-react";
+import { KeyRound, Link2, LogOut, ShieldCheck } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { useConnectXfive, useDisconnectXfive, useXfiveSession } from "@/api/hooks";
+import type { XfiveLinkResult } from "@/api/types";
+import {
+  useConnectXfive,
+  useDisconnectXfive,
+  useLinkXfivePlayers,
+  useXfiveSession,
+} from "@/api/hooks";
 import { Skeleton } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 import { Btn, Field, TextInput, toastError } from "./kit";
@@ -23,6 +29,22 @@ const hhmm = (iso: string) =>
     minute: "2-digit",
   });
 
+/** Dice in una riga come è andato l'abbinamento dei giocatori della rosa agli id di XFive. */
+function linkSummary(r: XfiveLinkResult): string {
+  const parts = [
+    r.linked > 0
+      ? `${r.linked} giocator${r.linked === 1 ? "e abbinato" : "i abbinati"} a XFive`
+      : r.already > 0
+        ? "Giocatori già tutti abbinati a XFive"
+        : "Nessun giocatore da abbinare",
+  ];
+  if (r.missing_on_xfive.length > 0) {
+    parts.push(`non trovati su XFive: ${r.missing_on_xfive.join(", ")}`);
+  }
+  if (r.ambiguous.length > 0) parts.push(`nome ambiguo: ${r.ambiguous.join(", ")}`);
+  return parts.join(". ");
+}
+
 /**
  * «Collega XFive» / «Esci da XFive»: chi dello staff entra nel proprio account XFive dalla Staff Area.
  * La password va solo a XFive, per fare il login: non viene salvata (resta solo la sessione, cifrata sul server, che scade).
@@ -31,6 +53,7 @@ export function XfiveConnectCard({ className }: { className?: string }) {
   const q = useXfiveSession();
   const connect = useConnectXfive();
   const disconnect = useDisconnectXfive();
+  const link = useLinkXfivePlayers();
   const [email, setEmail] = useState(readEmail);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +70,7 @@ export function XfiveConnectCard({ className }: { className?: string }) {
     connect.mutate(
       { email: email.trim(), password },
       {
-        onSuccess: () => {
+        onSuccess: (res) => {
           try {
             localStorage.setItem(EMAIL_KEY, email.trim());
           } catch {
@@ -55,6 +78,9 @@ export function XfiveConnectCard({ className }: { className?: string }) {
           }
           setPassword("");
           toast.success("Collegato a XFive");
+          if (res.link) toast.message(linkSummary(res.link));
+          else if (res.link_error)
+            toast.warning(`Abbinamento giocatori non riuscito: ${res.link_error}`);
         },
         onError: (err) => {
           setPassword("");
@@ -82,6 +108,18 @@ export function XfiveConnectCard({ className }: { className?: string }) {
             </div>
           )}
         </div>
+        <Btn
+          variant="outline"
+          disabled={link.isPending}
+          onClick={() =>
+            link.mutate(undefined, {
+              onSuccess: (r) => toast.success(linkSummary(r)),
+              onError: toastError,
+            })
+          }
+        >
+          <Link2 className="h-4 w-4" /> {link.isPending ? "Abbino…" : "Abbina giocatori a XFive"}
+        </Btn>
         <Btn
           variant="outline"
           disabled={disconnect.isPending}

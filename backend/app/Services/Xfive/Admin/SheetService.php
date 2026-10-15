@@ -28,11 +28,53 @@ final class SheetService
 {
     private const SCHEDULE_PATH = '/system/include/ajax/manager/manage_tournament/team_schedule.php';
 
+    private const ROSTER_PATH = '/system/include/ajax/manager/manage_tournament/team.php';
+
     public function __construct(
         private readonly XfiveAccess $access,
         private readonly XfiveSessionStore $store,
         private readonly SheetParser $parser,
+        private readonly AdminRosterParser $rosterParser,
+        private readonly AdminRosterSyncer $rosterSyncer,
     ) {}
+
+    /**
+     * Assegna ai giocatori l'id che XFive dà loro nell'area amministrazione (la rosa), abbinando per nome: chi ce l'ha già non si tocca,
+     * e non si cambia nient'altro. Serve il collegamento a XFive.
+     *
+     * @return array{rows: int, linked: int, already: int, unmatched: array<int, string>, ambiguous: array<int, string>, missing_on_xfive: array<int, string>}
+     *
+     * @throws XfiveAdminException
+     */
+    public function linkPlayers(User $user): array
+    {
+        $session = $this->store->current($user)
+            ?? throw new XfiveAdminException('not_connected', 'Collega XFive per abbinare i giocatori.');
+
+        $club = (int) config('amir.own.club_id');
+        $jar = $this->access->jar($this->store->cookies($session));
+        $json = $this->guard($user, fn () => $this->access->ajax($jar, self::ROSTER_PATH, $this->rosterParams($club), "/manage_tournament.php?tmid={$club}&sk=team", 'la rosa'));
+
+        $rows = $this->rosterParser->parse((string) json_encode($json, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        if ($rows === []) {
+            throw new XfiveAdminException('unexpected_page', "XFive non ha restituito nessun giocatore che riconosco: l'elenco è vuoto oppure la struttura è cambiata. Non è stato modificato nulla.");
+        }
+
+        $this->store->touch($session, $jar->toArray());
+
+        return $this->rosterSyncer->linkIds(Team::ownOrFail(), $rows);
+    }
+
+    /**
+     * Il link al PDF della distinta su XFive (si scarica anche senza accesso, per questo non si mostra a chi non è dello staff).
+     * Null se per questa partita non è stata inviata nessuna distinta.
+     */
+    public function pdfUrlFor(Game $game): ?string
+    {
+        $sheet = OfficialSheet::where('match_id', $game->id)->whereNotNull('xfive_gtid')->latest('sent_at')->first();
+
+        return $sheet && $game->xfive_match_id ? $this->pdfUrl((int) $game->xfive_match_id, (int) $sheet->xfive_gtid) : null;
+    }
 
     /**
      * Com'è la distinta per questa partita: giocatori, numeri suggeriti e storico, e se su XFive si può inviare adesso.
@@ -170,7 +212,7 @@ final class SheetService
         }
 
         $this->store->touch($session, $opened['jar']->toArray());
-        $this->remember($user, $game, $form['players'], $numbers, $note, $result['success']);
+        $this->remember($user, $game, $form['players'], $numbers, $note, $result['success'], $opened['gtid']);
 
         return $this->state($user, $game) + ['message' => $result['success'] ?? 'Distinta inviata a XFive.'];
     }
@@ -237,8 +279,54 @@ final class SheetService
         }
 
         $this->store->touch($session, $jar->toArray());
+        $this->linkSheetIds($form['players']);
 
         return ['form' => $form, 'gtid' => $gtid, 'jar' => $jar];
+    }
+
+    /**
+     * Ricorda a ogni giocatore della rosa l'id che ha nel modulo della distinta (abbinato per nome e data di nascita): così
+     * dalla volta dopo il riconoscimento è immediato. Non si assegna mai un id già di un altro.
+     *
+     * @param  array<int, array<string, mixed>>  $formPlayers
+     */
+    private function linkSheetIds(array $formPlayers): void
+    {
+        $roster = Player::where('team_id', Team::ownOrFail()->id)->get();
+        $taken = $roster->pluck('xfive_sheet_id')->filter()->map(fn ($id) => (int) $id)->flip();
+
+        foreach ($formPlayers as $x) {
+            $player = $this->match($roster, $x);
+            $id = (int) $x['xfive_id'];
+
+            if ($player !== null && (int) $player->xfive_sheet_id !== $id && ! isset($taken[$id])) {
+                $player->update(['xfive_sheet_id' => $id]);
+                $taken[$id] = true;
+            }
+        }
+    }
+
+    /**
+     * Gli stessi parametri che la tabella della rosa manda a XFive (tabella con paginazione lato server): tutto l'elenco, senza filtri.
+     *
+     * @return array<string, mixed>
+     */
+    private function rosterParams(int $club): array
+    {
+        $columns = [];
+        foreach (range(0, 5) as $i) {
+            $columns[] = ['data' => $i, 'name' => '', 'searchable' => 'true', 'orderable' => 'false', 'search' => ['value' => '', 'regex' => 'false']];
+        }
+
+        return [
+            'draw' => 1,
+            'columns' => $columns,
+            'start' => 0,
+            'length' => 200,
+            'search' => ['value' => '', 'regex' => 'false'],
+            'op' => 1,
+            'tmid' => $club,
+        ];
     }
 
     /**
@@ -304,7 +392,7 @@ final class SheetService
         $suggested = $past[0]['number'] ?? ($x['number'] ?? null) ?? $player?->shirt_number;
 
         return [
-            'xfive_id' => $x['xfive_id'] ?? ($player?->xfive_admin_id ? (int) $player->xfive_admin_id : null),
+            'xfive_id' => $x['xfive_id'] ?? ($player?->xfive_sheet_id ? (int) $player->xfive_sheet_id : null),
             'player_id' => $player?->id,
             'name' => $player?->full_name ?? ($x['name'] ?? ''),
             'birth_date' => $x['birth_date'] ?? $player?->birth_date?->toDateString(),
@@ -320,15 +408,15 @@ final class SheetService
     }
 
     /**
-     * Chi, fra i giocatori della rosa, è la riga di XFive: per id dell'area amministrazione, altrimenti per nome (nell'ordine che
-     * sia) e, se si conoscono, anche la data di nascita.
+     * Chi, fra i giocatori della rosa, è la riga di XFive: per l'id che ha nel modulo della distinta (già ricordato), altrimenti per
+     * nome (nell'ordine che sia) e, se si conoscono, anche la data di nascita.
      *
      * @param  Collection<int, Player>  $roster
      * @param  array<string, mixed>  $x
      */
     private function match(Collection $roster, array $x): ?Player
     {
-        $byId = $roster->first(fn (Player $p) => $p->xfive_admin_id !== null && (int) $p->xfive_admin_id === (int) $x['xfive_id']);
+        $byId = $roster->first(fn (Player $p) => $p->xfive_sheet_id !== null && (int) $p->xfive_sheet_id === (int) $x['xfive_id']);
         if ($byId !== null) {
             return $byId;
         }
@@ -405,15 +493,16 @@ final class SheetService
      * @param  array<int, array<string, mixed>>  $xfivePlayers  le righe del modulo di XFive
      * @param  array<int, string>  $numbers  numero per id XFive, dei soli giocatori scelti
      */
-    private function remember(User $user, Game $game, array $xfivePlayers, array $numbers, ?string $note, ?string $message): void
+    private function remember(User $user, Game $game, array $xfivePlayers, array $numbers, ?string $note, ?string $message, int $gtid): void
     {
         $own = Team::ownOrFail();
         $roster = Player::where('team_id', $own->id)->get();
 
-        DB::transaction(function () use ($user, $game, $xfivePlayers, $numbers, $note, $message, $roster) {
+        DB::transaction(function () use ($user, $game, $xfivePlayers, $numbers, $note, $message, $gtid, $roster) {
             $sheet = OfficialSheet::create([
                 'match_id' => $game->id,
                 'user_id' => $user->id,
+                'xfive_gtid' => $gtid,
                 'note' => $note !== null && trim($note) !== '' ? $note : null,
                 'xfive_message' => $message !== null ? mb_substr($message, 0, 255) : null,
                 'sent_at' => now(),

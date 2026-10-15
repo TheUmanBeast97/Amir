@@ -219,6 +219,10 @@ fuori dalla finestra la scheda mostra comunque i giocatori con i numeri suggerit
 (tabelle `official_sheets` e `official_sheet_players`): accanto a ogni giocatore compaiono i numeri usati nelle distinte passate.
 Anche qui vale l'avviso sui termini d'uso di XFive qui sopra: si agisce solo quando lo staff preme un pulsante, con il proprio account.
 
+Dopo il collegamento si legge anche la rosa su XFive (`manage_tournament/team.php`) per assegnare ai nostri giocatori il loro id XFive, e la
+distinta può essere pubblicata sul sito al posto dei convocati. La migrazione `2026_10_15_000002_add_sheet_ids_and_publishing` aggiunge
+`players.xfive_sheet_id`, `matches.sheet_published` e `official_sheets.xfive_gtid`: va eseguita (`php artisan migrate`) a ogni deploy, come le altre.
+
 ## Cose da sapere
 
 - **Piano gratuito di Vercel (Hobby)**: è pensato per uso personale e senza scopo di lucro. Per una squadra amatoriale va bene;

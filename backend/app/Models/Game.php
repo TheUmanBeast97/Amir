@@ -32,6 +32,7 @@ class Game extends Model
             'details_synced_at' => 'datetime',
             'details' => 'array',
             'callups_published' => 'boolean',
+            'sheet_published' => 'boolean',
             'home_score' => 'integer',
             'away_score' => 'integer',
         ];

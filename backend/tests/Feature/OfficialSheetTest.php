@@ -15,6 +15,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
+use Tests\Support\AdminRosterFixtures;
 use Tests\Support\SheetFixtures;
 use Tests\TestCase;
 
@@ -99,6 +100,9 @@ class OfficialSheetTest extends TestCase
             }
             if (! $loggedIn || ($this->expired && str_ends_with($path, '/team_schedule.php'))) {
                 return Http::response('<html><body><a onclick="suggestionFeedback(\'login\')">Accedi</a></body></html>');
+            }
+            if (str_ends_with($path, '/manage_tournament/team.php')) {
+                return Http::response(AdminRosterFixtures::ajaxJson(), 200, ['Content-Type' => 'application/json']);
             }
             if (str_ends_with($path, '/manage_tournament/team_schedule.php')) {
                 if ($this->scheduleStatus !== 200) {
@@ -330,5 +334,134 @@ class OfficialSheetTest extends TestCase
 
         $this->postJson("/api/v1/matches/{$this->game->id}/sheet", ['players' => [['xfive_id' => 1, 'number' => '4']]])
             ->assertStatus(409)->assertJsonPath('state', 'not_connected');
+    }
+
+    // ---------- id XFive dei giocatori ----------
+
+    public function test_connecting_assigns_the_xfive_roster_ids_and_changes_nothing_else(): void
+    {
+        $mario = $this->player('Mario', 'Rossi', ['in_squad_list' => false, 'registration_status' => 'none']);
+        $luca = $this->player('Luca', 'Bianchi');
+        $alone = $this->player('Giorgio', 'Verdi');
+        $this->fakeXfiveSheet();
+
+        $r = $this->connect()->assertOk();
+
+        $r->assertJsonPath('data.link.linked', 2)->assertJsonPath('data.link_error', null);
+        $this->assertSame(9001, $mario->refresh()->xfive_admin_id);
+        $this->assertSame(9002, $luca->refresh()->xfive_admin_id);
+        $this->assertNull($alone->refresh()->xfive_admin_id);
+        $this->assertContains('Giorgio Verdi', $r->json('data.link.missing_on_xfive'));
+        $this->assertCount(3, $r->json('data.link.unmatched'), 'gli altri tre di XFive non sono nella nostra rosa');
+        $this->assertFalse((bool) $mario->in_squad_list, 'solo gli id: Squad List, certificati e tesseramenti non si toccano');
+        $this->assertNull($mario->medical_cert_expires_on);
+
+        // rifatto, non cambia niente e non si duplica
+        $this->postJson('/api/v1/xfive-session/link-players')->assertOk()->assertJsonPath('data.linked', 0)->assertJsonPath('data.already', 2);
+    }
+
+    public function test_linking_players_needs_the_xfive_connection(): void
+    {
+        $this->fakeXfiveSheet();
+
+        $this->postJson('/api/v1/xfive-session/link-players')->assertStatus(409)->assertJsonPath('state', 'not_connected');
+    }
+
+    public function test_opening_the_sheet_remembers_each_players_sheet_id(): void
+    {
+        $mario = $this->player('Mario', 'Rossi', ['birth_date' => '1999-01-28']);
+        $luca = $this->player('Luca', 'Bianchi');
+        $this->fakeXfiveSheet(players: [
+            [62597, 'Rossi Mario', '28/01/1999', false, ''],
+            [62605, 'Bianchi Luca', '28/02/1996', false, ''],
+        ]);
+        $this->connect()->assertOk();
+
+        $this->getJson("/api/v1/matches/{$this->game->id}/sheet")->assertOk()->assertJsonPath('data.open', true);
+
+        $this->assertSame(62597, $mario->refresh()->xfive_sheet_id);
+        $this->assertSame(62605, $luca->refresh()->xfive_sheet_id);
+
+        // dopo, anche con XFive chiuso, la scheda sa a chi appartiene ogni giocatore
+        $this->deleteJson('/api/v1/xfive-session')->assertOk();
+        $r = $this->getJson("/api/v1/matches/{$this->game->id}/sheet")->assertOk();
+        $this->assertSame([62605, 62597], collect($r->json('data.players'))->sortBy('name')->pluck('xfive_id')->values()->all());
+    }
+
+    // ---------- distinta sul sito pubblico e PDF ----------
+
+    private function sendSheet(): void
+    {
+        $this->fakeXfiveSheet(players: [
+            [62597, 'Rossi Mario', '28/01/1999', false, ''],
+            [62605, 'Bianchi Luca', '28/02/1996', false, ''],
+            [62607, 'Verdi Paolo', '01/03/1997', false, ''],
+            [62609, 'Neri Carlo', '05/05/1995', false, ''],
+        ]);
+        $this->connect()->assertOk();
+        $this->postJson("/api/v1/matches/{$this->game->id}/sheet", ['players' => [
+            ['xfive_id' => 62597, 'number' => '10'],
+            ['xfive_id' => 62605, 'number' => '9'],
+            ['xfive_id' => 62607, 'number' => 'D'],
+            ['xfive_id' => 62609, 'number' => '2'],
+        ]])->assertOk();
+    }
+
+    public function test_the_sheet_can_be_published_only_after_it_was_sent(): void
+    {
+        $this->patchJson("/api/v1/matches/{$this->game->id}", ['sheet_published' => true])
+            ->assertStatus(422)->assertJsonValidationErrors('sheet_published');
+
+        $this->sendSheet();
+
+        $detail = $this->getJson("/api/v1/matches/{$this->game->id}")->assertOk();
+        $detail->assertJsonPath('data.sheet_published', false);
+        $this->assertNotNull($detail->json('data.sheet_sent_at'));
+
+        $this->patchJson("/api/v1/matches/{$this->game->id}", ['sheet_published' => true])
+            ->assertOk()->assertJsonPath('data.sheet_published', true);
+    }
+
+    public function test_the_public_page_shows_the_published_sheet_in_number_order_instead_of_the_callups(): void
+    {
+        $mario = $this->player('Mario', 'Rossi', ['xfive_sheet_id' => 62597]);
+        MatchCallup::create(['match_id' => $this->game->id, 'player_id' => $mario->id]);
+        $this->game->update(['callups_published' => true]);
+        $this->sendSheet();
+
+        // non pubblicata: sul sito ci sono ancora i convocati e nessuna traccia della distinta
+        $before = $this->getJson("/api/v1/public/matches/{$this->game->id}")->assertOk();
+        $this->assertNull($before->json('data.sheet'));
+        $this->assertCount(1, $before->json('data.callups'));
+
+        $this->patchJson("/api/v1/matches/{$this->game->id}", ['sheet_published' => true])->assertOk();
+
+        $after = $this->getJson("/api/v1/public/matches/{$this->game->id}")->assertOk();
+        $this->assertNull($after->json('data.callups'), 'la distinta prende il posto dei convocati');
+        $this->assertSame(['2', '9', '10', 'D'], collect($after->json('data.sheet.players'))->pluck('number')->all(), 'prima i numeri in ordine, poi le lettere');
+        $ten = $after->json('data.sheet.players.2');
+        $this->assertSame($mario->id, $ten['player']['id']);
+        $this->assertSame('Mario Rossi', $ten['name']);
+        $this->assertNull($after->json('data.sheet.players.0.player'), 'chi non è abbinato alla rosa si vede solo con il nome di XFive');
+        $this->assertSame('Neri Carlo', $after->json('data.sheet.players.0.name'));
+
+        // nascosta di nuovo, tornano i convocati
+        $this->patchJson("/api/v1/matches/{$this->game->id}", ['sheet_published' => false])->assertOk();
+        $back = $this->getJson("/api/v1/public/matches/{$this->game->id}")->assertOk();
+        $this->assertNull($back->json('data.sheet'));
+        $this->assertCount(1, $back->json('data.callups'));
+    }
+
+    public function test_the_pdf_link_is_for_the_staff_and_only_when_a_sheet_was_sent(): void
+    {
+        $this->getJson("/api/v1/matches/{$this->game->id}/sheet-pdf")->assertNotFound();
+
+        $this->sendSheet();
+
+        $this->getJson("/api/v1/matches/{$this->game->id}/sheet-pdf")->assertOk()
+            ->assertJsonPath('data.url', 'https://www.xfivesport.it/pdfTeamsSchedule.php?mid=14584&gtid=3604');
+
+        // il sito pubblico non contiene mai il link
+        $this->assertStringNotContainsString('pdfTeamsSchedule', (string) $this->getJson("/api/v1/public/matches/{$this->game->id}")->getContent());
     }
 }

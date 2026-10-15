@@ -139,6 +139,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/xfive-session', [XfiveSessionController::class, 'show']);
         Route::post('/xfive-session', [XfiveSessionController::class, 'connect'])->middleware('throttle:6,1');
         Route::delete('/xfive-session', [XfiveSessionController::class, 'disconnect']);
+        Route::post('/xfive-session/link-players', [XfiveSessionController::class, 'linkPlayers'])->middleware('throttle:10,1');
+        Route::get('/matches/{game}/sheet-pdf', [SheetController::class, 'pdf']);
         Route::get('/matches/{game}/sheet', [SheetController::class, 'show'])->middleware('throttle:30,1');
         Route::post('/matches/{game}/sheet', [SheetController::class, 'save'])->middleware('throttle:10,1');
         Route::get('/sheet-numbers', [SheetController::class, 'numbers']);

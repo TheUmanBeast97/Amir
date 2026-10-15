@@ -300,9 +300,25 @@ export const useConnectXfive = () => {
   const inv = useInvalidate();
   return useMutation({
     mutationFn: (v: { email: string; password: string }) => api.connectXfive(v.email, v.password),
-    onSuccess: () => inv(["xfive-session"], ["sheet"]),
+    onSuccess: () => inv(["xfive-session"], ["sheet"], ["players"]),
   });
 };
+export const useLinkXfivePlayers = () => {
+  const inv = useInvalidate();
+  return useMutation({
+    mutationFn: () => api.linkXfivePlayers(),
+    onSuccess: () => inv(["players"], ["sheet"]),
+  });
+};
+/** Il PDF della distinta su XFive: solo per chi è dello staff (enabled), e solo se la distinta è stata inviata. */
+export const useSheetPdf = (matchId: Id, enabled: boolean) =>
+  useQuery({
+    queryKey: ["sheet-pdf", matchId],
+    queryFn: () => api.getSheetPdf(matchId),
+    enabled,
+    retry: false,
+    staleTime: 5 * 60_000,
+  });
 export const useDisconnectXfive = () => {
   const inv = useInvalidate();
   return useMutation({

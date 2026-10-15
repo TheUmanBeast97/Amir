@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Api\Concerns\RespondsToXfiveErrors;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Xfive\Admin\SheetService;
 use App\Services\Xfive\Admin\XfiveAccess;
 use App\Services\Xfive\Admin\XfiveAdminException;
 use App\Services\Xfive\Admin\XfiveSessionStore;
@@ -24,7 +25,7 @@ class XfiveSessionController extends Controller
         return $this->ok($this->status($request->user(), $store));
     }
 
-    public function connect(Request $request, XfiveAccess $access, XfiveSessionStore $store): JsonResponse
+    public function connect(Request $request, XfiveAccess $access, XfiveSessionStore $store, SheetService $sheets): JsonResponse
     {
         $data = $request->validate([
             'email' => ['required', 'email', 'max:190'],
@@ -52,7 +53,27 @@ class XfiveSessionController extends Controller
         $store->succeeded($user);
         $store->open($user, $data['email'], $cookies);
 
-        return $this->ok($this->status($user, $store));
+        // appena collegato, i giocatori senza id XFive lo ricevono da soli; se non riesce, il collegamento resta valido
+        // e l'abbinamento si rifà con il pulsante
+        $link = null;
+        $linkError = null;
+        try {
+            $link = $sheets->linkPlayers($user);
+        } catch (XfiveAdminException $e) {
+            $linkError = $e->getMessage();
+        }
+
+        return $this->ok($this->status($user, $store) + ['link' => $link, 'link_error' => $linkError]);
+    }
+
+    /** Abbina i giocatori della rosa a XFive (assegna l'id a chi non ce l'ha). */
+    public function linkPlayers(Request $request, SheetService $sheets): JsonResponse
+    {
+        try {
+            return $this->ok($sheets->linkPlayers($request->user()));
+        } catch (XfiveAdminException $e) {
+            return $this->xfiveError($e);
+        }
     }
 
     public function disconnect(Request $request, XfiveAccess $access, XfiveSessionStore $store): JsonResponse

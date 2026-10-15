@@ -45,6 +45,57 @@ final class AdminRosterSyncer
     }
 
     /**
+     * Solo gli identificativi: a chi non ce l'ha ancora assegna l'id che XFive dà al giocatore nell'area amministrazione, abbinando
+     * per nome (e data di nascita se serve). Non tocca nient'altro (né Squad List, né certificati, né tesseramenti) e non crea giocatori.
+     *
+     * @param  array<int, array<string, mixed>>  $rows  vedi AdminRosterParser::parse
+     * @return array{rows: int, linked: int, already: int, unmatched: array<int, string>, ambiguous: array<int, string>, missing_on_xfive: array<int, string>}
+     */
+    public function linkIds(Team $own, array $rows): array
+    {
+        $players = Player::where('team_id', $own->id)->orderBy('id')->get();
+
+        $byAdminId = $players->filter(fn (Player $p) => $p->xfive_admin_id)->keyBy('xfive_admin_id');
+        $byName = [];
+        foreach ($players as $p) {
+            $byName[$this->nameKey($p->first_name.' '.$p->last_name)][] = $p;
+        }
+
+        $stats = ['rows' => count($rows), 'linked' => 0, 'already' => 0, 'unmatched' => [], 'ambiguous' => [], 'missing_on_xfive' => []];
+        $seen = [];
+
+        DB::transaction(function () use ($rows, $byAdminId, $byName, &$stats, &$seen) {
+            foreach ($rows as $row) {
+                if ($player = $byAdminId->get($row['admin_id'])) {
+                    $seen[$player->id] = true;
+                    $stats['already']++;
+
+                    continue;
+                }
+
+                $found = $this->matchByName($row, $byName, $seen);
+                if ($found === 'ambiguous') {
+                    $stats['ambiguous'][] = (string) $row['name'];
+                } elseif ($found === null) {
+                    $stats['unmatched'][] = (string) $row['name'];
+                } else {
+                    $found->update(['xfive_admin_id' => $row['admin_id']]);
+                    $seen[$found->id] = true;
+                    $stats['linked']++;
+                }
+            }
+        });
+
+        $stats['missing_on_xfive'] = $players
+            ->filter(fn (Player $p) => $p->is_active && ! $p->xfive_admin_id && ! isset($seen[$p->id]))
+            ->map(fn (Player $p) => $p->full_name)
+            ->values()
+            ->all();
+
+        return $stats;
+    }
+
+    /**
      * @param  array<int, array<string, mixed>>  $rows  vedi AdminRosterParser::parse
      * @return array<string, int>
      */

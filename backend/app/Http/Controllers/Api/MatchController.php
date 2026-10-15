@@ -7,6 +7,7 @@ use App\Models\Game;
 use App\Models\Lineup;
 use App\Models\MatchCallup;
 use App\Models\MatchPlayerStat;
+use App\Models\OfficialSheet;
 use App\Models\Team;
 use App\Services\CaptionGenerator;
 use App\Services\Stats\HistoryService;
@@ -111,10 +112,14 @@ class MatchController extends Controller
             'our_kit' => ['nullable', Rule::in(['red', 'white'])],
             'callups_published' => ['sometimes', 'boolean'],
             'lineup_published' => ['sometimes', 'boolean'],
+            'sheet_published' => ['sometimes', 'boolean'],
         ]);
 
         if (($data['lineup_published'] ?? false) && ! $game->lineup) {
             throw ValidationException::withMessages(['lineup_published' => ['Salva prima la formazione, poi pubblicala.']]);
+        }
+        if (($data['sheet_published'] ?? false) && ! OfficialSheet::where('match_id', $game->id)->exists()) {
+            throw ValidationException::withMessages(['sheet_published' => ['Invia prima la distinta a XFive, poi pubblicala.']]);
         }
 
         if (array_key_exists('our_kit', $data)) {
@@ -122,6 +127,9 @@ class MatchController extends Controller
         }
         if (array_key_exists('callups_published', $data)) {
             $game->callups_published = (bool) $data['callups_published'];
+        }
+        if (array_key_exists('sheet_published', $data)) {
+            $game->sheet_published = (bool) $data['sheet_published'];
         }
         $game->save();
 
@@ -250,6 +258,9 @@ class MatchController extends Controller
             ])->values()->all(),
             'callups' => $game->callups->map(fn (MatchCallup $c) => ['player_id' => $c->player_id, 'note' => $c->note])->values()->all(),
             'callups_published' => (bool) $game->callups_published,
+            // la distinta ufficiale inviata a XFive: quando (null = mai) e se è visibile sul sito, al posto dei convocati
+            'sheet_published' => (bool) $game->sheet_published,
+            'sheet_sent_at' => OfficialSheet::where('match_id', $game->id)->latest('sent_at')->first()?->sent_at?->toIso8601String(),
             'our_kit' => $game->our_kit,
             'referee' => $game->referee,
             'man_of_the_match_id' => $game->man_of_the_match_id,

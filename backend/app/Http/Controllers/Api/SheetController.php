@@ -42,6 +42,19 @@ class SheetController extends Controller
         }
     }
 
+    /**
+     * Il link al PDF della distinta su XFive, solo per lo staff: il sito pubblico mostra il pulsante a chi è collegato e lo chiede qui,
+     * così l'indirizzo non compare mai nelle pagine pubbliche. 404 se per la partita non è stata inviata nessuna distinta.
+     */
+    public function pdf(Game $game, SheetService $sheets): JsonResponse
+    {
+        $url = $sheets->pdfUrlFor($game);
+
+        return $url !== null
+            ? $this->ok(['url' => $url])
+            : response()->json(['message' => 'Nessuna distinta inviata per questa partita.'], 404);
+    }
+
     /** Per ogni giocatore, l'ultimo numero e quelli delle distinte passate (non serve XFive). */
     public function numbers(SheetService $sheets): JsonResponse
     {

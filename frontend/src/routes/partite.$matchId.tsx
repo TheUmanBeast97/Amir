@@ -6,6 +6,7 @@ import type { KitColor, PublicMatch, PublicPlayer } from "@/api/types";
 import { Crest, ErrorState, InfoBanner, Skeleton, StatusChip } from "@/components/ui-kit";
 import { HeadToHead } from "@/components/HeadToHead";
 import { CountUp, Reveal } from "@/components/motion";
+import { OfficialSheet } from "@/components/OfficialSheet";
 import { Pitch, PlayerPhoto, ShirtBadge } from "@/components/player-ui";
 import { Panel } from "@/components/stats-ui";
 import { fmtDateTime, opponent } from "@/lib/format";
@@ -18,10 +19,11 @@ export const Route = createFileRoute("/partite/$matchId")({
       { title: "Partita - AMIR COSTRUZIONI" },
       {
         name: "description",
-        content: "Convocati, formazione, referto e precedenti della partita di AMIR COSTRUZIONI.",
+        content:
+          "Distinta, convocati, formazione, referto e precedenti della partita di AMIR COSTRUZIONI.",
       },
       { property: "og:title", content: "Partita - AMIR COSTRUZIONI" },
-      { property: "og:description", content: "Convocati, formazione e referto." },
+      { property: "og:description", content: "Distinta, formazione e referto." },
     ],
   }),
   component: MatchPage,
@@ -54,7 +56,7 @@ function MatchPage() {
 }
 
 function MatchView({ data }: { data: PublicMatch }) {
-  const { match: m, callups, lineup, report } = data;
+  const { match: m, callups, lineup, report, sheet } = data;
   const played = m.status === "played" && m.home_score !== null;
   const kit = m.our_kit;
   const opp = opponent(m);
@@ -138,13 +140,17 @@ function MatchView({ data }: { data: PublicMatch }) {
         </Reveal>
       </section>
 
-      {!played && !callups && !lineup && (
+      {!played && !callups && !lineup && !sheet && (
         <InfoBanner>
           Convocati e formazione saranno pubblicati prima della partita: torna a trovarci!
         </InfoBanner>
       )}
 
-      {callups && <Callups callups={callups} kit={kit} />}
+      {sheet ? (
+        <OfficialSheet sheet={sheet} kit={kit} matchId={m.id} />
+      ) : (
+        callups && <Callups callups={callups} kit={kit} />
+      )}
       {lineup && <LineupView lineup={lineup} kit={kit} />}
       {report && <Report data={data} />}
       <HeadToHead teamId={opp.id} />

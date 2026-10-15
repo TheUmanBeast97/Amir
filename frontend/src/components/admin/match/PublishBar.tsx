@@ -76,6 +76,25 @@ export function PublishBar({ detail }: { detail: MatchDetail }) {
               : apply({ lineup_published: v }, v ? "Formazione pubblicata" : "Formazione nascosta")
           }
         />
+        <div className="sm:col-span-2">
+          <Toggle
+            label="Distinta ufficiale visibile sul sito"
+            checked={detail.sheet_published}
+            onChange={(v) =>
+              !detail.sheet_sent_at && v
+                ? toast.error("Prima invia la distinta a XFive (scheda Distinta).")
+                : apply(
+                    { sheet_published: v },
+                    v ? "Distinta pubblicata al posto dei convocati" : "Distinta nascosta",
+                  )
+            }
+          />
+          {detail.sheet_published && (
+            <p className="pb-1 text-xs text-muted-foreground">
+              Sul sito la distinta, in ordine di numero, prende il posto dei convocati.
+            </p>
+          )}
+        </div>
       </div>
       <Link
         to="/partite/$matchId"

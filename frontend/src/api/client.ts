@@ -45,6 +45,8 @@ import type {
   XfiveAdminCheck,
   XfiveAdminStatus,
   XfiveSessionStatus,
+  XfiveConnectResult,
+  XfiveLinkResult,
   PlayerSheetNumbers,
   SheetState,
   User,
@@ -105,6 +107,7 @@ export interface MatchSettings {
   our_kit?: KitColor | null;
   callups_published?: boolean;
   lineup_published?: boolean;
+  sheet_published?: boolean;
 }
 
 export interface ApiClient {
@@ -189,7 +192,12 @@ export interface ApiClient {
   checkXfiveAdmin(): Promise<XfiveAdminCheck>;
   /** «Collega XFive»: la password va solo a XFive per fare il login e non viene salvata. */
   getXfiveSession(): Promise<XfiveSessionStatus>;
-  connectXfive(email: string, password: string): Promise<XfiveSessionStatus>;
+  /** Dopo il login abbina anche i giocatori della rosa a XFive (`link`, o `link_error` se non è riuscito). */
+  connectXfive(email: string, password: string): Promise<XfiveConnectResult>;
+  /** Assegna l'id di XFive ai giocatori che non ce l'hanno (solo gli id: non cambia altro). */
+  linkXfivePlayers(): Promise<XfiveLinkResult>;
+  /** Il link al PDF della distinta su XFive: solo per lo staff, 404 se non è stata inviata nessuna distinta. */
+  getSheetPdf(matchId: Id): Promise<{ url: string }>;
   disconnectXfive(): Promise<XfiveSessionStatus>;
   /** La distinta ufficiale: si apre su XFive solo in una finestra prima della gara. */
   getSheet(matchId: Id): Promise<SheetState>;
@@ -407,6 +415,8 @@ export const api: ApiClient = {
   getXfiveSession: () => request("/xfive-session"),
   connectXfive: (email, password) => request("/xfive-session", post({ email, password })),
   disconnectXfive: () => request("/xfive-session", { method: "DELETE" }),
+  linkXfivePlayers: () => request("/xfive-session/link-players", post({})),
+  getSheetPdf: (matchId) => request(`/matches/${matchId}/sheet-pdf`),
   getSheet: (matchId) => request(`/matches/${matchId}/sheet`),
   saveSheet: (matchId, v) => request(`/matches/${matchId}/sheet`, post(v)),
   getSheetNumbers: () => request("/sheet-numbers"),

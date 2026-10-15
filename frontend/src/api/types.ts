@@ -218,6 +218,10 @@ export interface MatchDetail {
   stats: MatchPlayerStat[];
   callups: { player_id: Id; note: string | null }[];
   callups_published: boolean;
+  /** La distinta ufficiale è visibile sul sito, al posto dei convocati. */
+  sheet_published: boolean;
+  /** Quando è stata inviata a XFive l'ultima distinta (null = mai). */
+  sheet_sent_at: ISODateTime | null;
   our_kit: KitColor | null;
   referee: string | null;
   man_of_the_match_id: Id | null;
@@ -246,7 +250,8 @@ export interface MatchReport {
 }
 export interface PublicMatch {
   match: Match;
-  callups: { player: PublicPlayer; note: string | null }[] | null; // null = non pubblicati
+  callups: { player: PublicPlayer; note: string | null }[] | null; // null = non pubblicati (o sostituiti dalla distinta)
+  sheet: PublicSheet | null; // null = distinta non pubblicata
   lineup: (Lineup & { players: Record<string, PublicPlayer> }) | null; // null = non pubblicata
   report: MatchReport | null; // solo a partita giocata
   head_to_head: HeadToHead | null;
@@ -814,6 +819,34 @@ export interface SheetState {
   last_sent: { sent_at: ISODateTime; players: number; message: string | null } | null;
   /** Solo dopo un invio: la risposta di XFive. */
   message?: string;
+}
+/** L'esito dell'abbinamento dei giocatori della rosa a XFive (assegna l'id di XFive a chi non ce l'ha, senza toccare altro). */
+export interface XfiveLinkResult {
+  rows: number;
+  linked: number;
+  already: number;
+  /** Su XFive ma non nella nostra rosa. */
+  unmatched: string[];
+  /** Più giocatori possibili con quel nome: non si indovina. */
+  ambiguous: string[];
+  /** Nostri giocatori attivi che su XFive non si trovano. */
+  missing_on_xfive: string[];
+}
+/** La risposta di «Collega XFive»: lo stato del collegamento più l'abbinamento fatto subito dopo (o perché non è riuscito). */
+export interface XfiveConnectResult extends XfiveSessionStatus {
+  link: XfiveLinkResult | null;
+  link_error: string | null;
+}
+/** Un giocatore nella distinta pubblicata sul sito; `player` è null se non è (ancora) abbinato alla nostra rosa. */
+export interface PublicSheetPlayer {
+  number: string;
+  name: string;
+  player: PublicPlayer | null;
+}
+/** La distinta ufficiale pubblicata: in ordine di numero di maglia. */
+export interface PublicSheet {
+  sent_at: ISODateTime;
+  players: PublicSheetPlayer[];
 }
 export interface PlayerSheetNumbers {
   player_id: Id;

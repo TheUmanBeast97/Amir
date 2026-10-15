@@ -132,7 +132,14 @@ XFive, che li chiede prima della gara (la finestra la decide XFive, fino a 5 min
   si riprendono con un tocco, e se XFive non ha ancora aperto la distinta si prepara comunque (non si invia).
 - Prima dell'invio un riepilogo da confermare; i numeri ripetuti o mancanti bloccano il pulsante. Se XFive rifiuta, si vede il suo messaggio e non si
   ricorda nulla. Il PDF della distinta si scarica da XFive e il link compare dopo l'invio.
-- API (staff): `GET/POST/DELETE /xfive-session`, `GET/POST /matches/{id}/sheet`, `GET /sheet-numbers`.
+- **Id XFive dei giocatori**: appena ci si collega (o con **Abbina giocatori a XFive**) si legge la rosa su XFive e a ogni giocatore nostro, abbinato per
+  nome e data di nascita, si assegna il suo id (`players.xfive_admin_id`). Non si cambia altro, e nei casi dubbi (nomi uguali) non si indovina. L'id
+  che XFive usa nel modulo della distinta è diverso: lo si impara da solo alla prima apertura del modulo (`players.xfive_sheet_id`).
+- **Distinta sul sito**: l'interruttore «Distinta ufficiale visibile sul sito» (barra sopra le schede della partita, attivo solo dopo l'invio a
+  XFive) pubblica la distinta in ordine di numero **al posto dei convocati** (`matches.sheet_published`). Chi è dello staff vede sul sito anche il
+  tasto **PDF distinta**, che apre il PDF su XFive: il link non sta nei dati pubblici, lo dà solo `GET /matches/{id}/sheet-pdf` a chi ha il token.
+- API (staff): `GET/POST/DELETE /xfive-session`, `POST /xfive-session/link-players`, `GET/POST /matches/{id}/sheet`, `GET /matches/{id}/sheet-pdf`,
+  `GET /sheet-numbers`.
 
 ### Testi scritti dall'IA (Gemini)
 

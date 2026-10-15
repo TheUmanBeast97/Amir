@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Game;
 use App\Models\MatchPlayerStat;
+use App\Models\OfficialSheet;
+use App\Models\OfficialSheetPlayer;
 use App\Models\Player;
 use App\Models\Team;
 use App\Services\Stats\HistoryService;
@@ -26,13 +28,49 @@ final class MatchReport
         $isOwn = $game->home_team_id === $own->id || $game->away_team_id === $own->id;
         $opponent = $isOwn ? ($game->home_team_id === $own->id ? $game->away : $game->home) : null;
 
+        // la distinta ufficiale, quando lo staff la pubblica, prende il posto dei convocati
+        $sheet = $game->sheet_published ? $this->sheet($game) : null;
+
         return [
             'match' => Present::match($game, $own->id),
-            'callups' => $game->callups_published ? $this->callups($game) : null,
+            'callups' => ($game->callups_published && $sheet === null) ? $this->callups($game) : null,
+            'sheet' => $sheet,
             'lineup' => ($game->lineup && $game->lineup->is_published) ? $this->lineup($game) : null,
             'report' => $game->isPlayed() ? $this->report($game) : null,
             'head_to_head' => $opponent ? $this->history->headToHead($own, $opponent) : null,
         ];
+    }
+
+    /**
+     * L'ultima distinta inviata a XFive, in ordine di numero di maglia (prima i numeri, dal più piccolo; poi le lettere).
+     *
+     * @return array{sent_at: string, players: array<int, array{number: string, name: string, player: ?array<string, mixed>}>}|null
+     */
+    private function sheet(Game $game): ?array
+    {
+        $sheet = OfficialSheet::with('players.player')->where('match_id', $game->id)->latest('sent_at')->first();
+        if ($sheet === null || $sheet->players->isEmpty()) {
+            return null;
+        }
+
+        $players = $sheet->players
+            ->map(fn (OfficialSheetPlayer $sp) => [
+                'number' => (string) $sp->number,
+                'name' => $sp->player?->full_name ?? $sp->name,
+                'player' => $sp->player ? Present::publicPlayer($sp->player) : null,
+            ])
+            ->sort(function (array $a, array $b) {
+                $an = ctype_digit($a['number']);
+                $bn = ctype_digit($b['number']);
+
+                return $an === $bn
+                    ? ($an ? (int) $a['number'] <=> (int) $b['number'] : strcmp($a['number'], $b['number']))
+                    : ($an ? -1 : 1);
+            })
+            ->values()
+            ->all();
+
+        return ['sent_at' => $sheet->sent_at->toIso8601String(), 'players' => $players];
     }
 
     /** @return array<int, array<string, mixed>> */
