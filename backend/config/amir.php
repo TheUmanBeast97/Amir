@@ -127,6 +127,13 @@ return [
         'password' => env('XFIVE_ADMIN_PASSWORD'),
         // dopo un accesso rifiutato non si riprova per questo tempo: una password sbagliata ripetuta potrebbe far bloccare l'account
         'cooldown_minutes' => (int) env('XFIVE_ADMIN_COOLDOWN_MINUTES', 120),
+
+        // «Collega XFive» nella Staff Area (distinta ufficiale): la persona digita email e password di XFive nell'app, che non le
+        // salva; si conserva solo il cookie di sessione, cifrato. La scadenza si sposta avanti a ogni uso.
+        'session_minutes' => (int) env('XFIVE_SESSION_MINUTES', 120),
+        // dopo questi accessi rifiutati di fila si aspetta (per non far bloccare l'account su XFive)
+        'login_max_failures' => (int) env('XFIVE_LOGIN_MAX_FAILURES', 3),
+        'login_block_minutes' => (int) env('XFIVE_LOGIN_BLOCK_MINUTES', 15),
     ],
 
     // segreto delle esecuzioni pianificate (Vercel lo manda come «Authorization: Bearer ...»); vuoto = rotte disattivate

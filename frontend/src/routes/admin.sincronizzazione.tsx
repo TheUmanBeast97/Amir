@@ -33,6 +33,7 @@ import {
   type SyncReport,
 } from "@/components/admin/sync";
 import { Card, EmptyState, ErrorState, PageTitle, Skeleton } from "@/components/ui-kit";
+import { XfiveConnectCard } from "@/components/admin/XfiveConnect";
 import { AREAS } from "@/lib/area";
 import { fmtDateTime } from "@/lib/format";
 import { dur, ease } from "@/lib/motion";
@@ -460,6 +461,9 @@ function SyncPage() {
         <code>zone-001-tournaments.json.gz … zone-012-reports.json.gz</code> dell'export e li manda
         uno alla volta, in ordine: si può ripetere senza fare doppioni.
       </p>
+
+      {/* il tuo account XFive, per inviare la distinta ufficiale (scheda «Distinta» di ogni partita) */}
+      <XfiveConnectCard />
 
       <AnimatePresence mode="wait">
         {busy && (

@@ -769,6 +769,59 @@ export interface XfiveAdminCheck {
     | "unexpected_page";
   message: string;
 }
+/** Il collegamento di chi dello staff al proprio account XFive («Collega XFive»): si salva solo la sessione, mai la password. */
+export interface XfiveSessionStatus {
+  connected: boolean;
+  /** «e***@b4web.biz»: abbastanza per riconoscere l'account. */
+  email_hint: string | null;
+  expires_at: ISODateTime | null;
+  blocked_until: ISODateTime | null;
+}
+/** Un numero di maglia usato in una distinta passata. */
+export interface SheetNumberUse {
+  number: string;
+  count: number;
+  last_used_at: ISODateTime;
+}
+/** Un giocatore nella distinta: quello che dice XFive (quando è apribile) più i nostri numeri suggeriti e lo storico. */
+export interface SheetPlayer {
+  /** Id nell'area amministrazione di XFive; null = non abbinato, non si può inviare. */
+  xfive_id: number | null;
+  player_id: Id | null;
+  name: string;
+  birth_date: string | null;
+  called_up: boolean;
+  /** Scelto di partenza: la distinta già su XFive, altrimenti i convocati. */
+  selected: boolean;
+  /** Scelto già su XFive (distinta già depositata). */
+  xfive_selected: boolean;
+  /** Il numero che XFive ha già adesso. */
+  number: string | null;
+  /** Quello da proporre: l'ultimo delle nostre distinte, altrimenti quello di XFive o della rosa. */
+  suggested_number: string | null;
+  history: SheetNumberUse[];
+}
+export interface SheetState {
+  connected: boolean;
+  /** true = XFive la rende apribile adesso, quindi si può inviare. */
+  open: boolean;
+  reason: string | null;
+  match_id: Id;
+  xfive_match_id: number | null;
+  pdf_url: string | null;
+  note: string | null;
+  players: SheetPlayer[];
+  last_sent: { sent_at: ISODateTime; players: number; message: string | null } | null;
+  /** Solo dopo un invio: la risposta di XFive. */
+  message?: string;
+}
+export interface PlayerSheetNumbers {
+  player_id: Id;
+  name: string;
+  shirt_number: string | null;
+  last_number: string | null;
+  numbers: SheetNumberUse[];
+}
 /** Quello che è successo portando online le info dei giocatori e i pagamenti del gestionale sul computer. */
 export interface LocalImportResult {
   players_matched: number;

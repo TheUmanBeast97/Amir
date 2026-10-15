@@ -12,9 +12,11 @@ use App\Http\Controllers\Api\MatchController;
 use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Api\PlayerController;
 use App\Http\Controllers\Api\PublicController;
+use App\Http\Controllers\Api\SheetController;
 use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\Api\XfiveAdminController;
+use App\Http\Controllers\Api\XfiveSessionController;
 use App\Http\Controllers\Api\ZoneController;
 use App\Http\Controllers\Api\ZoneImportController;
 use App\Http\Middleware\PublicCache;
@@ -131,6 +133,15 @@ Route::prefix('v1')->group(function () {
         // Accesso all'area amministrazione di XFive con il tuo account (spento finché non lo accendi): stato e prova di accesso
         Route::get('/xfive-admin', [XfiveAdminController::class, 'status']);
         Route::post('/xfive-admin/check', [XfiveAdminController::class, 'check'])->middleware('throttle:5,1');
+
+        // «Collega XFive»: l'accesso di chi dello staff al proprio account XFive (la password si digita nell'app e non si salva),
+        // e la distinta ufficiale della partita
+        Route::get('/xfive-session', [XfiveSessionController::class, 'show']);
+        Route::post('/xfive-session', [XfiveSessionController::class, 'connect'])->middleware('throttle:6,1');
+        Route::delete('/xfive-session', [XfiveSessionController::class, 'disconnect']);
+        Route::get('/matches/{game}/sheet', [SheetController::class, 'show'])->middleware('throttle:30,1');
+        Route::post('/matches/{game}/sheet', [SheetController::class, 'save'])->middleware('throttle:10,1');
+        Route::get('/sheet-numbers', [SheetController::class, 'numbers']);
 
         Route::post('/sync/xfive', [SyncController::class, 'run']);
         Route::get('/sync/runs', [SyncController::class, 'runs']);

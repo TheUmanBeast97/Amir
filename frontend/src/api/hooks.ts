@@ -293,6 +293,45 @@ export const useCheckXfiveAdmin = () => {
     onSuccess: () => inv(["xfive-admin"]),
   });
 };
+// ---- «Collega XFive» e distinta ufficiale ----
+export const useXfiveSession = () =>
+  useQuery({ queryKey: ["xfive-session"], queryFn: () => api.getXfiveSession() });
+export const useConnectXfive = () => {
+  const inv = useInvalidate();
+  return useMutation({
+    mutationFn: (v: { email: string; password: string }) => api.connectXfive(v.email, v.password),
+    onSuccess: () => inv(["xfive-session"], ["sheet"]),
+  });
+};
+export const useDisconnectXfive = () => {
+  const inv = useInvalidate();
+  return useMutation({
+    mutationFn: () => api.disconnectXfive(),
+    onSuccess: () => inv(["xfive-session"], ["sheet"]),
+  });
+};
+/** Apre la distinta: con XFive collegato fa richieste a XFive, quindi non si rilegge da sola. */
+export const useSheet = (matchId: Id) =>
+  useQuery({
+    queryKey: ["sheet", matchId],
+    queryFn: () => api.getSheet(matchId),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+export const useSaveSheet = (matchId: Id) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { players: { xfive_id: number; number: string }[]; note?: string | null }) =>
+      api.saveSheet(matchId, v),
+    onSuccess: (state) => {
+      qc.setQueryData(["sheet", matchId], state);
+      return qc.invalidateQueries({ queryKey: ["sheet-numbers"] });
+    },
+  });
+};
+export const useSheetNumbers = () =>
+  useQuery({ queryKey: ["sheet-numbers"], queryFn: () => api.getSheetNumbers() });
 export const useSyncRuns = (poll = false) =>
   useQuery({
     queryKey: ["sync-runs"],

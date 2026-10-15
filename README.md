@@ -121,6 +121,19 @@ vengono creati come inattivi (con la loro foto) e compaiono nello Storico e nell
 - **Amichevoli**: partite organizzate da noi (area staff → Amichevoli), in una competizione "Amichevoli" per
   stagione; compaiono nel calendario ma non contano per statistiche e storico.
 
+### Distinta ufficiale su XFive
+
+Nella pagina di ogni partita (area staff → Partite) c'è la scheda **Distinta**: si scelgono i giocatori e i numeri di maglia e si inviano a
+XFive, che li chiede prima della gara (la finestra la decide XFive, fino a 5 minuti prima del calcio d'inizio).
+
+- Serve **Collega XFive**: chi dello staff digita email e password del proprio account XFive. La password serve solo a fare il login e non si salva;
+  si conserva il cookie di sessione, cifrato, con scadenza (`XFIVE_SESSION_MINUTES`). **Esci da XFive** lo cancella. Vedi `docs/DEPLOY.md`.
+- Ogni distinta inviata si ricorda (`official_sheets`, `official_sheet_players`): accanto a ogni giocatore compaiono i numeri delle distinte passate,
+  si riprendono con un tocco, e se XFive non ha ancora aperto la distinta si prepara comunque (non si invia).
+- Prima dell'invio un riepilogo da confermare; i numeri ripetuti o mancanti bloccano il pulsante. Se XFive rifiuta, si vede il suo messaggio e non si
+  ricorda nulla. Il PDF della distinta si scarica da XFive e il link compare dopo l'invio.
+- API (staff): `GET/POST/DELETE /xfive-session`, `GET/POST /matches/{id}/sheet`, `GET /sheet-numbers`.
+
 ### Testi scritti dall'IA (Gemini)
 
 Tre funzioni usano **Gemini** di Google (piano gratuito, chiave da <https://aistudio.google.com/apikey>):

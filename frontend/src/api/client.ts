@@ -44,6 +44,9 @@ import type {
   LocalImportResult,
   XfiveAdminCheck,
   XfiveAdminStatus,
+  XfiveSessionStatus,
+  PlayerSheetNumbers,
+  SheetState,
   User,
   ZoneChunkResult,
 } from "./types";
@@ -56,6 +59,8 @@ export class ApiError extends Error {
     public status: number,
     message: string,
     public errors: Record<string, string[]> = {},
+    /** Per i problemi con XFive: not_connected, session_expired, not_open, rejected, invalid, login_failed, blocked... */
+    public state?: string,
   ) {
     super(message);
   }
@@ -182,6 +187,17 @@ export interface ApiClient {
   getSyncRuns(): Promise<SyncRun[]>;
   getXfiveAdminStatus(): Promise<XfiveAdminStatus>;
   checkXfiveAdmin(): Promise<XfiveAdminCheck>;
+  /** «Collega XFive»: la password va solo a XFive per fare il login e non viene salvata. */
+  getXfiveSession(): Promise<XfiveSessionStatus>;
+  connectXfive(email: string, password: string): Promise<XfiveSessionStatus>;
+  disconnectXfive(): Promise<XfiveSessionStatus>;
+  /** La distinta ufficiale: si apre su XFive solo in una finestra prima della gara. */
+  getSheet(matchId: Id): Promise<SheetState>;
+  saveSheet(
+    matchId: Id,
+    v: { players: { xfive_id: number; number: string }[]; note?: string | null },
+  ): Promise<SheetState>;
+  getSheetNumbers(): Promise<PlayerSheetNumbers[]>;
   /** Carica nella Mixed Zone un pezzo dell'archivio XFive (zone-NNN-sezione.json.gz): uno alla volta, in ordine di nome. */
   uploadZoneChunk(file: File): Promise<ZoneChunkResult>;
   /** Quanto c'è nelle tabelle della Mixed Zone e l'ultimo caricamento o aggiornamento di ogni sezione. */
@@ -225,8 +241,17 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     throw new ApiError(401, "Sessione scaduta. Accedi di nuovo.");
   }
   if (res.status === 422) {
-    const body = (await res.json()) as { message: string; errors?: Record<string, string[]> };
-    throw new ApiError(422, body.message, body.errors ?? {});
+    const body = (await res.json()) as {
+      message: string;
+      errors?: Record<string, string[]>;
+      state?: string;
+    };
+    throw new ApiError(422, body.message, body.errors ?? {}, body.state);
+  }
+  // i problemi con XFive (collegamento mancante, distinta non apribile, XFive che non risponde) dicono da soli cosa è successo
+  if (res.status === 409 || res.status === 429 || res.status === 502) {
+    const body = (await res.json().catch(() => ({}))) as { message?: string; state?: string };
+    if (body.message) throw new ApiError(res.status, body.message, {}, body.state);
   }
   if (!res.ok)
     throw new ApiError(
@@ -379,6 +404,12 @@ export const api: ApiClient = {
   getSyncRuns: () => request("/sync/runs"),
   getXfiveAdminStatus: () => request("/xfive-admin"),
   checkXfiveAdmin: () => request("/xfive-admin/check", post({})),
+  getXfiveSession: () => request("/xfive-session"),
+  connectXfive: (email, password) => request("/xfive-session", post({ email, password })),
+  disconnectXfive: () => request("/xfive-session", { method: "DELETE" }),
+  getSheet: (matchId) => request(`/matches/${matchId}/sheet`),
+  saveSheet: (matchId, v) => request(`/matches/${matchId}/sheet`, post(v)),
+  getSheetNumbers: () => request("/sheet-numbers"),
   uploadZoneChunk: (file) => postFile("/zone/import", { file }, "Pezzo non caricato."),
   getZoneStatus: () => request("/zone/status"),
   getMe: (token) => request(`/me/${token}`),

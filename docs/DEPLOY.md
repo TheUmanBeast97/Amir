@@ -199,6 +199,26 @@ utenti «per scopi non autorizzati» e non parlano dell'automazione del proprio 
 della rosa non è attivo: la lettura parte quando premi il pulsante, o da un servizio esterno che chiama
 `GET /api/v1/cron/admin` con `Authorization: Bearer IL-TUO-CRON_SECRET`.
 
+### Distinta ufficiale: «Collega XFive»
+
+La scheda **Distinta** di ogni partita (Staff Area, Partite) prepara e invia a XFive la distinta ufficiale della gara, con il numero di
+maglia di ciascuno. Non servono variabili sul server: chi dello staff preme **Collega XFive** (in quella scheda o in **Sincronizzazione**)
+digita email e password del proprio account XFive.
+
+Come è protetto:
+- La password viene usata una sola volta, per fare il login su XFive, e **non viene salvata** (né nel database, né nei log, né nelle variabili).
+- Si conserva solo il cookie di sessione, **cifrato** con `APP_KEY`, legato all'utente dello staff e con scadenza (`XFIVE_SESSION_MINUTES`, 120 di
+  default, si sposta avanti a ogni uso). **Esci da XFive** cancella la sessione e fa il logout anche su XFive.
+- Dopo 3 accessi rifiutati di fila (`XFIVE_LOGIN_MAX_FAILURES`) si aspetta 15 minuti (`XFIVE_LOGIN_BLOCK_MINUTES`), così una password sbagliata
+  ripetuta non fa bloccare l'account.
+- Non parte nessuna richiesta a XFive se nessuno ha premuto **Collega XFive**, e l'invio avviene solo dopo la conferma «Invia a XFive».
+
+Come funziona su XFive (`manage_tournament/team_schedule.php`): `op=1` elenca le partite e dice per quali la distinta è apribile
+(`setSchedule(partita, squadra)`), `op=2` apre il modulo, `op=3` salva. XFive decide la finestra (fino a 5 minuti prima del calcio d'inizio):
+fuori dalla finestra la scheda mostra comunque i giocatori con i numeri suggeriti, ma non invia. Ogni distinta inviata si ricorda
+(tabelle `official_sheets` e `official_sheet_players`): accanto a ogni giocatore compaiono i numeri usati nelle distinte passate.
+Anche qui vale l'avviso sui termini d'uso di XFive qui sopra: si agisce solo quando lo staff preme un pulsante, con il proprio account.
+
 ## Cose da sapere
 
 - **Piano gratuito di Vercel (Hobby)**: è pensato per uso personale e senza scopo di lucro. Per una squadra amatoriale va bene;

@@ -9,6 +9,7 @@ import { CallupsTab } from "@/components/admin/match/CallupsTab";
 import { LineupTab } from "@/components/admin/match/LineupTab";
 import { PostMatchTab } from "@/components/admin/match/PostMatchTab";
 import { PrecedentiTab } from "@/components/admin/match/PrecedentiTab";
+import { SheetTab } from "@/components/admin/match/SheetTab";
 import { PublishBar } from "@/components/admin/match/PublishBar";
 
 export const Route = createFileRoute("/admin/partite/$matchId")({
@@ -17,7 +18,8 @@ export const Route = createFileRoute("/admin/partite/$matchId")({
       { title: "Gestione partita - AMIR COSTRUZIONI" },
       {
         name: "description",
-        content: "Presenze, convocati, formazione, statistiche e precedenti della partita.",
+        content:
+          "Presenze, convocati, formazione, distinta ufficiale, statistiche e precedenti della partita.",
       },
       { property: "og:title", content: "Gestione partita - AMIR COSTRUZIONI" },
       { property: "og:description", content: "Presenze, convocati, formazione e statistiche." },
@@ -61,6 +63,9 @@ function AdminMatchDetail() {
                   <TabsTrigger value="formazione" className="min-h-10">
                     Formazione
                   </TabsTrigger>
+                  <TabsTrigger value="distinta" className="min-h-10">
+                    Distinta
+                  </TabsTrigger>
                   <TabsTrigger value="dopo" className="min-h-10">
                     Dopo la partita
                   </TabsTrigger>
@@ -76,6 +81,9 @@ function AdminMatchDetail() {
                 </TabsContent>
                 <TabsContent value="formazione">
                   <LineupTab detail={q.data} />
+                </TabsContent>
+                <TabsContent value="distinta">
+                  <SheetTab detail={q.data} />
                 </TabsContent>
                 <TabsContent value="dopo">
                   <PostMatchTab detail={q.data} />
