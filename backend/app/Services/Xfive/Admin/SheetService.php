@@ -161,6 +161,7 @@ final class SheetService
             self::SCHEDULE_PATH,
             $payload,
             "/manage_tournament.php?tmid={$club}&sk=team_schedule",
+            'il salvataggio della distinta',
         ));
         $result = $this->parser->envelope($response);
 
@@ -214,14 +215,14 @@ final class SheetService
         $referer = "/manage_tournament.php?tmid={$club}&sk=team_schedule";
         $mid = (int) $game->xfive_match_id;
 
-        $schedule = $this->guard($user, fn () => $this->access->ajax($jar, self::SCHEDULE_PATH, $this->scheduleParams($club), $referer));
+        $schedule = $this->guard($user, fn () => $this->access->ajax($jar, self::SCHEDULE_PATH, $this->scheduleParams($club), $referer, "l'elenco delle partite"));
         $gtid = $this->parser->gtidFor((string) json_encode($schedule, JSON_UNESCAPED_SLASHES), $mid);
 
         if ($gtid === null) {
             throw new XfiveAdminException('not_open', "La distinta non si può aprire adesso su XFive: la rende disponibile solo in una finestra prima della gara (fino a 5 minuti prima del calcio d'inizio).");
         }
 
-        $opened = $this->parser->envelope($this->guard($user, fn () => $this->access->ajax($jar, self::SCHEDULE_PATH, ['op' => 2, 'mid' => $mid, 'gtid' => $gtid], $referer)));
+        $opened = $this->parser->envelope($this->guard($user, fn () => $this->access->ajax($jar, self::SCHEDULE_PATH, ['op' => 2, 'mid' => $mid, 'gtid' => $gtid], $referer, 'il modulo della distinta')));
 
         if ($opened['errors'] !== null) {
             throw new XfiveAdminException('not_open', $opened['errors']);
@@ -277,11 +278,12 @@ final class SheetService
             'draw' => 1,
             'columns' => $columns,
             'start' => 0,
-            'length' => -1,
+            // XFive risponde 500 a length=-1 (provato): si chiedono al massimo 100 righe, e solo da ieri in poi come fa la pagina da sola
+            'length' => 100,
             'search' => ['value' => '', 'regex' => 'false'],
             'op' => 1,
             'tmid' => $club,
-            'date_from' => '',
+            'date_from' => now('Europe/Rome')->subDay()->format('d/m/Y'),
             'date_to' => '',
         ];
     }

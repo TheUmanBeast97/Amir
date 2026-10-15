@@ -88,7 +88,7 @@ final class XfiveAccess
      *
      * @throws XfiveAdminException  session_expired se XFive risponde con la pagina di accesso
      */
-    public function ajax(CookieJar $jar, string $path, array $data, string $referer): array
+    public function ajax(CookieJar $jar, string $path, array $data, string $referer, string $what = 'la richiesta'): array
     {
         try {
             $this->pause();
@@ -102,7 +102,8 @@ final class XfiveAccess
         }
 
         if ($response->serverError()) {
-            throw new XfiveAdminException('unreachable', 'XFive ha avuto un problema. Riprova tra poco.');
+            // il codice e il passaggio aiutano a capire cosa non va, senza mostrare niente della risposta
+            throw new XfiveAdminException('unreachable', "XFive ha risposto con l'errore {$response->status()} a {$what}. Riprova tra poco.");
         }
 
         $body = $this->utf8($response->body());

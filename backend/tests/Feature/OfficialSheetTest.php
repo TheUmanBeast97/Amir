@@ -40,6 +40,9 @@ class OfficialSheetTest extends TestCase
     /** XFive ha chiuso la sessione: le chiamate AJAX rispondono con la pagina del sito */
     private bool $expired = false;
 
+    /** il codice con cui XFive risponde alle richieste di team_schedule.php (200 = normale) */
+    private int $scheduleStatus = 200;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -98,6 +101,15 @@ class OfficialSheetTest extends TestCase
                 return Http::response('<html><body><a onclick="suggestionFeedback(\'login\')">Accedi</a></body></html>');
             }
             if (str_ends_with($path, '/manage_tournament/team_schedule.php')) {
+                if ($this->scheduleStatus !== 200) {
+                    return Http::response('', $this->scheduleStatus);
+                }
+
+                // come su XFive (provato): length=-1 dà 500; la data va nel formato della pagina (g/m/aaaa)
+                if ((int) ($request['op'] ?? 0) === 1 && ((int) ($request['length'] ?? 0) <= 0 || ! preg_match('#^\d{2}/\d{2}/\d{4}$#', (string) ($request['date_from'] ?? '')))) {
+                    return Http::response('', 500);
+                }
+
                 return Http::response(match ((int) ($request['op'] ?? 0)) {
                     1 => SheetFixtures::schedule($open),
                     2 => isset($open[(int) $request['mid']]) ? SheetFixtures::form($players) : (string) json_encode(['errors' => 'Distinta non disponibile']),
@@ -277,6 +289,20 @@ class OfficialSheetTest extends TestCase
 
         Http::assertNotSent(fn (Request $r) => ($r['op'] ?? null) == 3);
         $this->assertSame(0, OfficialSheet::count());
+    }
+
+    public function test_a_server_error_from_xfive_says_which_step_failed(): void
+    {
+        $this->player('Mario', 'Rossi');
+        $this->fakeXfiveSheet(players: [[62597, 'Rossi Mario', '28/01/1999', false, '']]);
+        $this->connect()->assertOk();
+
+        // XFive risponde 500 all'elenco partite: l'app lo dice con il codice e il passaggio, senza mostrare nulla della risposta
+        $this->scheduleStatus = 503;
+
+        $r = $this->getJson("/api/v1/matches/{$this->game->id}/sheet")->assertStatus(502);
+        $this->assertStringContainsString('503', $r->json('message'));
+        $this->assertStringContainsString("l'elenco delle partite", $r->json('message'));
     }
 
     public function test_xfive_rejection_is_shown_and_nothing_is_remembered(): void
