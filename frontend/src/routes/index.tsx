@@ -259,7 +259,7 @@ function HomePage() {
                 const i = h.standings.findIndex((r) => r.team.is_own);
                 return h.standings.slice(Math.max(0, i - 2), i + 3);
               })()}
-              compact
+              view="compact"
             />
             <Link to="/classifica" className="mt-3 inline-block text-sm font-semibold text-primary">
               Classifica completa →

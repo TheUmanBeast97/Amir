@@ -2,8 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Globe } from "lucide-react";
 import { useHome, useStandings } from "@/api/hooks";
 import { EmptyState, ErrorState, PageTitle, Skeleton } from "@/components/ui-kit";
-import { StandingsTable } from "@/components/match";
+import { StandingsTable, StandingsViewToggle } from "@/components/match";
 import { Reveal } from "@/components/motion";
+import { useStandingsView } from "@/lib/standings-view";
 
 export const Route = createFileRoute("/classifica")({
   head: () => ({
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/classifica")({
 function StandingsPage() {
   const home = useHome();
   const q = useStandings(home.data?.competition?.id);
+  const [view, setView] = useStandingsView();
   return (
     <div>
       <PageTitle
@@ -40,11 +42,14 @@ function StandingsPage() {
       ) : q.data.length === 0 ? (
         <EmptyState>Classifica non disponibile.</EmptyState>
       ) : (
-        <StandingsTable rows={q.data} />
+        <div className="space-y-3">
+          <StandingsViewToggle value={view} onChange={setView} />
+          <StandingsTable rows={q.data} view={view} />
+        </div>
       )}
       <Reveal as="p" delay={0.4} y={6} className="mt-3 text-xs text-muted-foreground">
-        P giocate · V vinte · N pareggiate · Pe perse · GF gol fatti · GS gol subiti · DR differenza
-        reti · Pt punti
+        Pt punti · G partite giocate · V vinte · N pareggiate · P perse
+        {view === "extended" ? " · GF gol fatti · GS gol subiti · DR differenza reti" : ""}
       </Reveal>
       {home.data?.competition?.xfive_tournament_id && (
         <Reveal className="mt-6">

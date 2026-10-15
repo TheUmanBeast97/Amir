@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import type { HeadToHeadMatch, Match, StandingRow } from "@/api/types";
 import { Reveal } from "@/components/motion";
 import { dur, ease, stagger } from "@/lib/motion";
+import type { StandingsView } from "@/lib/standings-view";
 import { cn } from "@/lib/utils";
 import { fmtDate, fmtDateTime, outcome } from "@/lib/format";
 import { Crest, OutcomeBadge, ProvisionalChip, StatusChip, isOurs } from "./ui-kit";
@@ -105,15 +106,73 @@ export function HistoryMatchItem({ m, i = 0 }: { m: HeadToHeadMatch; i?: number 
   );
 }
 
+/** Le colonne della classifica, nell'ordine: i punti per primi, poi G (partite giocate), V, N, P; l'estesa aggiunge gol fatti, subiti e differenza reti. */
+const STANDINGS_COLS: Record<
+  StandingsView,
+  { label: string; title: string; value: (r: StandingRow) => number }[]
+> = {
+  compact: [
+    { label: "Pt", title: "Punti", value: (r) => r.points },
+    { label: "G", title: "Partite giocate", value: (r) => r.played },
+    { label: "V", title: "Vinte", value: (r) => r.won },
+    { label: "N", title: "Pareggiate", value: (r) => r.drawn },
+    { label: "P", title: "Perse", value: (r) => r.lost },
+  ],
+  extended: [
+    { label: "Pt", title: "Punti", value: (r) => r.points },
+    { label: "G", title: "Partite giocate", value: (r) => r.played },
+    { label: "V", title: "Vinte", value: (r) => r.won },
+    { label: "N", title: "Pareggiate", value: (r) => r.drawn },
+    { label: "P", title: "Perse", value: (r) => r.lost },
+    { label: "GF", title: "Gol fatti", value: (r) => r.goals_for },
+    { label: "GS", title: "Gol subiti", value: (r) => r.goals_against },
+    { label: "DR", title: "Differenza reti", value: (r) => r.goal_diff },
+  ],
+};
+
+/** Interruttore «Compatta / Estesa» sopra la classifica. */
+export function StandingsViewToggle({
+  value,
+  onChange,
+}: {
+  value: StandingsView;
+  onChange: (v: StandingsView) => void;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Vista della classifica"
+      className="inline-flex overflow-hidden rounded-lg border"
+    >
+      {(["compact", "extended"] as const).map((v) => (
+        <button
+          key={v}
+          type="button"
+          aria-pressed={value === v}
+          onClick={() => onChange(v)}
+          className={cn(
+            "min-h-11 px-4 text-sm font-semibold transition-colors",
+            value === v
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-accent/50",
+          )}
+        >
+          {v === "compact" ? "Compatta" : "Estesa"}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function StandingsTable({
   rows,
-  compact = false,
+  view = "extended",
 }: {
   rows: StandingRow[];
-  compact?: boolean;
+  view?: StandingsView;
 }) {
   const notStarted = rows.length > 0 && rows.every((r) => r.played === 0);
-  const cols = compact ? ["P", "DR", "Pt"] : ["P", "V", "N", "Pe", "GF", "GS", "DR", "Pt"];
+  const cols = STANDINGS_COLS[view];
   return (
     <div>
       {notStarted && (
@@ -126,26 +185,20 @@ export function StandingsTable({
               <th className="w-10 px-2 py-2 text-center">#</th>
               <th className="px-2 py-2 text-left">Squadra</th>
               {cols.map((c) => (
-                <th key={c} className="px-2 py-2 text-center">
-                  {c}
+                <th
+                  key={c.label}
+                  scope="col"
+                  title={c.title}
+                  aria-label={c.title}
+                  className="px-2 py-2 text-center"
+                >
+                  {c.label}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {rows.map((r, rowIndex) => {
-              const vals = compact
-                ? [r.played, r.goal_diff, r.points]
-                : [
-                    r.played,
-                    r.won,
-                    r.drawn,
-                    r.lost,
-                    r.goals_for,
-                    r.goals_against,
-                    r.goal_diff,
-                    r.points,
-                  ];
               return (
                 <motion.tr
                   key={r.team.id}
@@ -176,17 +229,20 @@ export function StandingsTable({
                       <span className="max-w-[9rem] truncate md:max-w-none">{r.team.name}</span>
                     </div>
                   </td>
-                  {vals.map((v, i) => (
-                    <td
-                      key={i}
-                      className={cn(
-                        "px-2 py-2.5 text-center",
-                        i === vals.length - 1 && "font-bold",
-                      )}
-                    >
-                      {i === vals.length - 2 && v > 0 ? `+${v}` : v}
-                    </td>
-                  ))}
+                  {cols.map((c, i) => {
+                    const v = c.value(r);
+                    return (
+                      <td
+                        key={c.label}
+                        className={cn(
+                          "px-2 py-2.5 text-center",
+                          i === 0 && "font-display text-lg font-bold text-primary",
+                        )}
+                      >
+                        {c.label === "DR" && v > 0 ? `+${v}` : v}
+                      </td>
+                    );
+                  })}
                 </motion.tr>
               );
             })}
