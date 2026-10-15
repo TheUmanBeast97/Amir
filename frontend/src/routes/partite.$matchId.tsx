@@ -7,6 +7,7 @@ import { Crest, ErrorState, InfoBanner, Skeleton, StatusChip } from "@/component
 import { HeadToHead } from "@/components/HeadToHead";
 import { CountUp, Reveal } from "@/components/motion";
 import { OfficialSheet } from "@/components/OfficialSheet";
+import { SheetPdfButton } from "@/components/SheetPdfButton";
 import { Pitch, PlayerPhoto, ShirtBadge } from "@/components/player-ui";
 import { Panel } from "@/components/stats-ui";
 import { fmtDateTime, opponent } from "@/lib/format";
@@ -138,6 +139,12 @@ function MatchView({ data }: { data: PublicMatch }) {
           )}
           <StatusChip status={m.status} />
         </Reveal>
+        {/* solo per lo staff: il PDF su XFive anche se la distinta non è (ancora) pubblicata sul sito */}
+        {!sheet && (
+          <div className="mt-4 flex justify-center">
+            <SheetPdfButton matchId={m.id} className="rounded-full" />
+          </div>
+        )}
       </section>
 
       {!played && !callups && !lineup && !sheet && (

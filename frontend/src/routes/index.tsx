@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CalendarPlus, MapPin } from "lucide-react";
+import { ArrowRight, CalendarPlus, MapPin } from "lucide-react";
+import { SheetPdfButton } from "@/components/SheetPdfButton";
 import { motion } from "motion/react";
 import { CountUp, Reveal } from "@/components/motion";
 import { dist, dur, ease, spring } from "@/lib/motion";
@@ -182,16 +183,18 @@ function Hero({ m }: { m: Match | null }) {
           </motion.div>
         )}
         {m.kickoff_at && <Countdown to={m.kickoff_at} />}
-        <Link
-          to="/partite/$matchId"
-          params={{ matchId: String(m.id) }}
-          className="group text-sm font-semibold text-white underline-offset-4 hover:underline"
-        >
-          Convocati, formazione e precedenti{" "}
-          <span className="inline-block transition-transform duration-200 group-hover:translate-x-1">
-            →
-          </span>
-        </Link>
+        <div className="mt-1 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/partite/$matchId"
+            params={{ matchId: String(m.id) }}
+            className="press group inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-6 font-display text-lg tracking-wide text-primary-foreground shadow-[0_8px_30px_-6px_var(--primary)] ring-2 ring-white/30 transition-colors hover:bg-primary/90"
+          >
+            Tutte le info della partita
+            <ArrowRight className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" />
+          </Link>
+          <SheetPdfButton matchId={m.id} className="rounded-full" />
+        </div>
+        <p className="text-xs text-white/70">Distinta, formazione, convocati e precedenti</p>
       </div>
     </HeroShell>
   );

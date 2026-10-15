@@ -464,4 +464,34 @@ class OfficialSheetTest extends TestCase
         // il sito pubblico non contiene mai il link
         $this->assertStringNotContainsString('pdfTeamsSchedule', (string) $this->getJson("/api/v1/public/matches/{$this->game->id}")->getContent());
     }
+
+    public function test_a_sheet_filled_in_directly_on_xfive_makes_the_pdf_reachable_once_the_staff_opens_it(): void
+    {
+        $this->player('Mario', 'Rossi', ['xfive_admin_id' => 62597]);
+        // già compilata su XFive (fuori da qui): c'è un giocatore scelto con il suo numero
+        $this->fakeXfiveSheet(players: [[62597, 'Rossi Mario', '28/01/1999', true, '4']]);
+        $this->connect()->assertOk();
+
+        // finché nessuno apre la scheda non si sa niente: niente PDF, e niente chiamate fatte per cercarlo
+        $before = count($this->calls);
+        $this->getJson("/api/v1/matches/{$this->game->id}/sheet-pdf")->assertNotFound();
+        $this->assertSame($before, count($this->calls), 'la richiesta del PDF non contatta XFive');
+
+        $this->getJson("/api/v1/matches/{$this->game->id}/sheet")->assertOk()
+            ->assertJsonPath('data.pdf_url', 'https://www.xfivesport.it/pdfTeamsSchedule.php?mid=14584&gtid=3604');
+
+        $this->getJson("/api/v1/matches/{$this->game->id}/sheet-pdf")->assertOk()
+            ->assertJsonPath('data.url', 'https://www.xfivesport.it/pdfTeamsSchedule.php?mid=14584&gtid=3604');
+        $this->assertSame(3604, $this->game->fresh()->xfive_gtid);
+    }
+
+    public function test_opening_an_empty_sheet_does_not_make_up_a_pdf(): void
+    {
+        $this->player('Mario', 'Rossi', ['xfive_admin_id' => 62597]);
+        $this->fakeXfiveSheet(players: [[62597, 'Rossi Mario', '28/01/1999', false, '']]);
+        $this->connect()->assertOk();
+
+        $this->getJson("/api/v1/matches/{$this->game->id}/sheet")->assertOk()->assertJsonPath('data.pdf_url', null);
+        $this->getJson("/api/v1/matches/{$this->game->id}/sheet-pdf")->assertNotFound();
+    }
 }

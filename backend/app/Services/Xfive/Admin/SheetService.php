@@ -67,13 +67,19 @@ final class SheetService
 
     /**
      * Il link al PDF della distinta su XFive (si scarica anche senza accesso, per questo non si mostra a chi non è dello staff).
-     * Null se per questa partita non è stata inviata nessuna distinta.
+     * Il gtid viene da una distinta inviata da qui oppure, se la distinta è stata compilata direttamente su XFive, da quando lo staff
+     * ha aperto la scheda Distinta e il modulo risultava compilato. Null se per questa partita non risulta nessuna distinta.
      */
     public function pdfUrlFor(Game $game): ?string
     {
-        $sheet = OfficialSheet::where('match_id', $game->id)->whereNotNull('xfive_gtid')->latest('sent_at')->first();
+        if (! $game->xfive_match_id) {
+            return null;
+        }
 
-        return $sheet && $game->xfive_match_id ? $this->pdfUrl((int) $game->xfive_match_id, (int) $sheet->xfive_gtid) : null;
+        $gtid = OfficialSheet::where('match_id', $game->id)->whereNotNull('xfive_gtid')->latest('sent_at')->value('xfive_gtid')
+            ?? $game->xfive_gtid;
+
+        return $gtid ? $this->pdfUrl((int) $game->xfive_match_id, (int) $gtid) : null;
     }
 
     /**
@@ -132,6 +138,10 @@ final class SheetService
 
             if ($anySelected) {
                 $out['pdf_url'] = $this->pdfUrl((int) $game->xfive_match_id, $opened['gtid']);
+                // la distinta c'è su XFive (anche se fatta fuori da qui): ricordo la squadra, così il PDF resta raggiungibile dal sito
+                if ((int) $game->xfive_gtid !== $opened['gtid']) {
+                    $game->forceFill(['xfive_gtid' => $opened['gtid']])->saveQuietly();
+                }
             }
         } else {
             $out['players'] = $roster->map(fn (Player $p) => $this->entry($p, null, $history, isset($calledUp[$p->id]), false))->values()->all();

@@ -1,43 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { FileText } from "lucide-react";
-import { useEffect, useState } from "react";
-import { TOKEN_KEY } from "@/api/client";
-import { useSheetPdf } from "@/api/hooks";
 import type { Id, KitColor, PublicSheet, PublicSheetPlayer } from "@/api/types";
 import { Reveal } from "@/components/motion";
 import { PlayerPhoto } from "@/components/player-ui";
+import { SheetPdfButton } from "@/components/SheetPdfButton";
 import { KIT_LABEL, KIT_STYLE } from "@/lib/kit";
 import { cn } from "@/lib/utils";
-
-/** Chi è dello staff ha il token nel browser: solo a lui compare il tasto del PDF (letto dopo il primo disegno, per non sfasare il rendering lato server). */
-function useIsStaff() {
-  const [staff, setStaff] = useState(false);
-  useEffect(() => {
-    try {
-      setStaff(!!localStorage.getItem(TOKEN_KEY));
-    } catch {
-      setStaff(false);
-    }
-  }, []);
-  return staff;
-}
-
-/** «PDF distinta»: il link a XFive non sta nei dati pubblici, lo chiede al server solo chi è dello staff. */
-function SheetPdfButton({ matchId }: { matchId: Id }) {
-  const staff = useIsStaff();
-  const pdf = useSheetPdf(matchId, staff);
-  if (!staff || !pdf.data) return null;
-  return (
-    <a
-      href={pdf.data.url}
-      target="_blank"
-      rel="noreferrer noopener"
-      className="press inline-flex min-h-11 items-center gap-2 rounded-lg bg-white px-4 text-sm font-bold uppercase tracking-wider text-[#0b0b0d] shadow-lg transition-colors hover:bg-white/85"
-    >
-      <FileText className="h-4 w-4" /> PDF distinta
-    </a>
-  );
-}
 
 /** Il numero grande nella tinta della divisa, con il bordo inclinato come un tabellone. */
 function NumberPlate({ number, kit }: { number: string; kit: KitColor | null }) {
